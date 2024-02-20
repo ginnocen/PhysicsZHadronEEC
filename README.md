@@ -7,6 +7,7 @@ For example
 - SamplePreparation/
    - 20240220_Pythia8Generation/
    - 20240225_PyquenGeneration/
+   - ...
 - MCStudies/
    - 20240220_FirstExploration/
    - ...
