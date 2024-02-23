@@ -66,13 +66,13 @@ void smartBranch(TTree* fChain)
    fChain->SetBranchStatus("zPt",1);
    fChain->SetBranchStatus("hiBin",1);
    fChain->SetBranchStatus("trackPt",1);
-   fChain->SetBranchStatus("trackMuTagged",1);
-   fChain->SetBranchStatus("trackDeta",1);
-   fChain->SetBranchStatus("trackDphi",1);
+   //fChain->SetBranchStatus("trackMuTagged",1);
+   fChain->SetBranchStatus("trackEta",1);
+   fChain->SetBranchStatus("trackPhi",1);
    fChain->SetBranchStatus("NCollWeight",1);
    fChain->SetBranchStatus("trackWeight",1);
    fChain->SetBranchStatus("ZWeight",1);
-   fChain->SetBranchStatus("trackResidualWeight",1);
+   //fChain->SetBranchStatus("trackResidualWeight",1);
 }
 
 //======= eventSelection =====================================//
@@ -102,7 +102,7 @@ bool eventSelection(Tree &b, const Parameters& par)
 // hiBinL , hiBin < hiBinH
 //============================================================//
 bool trackSelection(Tree &b, Parameters par, int j) {
-    if ((*b.trackMuTagged)[j]) return false;  
+    //if ((*b.trackMuTagged)[j]) return false;  
     if ((*b.trackPt)[j]>par.ptCutH) return false;  
     if ((*b.trackPt)[j]<par.ptCutL) return false;  
     //if (fabs((*b.trackDeta)[j])>4) return false;
@@ -127,20 +127,21 @@ void projectTrack3DHistogram(TTree *t, Tree &b, TH3D *h3D, const Parameters& par
        bool foundZ=false;
        t->GetEntry(i);
        if (i%100000==0) cout <<i<<" / "<<t->GetEntries()<<endl;
-       
+       //cout <<eventSelection(b, par)<<endl;
        // check if the event pass the selection criteria
        if (eventSelection(b, par)) {
           // Ncoll wieght
 	  nZ+=(b.NCollWeight);
-	  for (long j=0;j<b.trackDphi->size();j++) {
+	  for (unsigned long j=0;j<b.trackPhi->size();j++) {
              if (!trackSelection(b, par, j)) continue;  
 	     // recover track Phi angle
-	     double trackPhi = (*b.trackDphi)[j]+(*b.zPhi)[0];  
+	     double trackPhi = (*b.trackPhi)[j];  
 	     if (trackPhi<0) trackPhi+=2*M_PI;
 	     // recover track Eta value
-	     double trackEta = (*b.trackDeta)[j]+(*b.zEta)[0];
+	     double trackEta = (*b.trackEta)[j];
 	     double residualCorr = 1;
 	     h3D->Fill((*b.trackPt)[j], trackEta, trackPhi,(b.NCollWeight)*(*b.trackWeight)[j]*residualCorr);
+	     //cout <<(*b.trackPt)[j]<<" "<<trackEta<<" "<<trackPhi<<" "<<(b.NCollWeight)*(*b.trackWeight)[j]*residualCorr<<endl;
  	  }
        }
     }
@@ -216,13 +217,13 @@ int efficiencyStudy(double ZptCutL=5, double ZptCutH=200, double ptL=0, double p
       par.hiBinL=hiBin[i];
       par.hiBinH=hiBin[i+1];
       TFile *outf = new TFile(Form("result/output_data_%.1f_%.1f_%.0f_%.0f_%d_%d.root",ptL,ptH,ZptCutL,ZptCutH,par.hiBinL,par.hiBinH),"recreate");
-      DataAnalyzer* analyzerMC = new DataAnalyzer("PbPbMC_V9.root", "Tree",Form("MC", hiBin[i], hiBin[i+1]));
+      DataAnalyzer* analyzerMC = new DataAnalyzer("sample/Skim_RECO.root", "Tree",Form("MC", hiBin[i], hiBin[i+1]));
       analyzerMC->analyze3D(par);
       cout <<"good"<<endl;
       analyzerMC->writeHistograms(outf);
       delete analyzerMC;
 
-      DataAnalyzer* analyzerMCGen = new DataAnalyzer("PbPbMCGen_V9.root", "Tree",Form("MCGen", hiBin[i], hiBin[i+1]));
+      DataAnalyzer* analyzerMCGen = new DataAnalyzer("sample/Skim_GEN.root", "Tree",Form("MCGen", hiBin[i], hiBin[i+1]));
       analyzerMCGen->analyze3D(par);
       analyzerMCGen->writeHistograms(outf);
       
@@ -255,4 +256,10 @@ int efficiencyStudyPP(double ZptCutL=5, double ZptCutH=200, double ptL=0, double
    outf->Close();
    
    return 1;
+}
+
+
+void trackingEfficiency()
+{
+   efficiencyStudy();
 }

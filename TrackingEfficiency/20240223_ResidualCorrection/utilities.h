@@ -1,6 +1,6 @@
 int findIndexOfLargestValue(vector<double>* arr) {
     int indexOfLargestValue = 0;
-    for (int i = 1; i < arr->size(); i++) {
+    for (unsigned int i = 1; i < arr->size(); i++) {
         if ((*arr)[i] > (*arr)[indexOfLargestValue]) {
             indexOfLargestValue = i;
         }
@@ -43,7 +43,7 @@ public:
             return;
         }
 
-        int numBins = histogram->GetNbinsX();
+        unsigned int numBins = histogram->GetNbinsX();
 
         if (numBins == 0) {
             // Handle empty histogram
@@ -53,7 +53,7 @@ public:
         double currentMinValue = histogram->GetBinContent(1);
         double currentMaxValue = histogram->GetBinContent(1);
 
-        for (int i = 2; i <= numBins; ++i) {
+        for (unsigned int i = 2; i <= numBins; ++i) {
             double binContent = histogram->GetBinContent(i);
             if (binContent < currentMinValue) {
                 currentMinValue = binContent;
