@@ -1,9 +1,9 @@
-default: ExecuteZHadron
+default: ExecuteCorrelationAnalysis
 
-ExecuteZHadron: ZHadron.cpp
-	g++ ZHadron.cpp -I. -I$(ProjectBase)/CommonCode/include \
-		-o ExecuteZHadron `root-config --cflags --glibs` \
+ExecuteCorrelationAnalysis: CorrelationAnalysis.cpp
+	g++ CorrelationAnalysis.cpp -I. -I$(ProjectBase)/CommonCode/include \
+		-o ExecuteCorrelationAnalysis `root-config --cflags --glibs` \
 		$(ProjectBase)/CommonCode/library/Messenger.o
 
-TestRun: ExecuteZHadron
-	./ExecuteZHadron --Input XXX1.root,XXX2.root --Output output.root
+TestRun: ExecuteCorrelationAnalysis
+	./ExecuteCorrelationAnalysis --Input XXX1.root,XXX2.root --Output output.root
