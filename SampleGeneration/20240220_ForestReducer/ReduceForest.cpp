@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
    double MuonVeto                    = CL.GetDouble("MuonVeto", 0.01);
    bool CheckZ                        = MinZPT > 0 ? true : false;
    string TrackEfficiencyPath         = (DoGenLevel == false) ? CL.Get("TrackEfficiencyPath") : "";
+   bool DoTrackResidual               = DoGenLevel ? false : CL.GetBool("DoTrackResidual", false);
+   vector<string> TrackResidualPath   = (DoTrackResidual == true) ? CL.GetStringVector("TrackResidualPath") : vector<string>();
 
    string PFTreeName                  = IsPP ? "pfcandAnalyzer/pfTree" : "particleFlowAnalyser/pftree";
    PFTreeName                         = CL.Get("PFTree", PFTreeName);
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
             TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "Tight", false, TrackEfficiencyPath);
       }
    }
-   // TrackResidualCentralityCorrector TrackResidual(TrackResidualPath);
+   TrackResidualCentralityCorrector TrackResidual(TrackResidualPath);
 
    TFile InputFile(InputFileName.c_str());
 
@@ -344,7 +346,152 @@ int main(int argc, char *argv[])
          {
             MZHadron.FillEntry();
             continue;
-         }   
+         }
+      }
+
+      ///////////////////////////////
+      ////////// Z weights //////////
+      ///////////////////////////////
+
+      MZHadron.ZWeight = 1;
+      if(DoGenLevel == false && GoodRecoZ == true)
+      {
+         TLorentzVector Z;
+         Z.SetPtEtaPhiM(MZHadron.zPt->at(0), MZHadron.zEta->at(0), MZHadron.zPhi->at(0), MZHadron.zMass->at(0));
+         if(IsPP == false)
+         {
+            if(IsData == false)
+               MZHadron.ZWeight = GetZWeightPbPbMC(Z.Pt(), Z.Rapidity(), MZHadron.hiBin);
+            else
+            {
+               MZHadron.ZWeight = GetZWeightPbPbDataTrigger(Z.Pt(), Z.Rapidity(), MZHadron.hiBin);
+
+               double Mu1Eta = MZHadron.muEta1->at(0);
+               double Mu1PT = MZHadron.muPt1->at(0);
+               double Mu2Eta = MZHadron.muEta1->at(0);
+               double Mu2PT = MZHadron.muPt1->at(0);
+               double Centrality = MZHadron.hiBin * 0.5;
+
+               MZHadron.ExtraZWeight[0] =
+                  tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, -1)
+                  / tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, 0)
+                  * tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, -1)
+                  / tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[1] =
+                  tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, -2)
+                  / tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, 0)
+                  * tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, -2)
+                  / tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[2] =
+                  tnp_weight_muid_pbpb(Mu1Eta, -1)
+                  / tnp_weight_muid_pbpb(Mu1Eta, 0)
+                  * tnp_weight_muid_pbpb(Mu2Eta, -1)
+                  / tnp_weight_muid_pbpb(Mu2Eta, 0);
+               MZHadron.ExtraZWeight[3] =
+                  tnp_weight_muid_pbpb(Mu1Eta, -2)
+                  / tnp_weight_muid_pbpb(Mu1Eta, 0)
+                  * tnp_weight_muid_pbpb(Mu2Eta, -2)
+                  / tnp_weight_muid_pbpb(Mu2Eta, 0);
+               // MZHadron.ExtraZWeight[4] =
+               //    tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, -1)
+               //    / tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, 0)
+               //    * tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, -1)
+               //    / tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, 0);
+               // MZHadron.ExtraZWeight[5] =
+               //    tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, -2)
+               //    / tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, 0)
+               //    * tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, -2)
+               //    / tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[4] =
+                  tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, -1)
+                  / tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[5] =
+                  tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, -2)
+                  / tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, 0);
+
+               MZHadron.ExtraZWeight[6] =
+                  tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, 1)
+                  / tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, 0)
+                  * tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, 1)
+                  / tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[7] =
+                  tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, 2)
+                  / tnp_weight_glbPFtrk_pbpb(Mu1Eta, Centrality, 0)
+                  * tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, 2)
+                  / tnp_weight_glbPFtrk_pbpb(Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[8] =
+                  tnp_weight_muid_pbpb(Mu1Eta, 1)
+                  / tnp_weight_muid_pbpb(Mu1Eta, 0)
+                  * tnp_weight_muid_pbpb(Mu2Eta, 1)
+                  / tnp_weight_muid_pbpb(Mu2Eta, 0);
+               MZHadron.ExtraZWeight[9] =
+                  tnp_weight_muid_pbpb(Mu1Eta, 2)
+                  / tnp_weight_muid_pbpb(Mu1Eta, 0)
+                  * tnp_weight_muid_pbpb(Mu2Eta, 2)
+                  / tnp_weight_muid_pbpb(Mu2Eta, 0);
+               // MZHadron.ExtraZWeight[10] =
+               //    tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, 1)
+               //    / tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, 0)
+               //    * tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, 1)
+               //    / tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, 0);
+               // MZHadron.ExtraZWeight[11] =
+               //    tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, 2)
+               //    / tnp_weight_trig_pbpb(Mu1PT, Mu1Eta, Centrality, 0)
+               //    * tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, 2)
+               //    / tnp_weight_trig_pbpb(Mu2PT, Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[10] =
+                  tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, 1)
+                  / tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, 0);
+               MZHadron.ExtraZWeight[11] =
+                  tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, 2)
+                  / tnp_weight_trig_double_pbpb(Mu1PT, Mu1Eta, Centrality, Mu2PT, Mu2Eta, Centrality, 0);
+            }
+         }
+         else
+         {
+            if(IsData == false)
+               MZHadron.ZWeight = GetZWeightPPMC(Z.Pt(), Z.Rapidity());
+            else
+            {
+               MZHadron.ZWeight = GetZWeightPPDataTrigger(Z.Pt(), Z.Rapidity());
+               // Extra Z weight for systematics
+
+               double Mu1Eta = MZHadron.muEta1->at(0);
+               double Mu1PT = MZHadron.muPt1->at(0);
+               double Mu2Eta = MZHadron.muEta1->at(0);
+               double Mu2PT = MZHadron.muPt1->at(0);
+
+               MZHadron.ExtraZWeight[0] =
+                  tnp_weight_TightID_pp(Mu1Eta, 1)
+                  / tnp_weight_TightID_pp(Mu1Eta, 0)
+                  * tnp_weight_TightID_pp(Mu2Eta, 1)
+                  / tnp_weight_TightID_pp(Mu2Eta, 0);
+               MZHadron.ExtraZWeight[1] =
+                  tnp_weight_TightID_pp(Mu1Eta, -1)
+                  / tnp_weight_TightID_pp(Mu1Eta, 0)
+                  * tnp_weight_TightID_pp(Mu2Eta, -1)
+                  / tnp_weight_TightID_pp(Mu2Eta, 0);
+               // MZHadron.ExtraZWeight[2] =
+               //    tnp_weight_L3Mu12_pp(Mu1Eta, 1)
+               //    / tnp_weight_L3Mu12_pp(Mu1Eta, 0)
+               //    * tnp_weight_L3Mu12_pp(Mu2Eta, 1)
+               //    / tnp_weight_L3Mu12_pp(Mu2Eta, 0);
+               // MZHadron.ExtraZWeight[3] =
+               //    tnp_weight_L3Mu12_pp(Mu1Eta, -1)
+               //    / tnp_weight_L3Mu12_pp(Mu1Eta, 0)
+               //    * tnp_weight_L3Mu12_pp(Mu2Eta, -1)
+               //    / tnp_weight_L3Mu12_pp(Mu2Eta, 0);
+               MZHadron.ExtraZWeight[2] =
+                  tnp_weight_L3Mu12_double_pp(Mu1Eta, Mu2Eta, 1)
+                  / tnp_weight_L3Mu12_double_pp(Mu1Eta, Mu2Eta, 0);
+               MZHadron.ExtraZWeight[3] =
+                  tnp_weight_L3Mu12_double_pp(Mu1Eta, Mu2Eta, -1)
+                  / tnp_weight_L3Mu12_double_pp(Mu1Eta, Mu2Eta, 0);
+
+               for(int i = 4; i < 12; i++)
+                  MZHadron.ExtraZWeight[i] = 1;
+            }
+         }
       }
 
       ////////////////////////////
@@ -441,11 +588,8 @@ int main(int argc, char *argv[])
                TrackCorrection = TrackEfficiencyPbPb->getCorrection(TrackPT, TrackEta, MZHadron.hiBin);
          }
          double TrackResidualCorrection = 1;
-         // if(DoTrackResidual == true && DoGenLevel == false)
-         // {
-         //    TrackResidualCorrection = TrackResidual.GetCorrectionFactor(TrackPT, TrackEta, TrackPhi, MZHadron.h
-         //          iBin);
-         // }
+         if(DoTrackResidual == true && DoGenLevel == false)
+            TrackResidualCorrection = TrackResidual.GetCorrectionFactor(TrackPT, TrackEta, TrackPhi, MZHadron.hiBin);
          MZHadron.trackWeight->push_back(TrackCorrection * TrackResidualCorrection);
          MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
       }
