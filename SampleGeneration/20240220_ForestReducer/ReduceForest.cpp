@@ -10,6 +10,11 @@ using namespace std;
 #include "ProgressBar.h"
 #include "Messenger.h"
 
+#include "tnp_weight.h"
+#include "trackingEfficiency2017pp.h"
+#include "trackingEfficiency2018PbPb.h"
+#include "TrackResidualCorrector.h"
+
 int main(int argc, char *argv[]);
 double GetHFSum(PFTreeMessenger *M);
 double GetGenHFSum(GenParticleTreeMessenger *M);
@@ -33,9 +38,30 @@ int main(int argc, char *argv[])
    bool DoSumET                       = CL.GetBool("DoSumET", false);
    double MuonVeto                    = CL.GetDouble("MuonVeto", 0.01);
    bool CheckZ                        = MinZPT > 0 ? true : false;
+   string TrackEfficiencyPath         = (DoGenLevel == false) ? CL.Get("TrackEfficiencyPath") : "";
 
    string PFTreeName                  = IsPP ? "pfcandAnalyzer/pfTree" : "particleFlowAnalyser/pftree";
    PFTreeName                         = CL.Get("PFTree", PFTreeName);
+
+   TrkEff2017pp *TrackEfficiencyPP = nullptr;
+   TrkEff2018PbPb *TrackEfficiencyPbPb = nullptr;
+   if(DoGenLevel == false)
+   {
+      if(IsPP == true)
+         TrackEfficiencyPP = new TrkEff2017pp(false, TrackEfficiencyPath);
+      else
+      {
+         if(DoAlternateTrackSelection == false)
+            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "", false, TrackEfficiencyPath);
+         if(DoAlternateTrackSelection == true && AlternateTrackSelection == 0)
+            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "", false, TrackEfficiencyPath);
+         if(DoAlternateTrackSelection == true && AlternateTrackSelection == 1)
+            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "Loose", false, TrackEfficiencyPath);
+         if(DoAlternateTrackSelection == true && AlternateTrackSelection == 2)
+            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "Tight", false, TrackEfficiencyPath);
+      }
+   }
+   // TrackResidualCentralityCorrector TrackResidual(TrackResidualPath);
 
    TFile InputFile(InputFileName.c_str());
 
@@ -317,13 +343,13 @@ int main(int argc, char *argv[])
          MZHadron.subevent->push_back(SubEvent);
 
          double TrackCorrection = 1;
-         // if(DoTrackEfficiency == true && DoGenLevel == false)
-         // {
-         //    if(IsPP == true)
-         //       TrackCorrection = TrackEfficiencyPP->getCorrection(TrackPT, TrackEta);
-         //    else
-         //       TrackCorrection = TrackEfficiencyPbPb->getCorrection(TrackPT, TrackEta, MZHadron.hiBin);
-         // }
+         if(DoGenLevel == false)
+         {
+            if(IsPP == true)
+               TrackCorrection = TrackEfficiencyPP->getCorrection(TrackPT, TrackEta);
+            else
+               TrackCorrection = TrackEfficiencyPbPb->getCorrection(TrackPT, TrackEta, MZHadron.hiBin);
+         }
          double TrackResidualCorrection = 1;
          // if(DoTrackResidual == true && DoGenLevel == false)
          // {
