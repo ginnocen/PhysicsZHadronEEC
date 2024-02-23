@@ -58,6 +58,11 @@ int main(int argc, char *argv[])
    int EntryCount = MEvent.GetEntries() * Fraction;
    ProgressBar Bar(cout, EntryCount);
    Bar.SetStyle(-1);
+   
+   /////////////////////////////////
+   //////// Main Event Loop ////////
+   /////////////////////////////////   
+
    for(int iE = 0; iE < EntryCount; iE++)
    {
       if(EntryCount < 300 || (iE % (EntryCount / 250)) == 0)
@@ -199,9 +204,15 @@ int main(int argc, char *argv[])
       if(CheckZ == true)
       {
          if(DoGenLevel == true && GoodGenZ == false)
+	 {
+	    MZHadron.FillEntry();
             continue;
-         if(DoGenLevel == false && GoodRecoZ == false)
-            continue;
+         }
+	 if(DoGenLevel == false && GoodRecoZ == false)
+         {
+	    MZHadron.FillEntry();
+	    continue;
+	 }   
       }
 
       ////////////////////////////
