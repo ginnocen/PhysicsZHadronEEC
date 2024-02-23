@@ -21,6 +21,8 @@ double GetGenHFSum(GenParticleTreeMessenger *M);
 
 int main(int argc, char *argv[])
 {
+   string VersionString = "V0.0";
+   
    CommandLine CL(argc, argv);
 
    string InputFileName = CL.Get("Input");
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
    TriggerTreeMessenger     MTrigger(InputFile);
    
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
-   TTree Tree("Tree", "Tree for ZHadron EEC analysis");
+   TTree Tree("Tree", Form("Tree for ZHadron EEC analysis (%s)", VersionString.c_str()));
    TTree InfoTree("InfoTree", "Information");
 
    ZHadronMessenger MZHadron;
