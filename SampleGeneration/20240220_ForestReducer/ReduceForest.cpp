@@ -131,7 +131,58 @@ int main(int argc, char *argv[])
          MZHadron.NPU = MEvent.npus->at(0);
       else
          MZHadron.NPU = 0;
-      
+
+      /////////////////////////////////////
+      ////////// Event selection //////////
+      /////////////////////////////////////
+
+      if(IsPP == true)
+      {
+         if(IsData == true)
+         {
+            int pprimaryVertexFilter = MSkim.PVFilter;
+            int beamScrapingFilter = MSkim.BeamScrapingFilter;
+
+            // Event selection criteria
+            //    see https://twiki.cern.ch/twiki/bin/viewauth/CMS/HIPhotonJe5TeVpp2017PbPb2018
+            if(pprimaryVertexFilter == 0 || beamScrapingFilter == 0)
+               continue;
+
+            //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
+            int HLT_HIL2Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL2Mu12");
+            int HLT_HIL3Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
+            if(HLT_HIL3Mu12 == 0 && HLT_HIL2Mu12 == 0)
+               continue;
+
+            MZHadron.NCollWeight = 1;
+         }
+         else
+            MZHadron.NCollWeight = 1;
+      }
+      else
+      {
+         if(IsData == true)
+         {
+            int pprimaryVertexFilter = MSkim.PVFilter;
+            int phfCoincFilter2Th4 = MSkim.HFCoincidenceFilter2Th4;
+            int pclusterCompatibilityFilter = MSkim.ClusterCompatibilityFilter;
+
+            // Event selection criteria
+            //    see https://twiki.cern.ch/twiki/bin/viewauth/CMS/HIPhotonJe5TeVpp2017PbPb2018
+            if(pprimaryVertexFilter == 0 || phfCoincFilter2Th4 == 0 || pclusterCompatibilityFilter == 0)
+               continue;
+
+            //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
+            int HLT_HIL3Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
+            if(HLT_HIL3Mu12 == 0)
+               continue;
+
+            MZHadron.NCollWeight = 1;
+         }
+         else
+            MZHadron.NCollWeight = FindNColl(MEvent.hiBin);
+      }
+
       ///////////////////////////
       ////////// Muons //////////
       ///////////////////////////
