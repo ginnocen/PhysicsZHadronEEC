@@ -2126,7 +2126,7 @@ bool ZHadronMessenger::SetBranch(TTree *T)
    Tree->Branch("trackPDFId",             &trackPDFId);
    Tree->Branch("trackPhi",               &trackPhi);
    Tree->Branch("trackEta",               &trackEta);
-   // Tree->Branch("trackMuTagged",          &trackMuTagged);
+   Tree->Branch("trackMuTagged",          &trackMuTagged);
    // Tree->Branch("trackMuDR",              &trackMuDR);
    Tree->Branch("trackWeight",            &trackWeight);
    // Tree->Branch("trackResidualWeight",    &trackResidualWeight);
