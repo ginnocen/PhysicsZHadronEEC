@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 
       TLorentzVector VGenZ, VGenMu1, VGenMu2;
 
-      if(DoGenLevel == true && MMu.NGen > 1)
+      if(MMu.NGen > 1)
       {
          for(int igen1 = 0; igen1 < MMu.NGen; igen1++)
          {
