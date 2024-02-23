@@ -81,6 +81,28 @@ int main(int argc, char *argv[])
       MTrigger.GetEntry(iE);
 
       MZHadron.Clear();
+
+      ////////////////////////////////////////
+      ////////// Global event stuff //////////
+      ////////////////////////////////////////
+      
+      MZHadron.Run   = MEvent.Run;
+      MZHadron.Lumi  = MEvent.Lumi;
+      MZHadron.Event = MEvent.Event;
+      MZHadron.hiBin = MEvent.hiBin;
+      if(IsPP == false && IsData == true)   // need hiBin shifts!
+      {
+         MZHadron.hiBinUp   = GetHiBin(MEvent.hiHF, 1);
+         MZHadron.hiBinDown = GetHiBin(MEvent.hiHF, -1);
+      }
+      MZHadron.hiHF  = MEvent.hiHF;
+      MZHadron.NPU   = 0;
+      if(MEvent.npus->size() == 9)
+         MZHadron.NPU = MEvent.npus->at(5);
+      else if(MEvent.npus->size() > 1)
+         MZHadron.NPU = MEvent.npus->at(0);
+      else
+         MZHadron.NPU = 0;
       
       ///////////////////////////
       ////////// Muons //////////
@@ -204,15 +226,15 @@ int main(int argc, char *argv[])
       if(CheckZ == true)
       {
          if(DoGenLevel == true && GoodGenZ == false)
-	 {
-	    MZHadron.FillEntry();
+         {
+            MZHadron.FillEntry();
             continue;
          }
-	 if(DoGenLevel == false && GoodRecoZ == false)
+         if(DoGenLevel == false && GoodRecoZ == false)
          {
-	    MZHadron.FillEntry();
-	    continue;
-	 }   
+            MZHadron.FillEntry();
+            continue;
+         }   
       }
 
       ////////////////////////////
