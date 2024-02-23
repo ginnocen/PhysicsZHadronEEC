@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Wed May 10 10:50:41 2023 by ROOT version 6.22/00
-// from TTree Tree/Tree for ZHadron analysis, V8
-// found on file: sample/HISingleMuon_V8.root
+// Fri Feb 23 10:57:25 2024 by ROOT version 6.24/06
+// from TTree Tree/Tree for ZHadron EEC analysis
+// found on file: Skim_RECO.root
 //////////////////////////////////////////////////////////
 
 #ifndef Tree_h
@@ -13,7 +13,6 @@
 #include <TFile.h>
 
 // Header file for the classes stored in the TTree if any.
-#include "vector"
 #include "vector"
 #include "vector"
 
@@ -29,12 +28,16 @@ public :
    Long64_t        event;
    Int_t           lumi;
    Int_t           hiBin;
+   Int_t           hiBinUp;
+   Int_t           hiBinDown;
    Float_t         hiHF;
    Float_t         SignalHF;
    Float_t         BackgroundHF;
    Float_t         SignalVZ;
    Float_t         NCollWeight;
    Float_t         ZWeight;
+   Float_t         VZWeight;
+   Float_t         ExtraZWeight[12];
    Int_t           NVertex;
    Float_t         VX;
    Float_t         VY;
@@ -43,92 +46,57 @@ public :
    Float_t         VYError;
    Float_t         VZError;
    Int_t           NPU;
-   vector<double>  *zMass;
-   vector<double>  *zEta;
-   vector<double>  *zPhi;
-   vector<double>  *zPt;
-   vector<double>  *genZMass;
-   vector<double>  *genZEta;
-   vector<double>  *genZPhi;
-   vector<double>  *genZPt;
-   vector<double>  *trackPt;
-   vector<double>  *trackDeta;
-   vector<double>  *trackDphi;
-   vector<double>  *trackPDFId;
-   vector<bool>    *trackMuTagged;
-   vector<double>  *trackWeight;
-   vector<double>  *trackResidualWeight;
+   vector<float>   *zMass;
+   vector<float>   *zEta;
+   vector<float>   *zPhi;
+   vector<float>   *zPt;
+   vector<float>   *genZMass;
+   vector<float>   *genZEta;
+   vector<float>   *genZPhi;
+   vector<float>   *genZPt;
+   vector<float>   *trackPt;
+   vector<float>   *trackPDFId;
+   vector<float>   *trackPhi;
+   vector<float>   *trackEta;
+   vector<float>   *trackWeight;
+   vector<int>     *trackCharge;
    vector<int>     *subevent;
-   vector<double>  *jetPt;
-   vector<double>  *jetDeta;
-   vector<double>  *jetDphi;
-   vector<double>  *jetRefPt;
-   vector<double>  *jetRefDeta;
-   vector<double>  *jetRefDphi;
-   vector<bool>    *jetMuTagged;
-   vector<double>  *genJetPt;
-   vector<double>  *genJetEta;
-   vector<double>  *genJetPhi;
-   Double_t        maxOppositeDEta;
-   Double_t        maxOppositeDPhi;
-   Double_t        maxDEta;
-   Double_t        maxDPhi;
-   Double_t        maxOppositeWTADEta;
-   Double_t        maxOppositeWTADPhi;
-   Double_t        maxMoreOppositeWTADEta;
-   Double_t        maxMoreOppositeWTADPhi;
-   Double_t        maxOppositeCSWTADEta;
-   Double_t        maxOppositeCSWTADPhi;
-   Double_t        maxOppositeChargedWTADEta;
-   Double_t        maxOppositeChargedWTADPhi;
-   Double_t        maxMoreOppositeChargedWTADEta;
-   Double_t        maxMoreOppositeChargedWTADPhi;
-   Double_t        maxOppositeHardChargedWTADEta;
-   Double_t        maxOppositeHardChargedWTADPhi;
-   Double_t        maxOppositeJet12Pt;
-   Double_t        maxOppositeJet12DEta;
-   Double_t        maxOppositeJet12DPhi;
-   Double_t        maxOppositeJet34Pt;
-   Double_t        maxOppositeJet34DEta;
-   Double_t        maxOppositeJet34DPhi;
-   Double_t        maxOppositeJet56Pt;
-   Double_t        maxOppositeJet56DEta;
-   Double_t        maxOppositeJet56DPhi;
-   Double_t        maxOppositeJet78Pt;
-   Double_t        maxOppositeJet78DEta;
-   Double_t        maxOppositeJet78DPhi;
-   vector<double>  *muEta1;
-   vector<double>  *muEta2;
-   vector<double>  *muPhi1;
-   vector<double>  *muPhi2;
-   vector<double>  *muPt1;
-   vector<double>  *muPt2;
-   vector<double>  *genMuPt1;
-   vector<double>  *genMuPt2;
-   vector<double>  *genMuEta1;
-   vector<double>  *genMuEta2;
-   vector<double>  *genMuPhi1;
-   vector<double>  *genMuPhi2;
-   vector<double>  *muDeta;
-   vector<double>  *muDphi;
-   vector<double>  *muDR;
-   vector<double>  *muDphiS;
-   vector<double>  *genMuDeta;
-   vector<double>  *genMuDphi;
-   vector<double>  *genMuDR;
-   vector<double>  *genMuDphiS;
+   vector<float>   *muEta1;
+   vector<float>   *muEta2;
+   vector<float>   *muPhi1;
+   vector<float>   *muPhi2;
+   vector<float>   *muPt1;
+   vector<float>   *muPt2;
+   vector<float>   *genMuPt1;
+   vector<float>   *genMuPt2;
+   vector<float>   *genMuEta1;
+   vector<float>   *genMuEta2;
+   vector<float>   *genMuPhi1;
+   vector<float>   *genMuPhi2;
+   vector<float>   *muDeta;
+   vector<float>   *muDphi;
+   vector<float>   *muDR;
+   vector<float>   *muDphiS;
+   vector<float>   *genMuDeta;
+   vector<float>   *genMuDphi;
+   vector<float>   *genMuDR;
+   vector<float>   *genMuDphiS;
 
    // List of branches
    TBranch        *b_run;   //!
    TBranch        *b_event;   //!
    TBranch        *b_lumi;   //!
    TBranch        *b_hiBin;   //!
+   TBranch        *b_hiBinUp;   //!
+   TBranch        *b_hiBinDown;   //!
    TBranch        *b_hiHF;   //!
    TBranch        *b_SignalHF;   //!
    TBranch        *b_BackgroundHF;   //!
    TBranch        *b_SignalVZ;   //!
    TBranch        *b_NCollWeight;   //!
    TBranch        *b_ZWeight;   //!
+   TBranch        *b_VZWeight;   //!
+   TBranch        *b_ExtraZWeight;   //!
    TBranch        *b_NVertex;   //!
    TBranch        *b_VX;   //!
    TBranch        *b_VY;   //!
@@ -146,51 +114,12 @@ public :
    TBranch        *b_genZPhi;   //!
    TBranch        *b_genZPt;   //!
    TBranch        *b_trackPt;   //!
-   TBranch        *b_trackDeta;   //!
-   TBranch        *b_trackDphi;   //!
    TBranch        *b_trackPDFId;   //!
-   TBranch        *b_trackMuTagged;   //!
+   TBranch        *b_trackPhi;   //!
+   TBranch        *b_trackEta;   //!
    TBranch        *b_trackWeight;   //!
-   TBranch        *b_trackResidualWeight;   //!
+   TBranch        *b_trackCharge;   //!
    TBranch        *b_subevent;   //!
-   TBranch        *b_jetPt;   //!
-   TBranch        *b_jetDeta;   //!
-   TBranch        *b_jetDphi;   //!
-   TBranch        *b_jetRefPt;   //!
-   TBranch        *b_jetRefDeta;   //!
-   TBranch        *b_jetRefDphi;   //!
-   TBranch        *b_jetMuTagged;   //!
-   TBranch        *b_genJetPt;   //!
-   TBranch        *b_genJetEta;   //!
-   TBranch        *b_genJetPhi;   //!
-   TBranch        *b_maxOppositeDEta;   //!
-   TBranch        *b_maxOppositeDPhi;   //!
-   TBranch        *b_maxDEta;   //!
-   TBranch        *b_maxDPhi;   //!
-   TBranch        *b_maxOppositeWTADEta;   //!
-   TBranch        *b_maxOppositeWTADPhi;   //!
-   TBranch        *b_maxMoreOppositeWTADEta;   //!
-   TBranch        *b_maxMoreOppositeWTADPhi;   //!
-   TBranch        *b_maxOppositeCSWTADEta;   //!
-   TBranch        *b_maxOppositeCSWTADPhi;   //!
-   TBranch        *b_maxOppositeChargedWTADEta;   //!
-   TBranch        *b_maxOppositeChargedWTADPhi;   //!
-   TBranch        *b_maxMoreOppositeChargedWTADEta;   //!
-   TBranch        *b_maxMoreOppositeChargedWTADPhi;   //!
-   TBranch        *b_maxOppositeHardChargedWTADEta;   //!
-   TBranch        *b_maxOppositeHardChargedWTADPhi;   //!
-   TBranch        *b_maxOppositeJet12Pt;   //!
-   TBranch        *b_maxOppositeJet12DEta;   //!
-   TBranch        *b_maxOppositeJet12DPhi;   //!
-   TBranch        *b_maxOppositeJet34Pt;   //!
-   TBranch        *b_maxOppositeJet34DEta;   //!
-   TBranch        *b_maxOppositeJet34DPhi;   //!
-   TBranch        *b_maxOppositeJet56Pt;   //!
-   TBranch        *b_maxOppositeJet56DEta;   //!
-   TBranch        *b_maxOppositeJet56DPhi;   //!
-   TBranch        *b_maxOppositeJet78Pt;   //!
-   TBranch        *b_maxOppositeJet78DEta;   //!
-   TBranch        *b_maxOppositeJet78DPhi;   //!
    TBranch        *b_muEta1;   //!
    TBranch        *b_muEta2;   //!
    TBranch        *b_muPhi1;   //!
@@ -231,9 +160,9 @@ Tree::Tree(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("sample/HISingleMuon_V8.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("Skim_RECO.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("sample/HISingleMuon_V8.root");
+         f = new TFile("Skim_RECO.root");
       }
       f->GetObject("Tree",tree);
 
@@ -286,23 +215,12 @@ void Tree::Init(TTree *tree)
    genZPhi = 0;
    genZPt = 0;
    trackPt = 0;
-   trackDeta = 0;
-   trackDphi = 0;
    trackPDFId = 0;
-   trackMuTagged = 0;
+   trackPhi = 0;
+   trackEta = 0;
    trackWeight = 0;
-   trackResidualWeight = 0;
+   trackCharge = 0;
    subevent = 0;
-   jetPt = 0;
-   jetDeta = 0;
-   jetDphi = 0;
-   jetRefPt = 0;
-   jetRefDeta = 0;
-   jetRefDphi = 0;
-   jetMuTagged = 0;
-   genJetPt = 0;
-   genJetEta = 0;
-   genJetPhi = 0;
    muEta1 = 0;
    muEta2 = 0;
    muPhi1 = 0;
@@ -333,12 +251,16 @@ void Tree::Init(TTree *tree)
    fChain->SetBranchAddress("event", &event, &b_event);
    fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
    fChain->SetBranchAddress("hiBin", &hiBin, &b_hiBin);
+   fChain->SetBranchAddress("hiBinUp", &hiBinUp, &b_hiBinUp);
+   fChain->SetBranchAddress("hiBinDown", &hiBinDown, &b_hiBinDown);
    fChain->SetBranchAddress("hiHF", &hiHF, &b_hiHF);
    fChain->SetBranchAddress("SignalHF", &SignalHF, &b_SignalHF);
    fChain->SetBranchAddress("BackgroundHF", &BackgroundHF, &b_BackgroundHF);
    fChain->SetBranchAddress("SignalVZ", &SignalVZ, &b_SignalVZ);
    fChain->SetBranchAddress("NCollWeight", &NCollWeight, &b_NCollWeight);
    fChain->SetBranchAddress("ZWeight", &ZWeight, &b_ZWeight);
+   fChain->SetBranchAddress("VZWeight", &VZWeight, &b_VZWeight);
+   fChain->SetBranchAddress("ExtraZWeight", ExtraZWeight, &b_ExtraZWeight);
    fChain->SetBranchAddress("NVertex", &NVertex, &b_NVertex);
    fChain->SetBranchAddress("VX", &VX, &b_VX);
    fChain->SetBranchAddress("VY", &VY, &b_VY);
@@ -356,51 +278,12 @@ void Tree::Init(TTree *tree)
    fChain->SetBranchAddress("genZPhi", &genZPhi, &b_genZPhi);
    fChain->SetBranchAddress("genZPt", &genZPt, &b_genZPt);
    fChain->SetBranchAddress("trackPt", &trackPt, &b_trackPt);
-   fChain->SetBranchAddress("trackDeta", &trackDeta, &b_trackDeta);
-   fChain->SetBranchAddress("trackDphi", &trackDphi, &b_trackDphi);
    fChain->SetBranchAddress("trackPDFId", &trackPDFId, &b_trackPDFId);
-   fChain->SetBranchAddress("trackMuTagged", &trackMuTagged, &b_trackMuTagged);
+   fChain->SetBranchAddress("trackPhi", &trackPhi, &b_trackPhi);
+   fChain->SetBranchAddress("trackEta", &trackEta, &b_trackEta);
    fChain->SetBranchAddress("trackWeight", &trackWeight, &b_trackWeight);
-   fChain->SetBranchAddress("trackResidualWeight", &trackResidualWeight, &b_trackResidualWeight);
+   fChain->SetBranchAddress("trackCharge", &trackCharge, &b_trackCharge);
    fChain->SetBranchAddress("subevent", &subevent, &b_subevent);
-   fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
-   fChain->SetBranchAddress("jetDeta", &jetDeta, &b_jetDeta);
-   fChain->SetBranchAddress("jetDphi", &jetDphi, &b_jetDphi);
-   fChain->SetBranchAddress("jetRefPt", &jetRefPt, &b_jetRefPt);
-   fChain->SetBranchAddress("jetRefDeta", &jetRefDeta, &b_jetRefDeta);
-   fChain->SetBranchAddress("jetRefDphi", &jetRefDphi, &b_jetRefDphi);
-   fChain->SetBranchAddress("jetMuTagged", &jetMuTagged, &b_jetMuTagged);
-   fChain->SetBranchAddress("genJetPt", &genJetPt, &b_genJetPt);
-   fChain->SetBranchAddress("genJetEta", &genJetEta, &b_genJetEta);
-   fChain->SetBranchAddress("genJetPhi", &genJetPhi, &b_genJetPhi);
-   fChain->SetBranchAddress("maxOppositeDEta", &maxOppositeDEta, &b_maxOppositeDEta);
-   fChain->SetBranchAddress("maxOppositeDPhi", &maxOppositeDPhi, &b_maxOppositeDPhi);
-   fChain->SetBranchAddress("maxDEta", &maxDEta, &b_maxDEta);
-   fChain->SetBranchAddress("maxDPhi", &maxDPhi, &b_maxDPhi);
-   fChain->SetBranchAddress("maxOppositeWTADEta", &maxOppositeWTADEta, &b_maxOppositeWTADEta);
-   fChain->SetBranchAddress("maxOppositeWTADPhi", &maxOppositeWTADPhi, &b_maxOppositeWTADPhi);
-   fChain->SetBranchAddress("maxMoreOppositeWTADEta", &maxMoreOppositeWTADEta, &b_maxMoreOppositeWTADEta);
-   fChain->SetBranchAddress("maxMoreOppositeWTADPhi", &maxMoreOppositeWTADPhi, &b_maxMoreOppositeWTADPhi);
-   fChain->SetBranchAddress("maxOppositeCSWTADEta", &maxOppositeCSWTADEta, &b_maxOppositeCSWTADEta);
-   fChain->SetBranchAddress("maxOppositeCSWTADPhi", &maxOppositeCSWTADPhi, &b_maxOppositeCSWTADPhi);
-   fChain->SetBranchAddress("maxOppositeChargedWTADEta", &maxOppositeChargedWTADEta, &b_maxOppositeChargedWTADEta);
-   fChain->SetBranchAddress("maxOppositeChargedWTADPhi", &maxOppositeChargedWTADPhi, &b_maxOppositeChargedWTADPhi);
-   fChain->SetBranchAddress("maxMoreOppositeChargedWTADEta", &maxMoreOppositeChargedWTADEta, &b_maxMoreOppositeChargedWTADEta);
-   fChain->SetBranchAddress("maxMoreOppositeChargedWTADPhi", &maxMoreOppositeChargedWTADPhi, &b_maxMoreOppositeChargedWTADPhi);
-   fChain->SetBranchAddress("maxOppositeHardChargedWTADEta", &maxOppositeHardChargedWTADEta, &b_maxOppositeHardChargedWTADEta);
-   fChain->SetBranchAddress("maxOppositeHardChargedWTADPhi", &maxOppositeHardChargedWTADPhi, &b_maxOppositeHardChargedWTADPhi);
-   fChain->SetBranchAddress("maxOppositeJet12Pt", &maxOppositeJet12Pt, &b_maxOppositeJet12Pt);
-   fChain->SetBranchAddress("maxOppositeJet12DEta", &maxOppositeJet12DEta, &b_maxOppositeJet12DEta);
-   fChain->SetBranchAddress("maxOppositeJet12DPhi", &maxOppositeJet12DPhi, &b_maxOppositeJet12DPhi);
-   fChain->SetBranchAddress("maxOppositeJet34Pt", &maxOppositeJet34Pt, &b_maxOppositeJet34Pt);
-   fChain->SetBranchAddress("maxOppositeJet34DEta", &maxOppositeJet34DEta, &b_maxOppositeJet34DEta);
-   fChain->SetBranchAddress("maxOppositeJet34DPhi", &maxOppositeJet34DPhi, &b_maxOppositeJet34DPhi);
-   fChain->SetBranchAddress("maxOppositeJet56Pt", &maxOppositeJet56Pt, &b_maxOppositeJet56Pt);
-   fChain->SetBranchAddress("maxOppositeJet56DEta", &maxOppositeJet56DEta, &b_maxOppositeJet56DEta);
-   fChain->SetBranchAddress("maxOppositeJet56DPhi", &maxOppositeJet56DPhi, &b_maxOppositeJet56DPhi);
-   fChain->SetBranchAddress("maxOppositeJet78Pt", &maxOppositeJet78Pt, &b_maxOppositeJet78Pt);
-   fChain->SetBranchAddress("maxOppositeJet78DEta", &maxOppositeJet78DEta, &b_maxOppositeJet78DEta);
-   fChain->SetBranchAddress("maxOppositeJet78DPhi", &maxOppositeJet78DPhi, &b_maxOppositeJet78DPhi);
    fChain->SetBranchAddress("muEta1", &muEta1, &b_muEta1);
    fChain->SetBranchAddress("muEta2", &muEta2, &b_muEta2);
    fChain->SetBranchAddress("muPhi1", &muPhi1, &b_muPhi1);
