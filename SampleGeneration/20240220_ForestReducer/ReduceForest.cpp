@@ -315,31 +315,37 @@ int main(int argc, char *argv[])
          int TrackCharge = DoGenLevel ? MGen.Charge->at(iT) : (IsPP ? MTrackPP.trkCharge[iT] : MTrack.TrackCharge->at(iT));
          int SubEvent    = DoGenLevel ? (MGen.SubEvent->at(iT) + IsBackground) : (IsPP ? 0 : IsBackground);
 
-         double Mu1Eta = DoGenLevel ? MZHadron.genMuEta1->at(0) : MZHadron.muEta1->at(0);
-         double Mu1Phi = DoGenLevel ? MZHadron.genMuPhi1->at(0) : MZHadron.muPhi1->at(0);
-         double Mu2Eta = DoGenLevel ? MZHadron.genMuEta2->at(0) : MZHadron.muEta2->at(0);
-         double Mu2Phi = DoGenLevel ? MZHadron.genMuPhi2->at(0) : MZHadron.muPhi2->at(0);
+         if(CheckZ == true && (DoGenLevel ? (GoodGenZ == true) : (GoodRecoZ == true)))
+         {
+            double Mu1Eta = DoGenLevel ? MZHadron.genMuEta1->at(0) : MZHadron.muEta1->at(0);
+            double Mu1Phi = DoGenLevel ? MZHadron.genMuPhi1->at(0) : MZHadron.muPhi1->at(0);
+            double Mu2Eta = DoGenLevel ? MZHadron.genMuEta2->at(0) : MZHadron.muEta2->at(0);
+            double Mu2Phi = DoGenLevel ? MZHadron.genMuPhi2->at(0) : MZHadron.muPhi2->at(0);
 
-         double DeltaEtaMu1 = TrackEta - Mu1Eta;
-         double DeltaEtaMu2 = TrackEta - Mu2Eta;
-         double DeltaPhiMu1 = DeltaPhi(TrackPhi, Mu1Phi);
-         double DeltaPhiMu2 = DeltaPhi(TrackPhi, Mu2Phi);
+            double DeltaEtaMu1 = TrackEta - Mu1Eta;
+            double DeltaEtaMu2 = TrackEta - Mu2Eta;
+            double DeltaPhiMu1 = DeltaPhi(TrackPhi, Mu1Phi);
+            double DeltaPhiMu2 = DeltaPhi(TrackPhi, Mu2Phi);
 
-         double DeltaRMu1 = sqrt(DeltaEtaMu1 * DeltaEtaMu1 + DeltaPhiMu1 * DeltaPhiMu1);
-         double DeltaRMu2 = sqrt(DeltaEtaMu2 * DeltaEtaMu2 + DeltaPhiMu2 * DeltaPhiMu2);
+            double DeltaRMu1 = sqrt(DeltaEtaMu1 * DeltaEtaMu1 + DeltaPhiMu1 * DeltaPhiMu1);
+            double DeltaRMu2 = sqrt(DeltaEtaMu2 * DeltaEtaMu2 + DeltaPhiMu2 * DeltaPhiMu2);
 
-         bool MuTagged = false;
-         if(DeltaRMu1 < MuonVeto)   MuTagged = true;
-         if(DeltaRMu2 < MuonVeto)   MuTagged = true;
-
-         double ZEta = DoGenLevel ? MZHadron.genZEta->at(0) : MZHadron.zEta->at(0);
-         double ZPhi = DoGenLevel ? MZHadron.genZPhi->at(0) : MZHadron.zPhi->at(0);
+            bool MuTagged = false;
+            if(DeltaRMu1 < MuonVeto)   MuTagged = true;
+            if(DeltaRMu2 < MuonVeto)   MuTagged = true;
          
+            MZHadron.trackMuTagged->push_back(MuTagged);
+            MZHadron.trackMuDR->push_back(min(DeltaRMu1, DeltaRMu2));
+         }
+         else
+         {
+            MZHadron.trackMuTagged->push_back(false);
+            MZHadron.trackMuDR->push_back(-1);
+         }
+
          MZHadron.trackPhi->push_back(TrackPhi);
          MZHadron.trackEta->push_back(TrackEta);
          MZHadron.trackPt->push_back(TrackPT);
-         MZHadron.trackMuTagged->push_back(MuTagged);
-         MZHadron.trackMuDR->push_back(min(DeltaRMu1, DeltaRMu2));
          MZHadron.subevent->push_back(SubEvent);
 
          double TrackCorrection = 1;
@@ -356,7 +362,7 @@ int main(int argc, char *argv[])
          //    TrackResidualCorrection = TrackResidual.GetCorrectionFactor(TrackPT, TrackEta, TrackPhi, MZHadron.h
          //          iBin);
          // }
-         MZHadron.trackWeight->push_back(TrackCorrection);
+         MZHadron.trackWeight->push_back(TrackCorrection * TrackResidualCorrection);
          MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
       }
 
