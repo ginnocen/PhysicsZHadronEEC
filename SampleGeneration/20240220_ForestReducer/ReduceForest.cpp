@@ -132,6 +132,37 @@ int main(int argc, char *argv[])
       else
          MZHadron.NPU = 0;
 
+      ////////////////////////////
+      ////////// Vertex //////////
+      ////////////////////////////
+
+      MZHadron.NVertex = 0;
+      int BestVertex = -1;
+      for(int i = 0; i < (IsPP ? MTrackPP.nVtx : MTrack.VX->size()); i++)
+      {
+         if(IsPP == true && (BestVertex < 0 || MTrackPP.sumPtVtx[i] > MTrackPP.sumPtVtx[BestVertex]))
+            BestVertex = i;
+         if(IsPP == false && (BestVertex < 0 || MTrack.VPTSum->at(i) > MTrack.VPTSum->at(BestVertex)))
+            BestVertex = i;
+
+         MZHadron.NVertex = MZHadron.NVertex + 1;
+      }
+
+      if(BestVertex >= 0)
+      {
+         MZHadron.VX      = IsPP ? MTrackPP.xVtx[BestVertex] : MTrack.VX->at(BestVertex);
+         MZHadron.VY      = IsPP ? MTrackPP.yVtx[BestVertex] : MTrack.VY->at(BestVertex);
+         MZHadron.VZ      = IsPP ? MTrackPP.zVtx[BestVertex] : MTrack.VZ->at(BestVertex);
+         MZHadron.VXError = IsPP ? MTrackPP.xVtxErr[BestVertex] : MTrack.VXError->at(BestVertex);
+         MZHadron.VYError = IsPP ? MTrackPP.yVtxErr[BestVertex] : MTrack.VYError->at(BestVertex);
+         MZHadron.VZError = IsPP ? MTrackPP.zVtxErr[BestVertex] : MTrack.VZError->at(BestVertex);
+
+         if(IsData == false)
+            MZHadron.VZWeight = IsPP ? GetVZWeightPP(MZHadron.VZ) : GetVZWeightPbPb(MZHadron.VZ);
+         else
+            MZHadron.VZWeight = 1;
+      }
+
       /////////////////////////////////////
       ////////// Event selection //////////
       /////////////////////////////////////
