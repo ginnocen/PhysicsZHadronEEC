@@ -16,6 +16,7 @@ using namespace std;
 #include "utilities.h"
 #include "Messenger.h"
 #include "CommandLine.h"
+#include "ProgressBar.h"
 
 
 
@@ -26,30 +27,32 @@ using namespace std;
 class Parameters 
 {
   public:
-  Parameters(double zPtCutL, double zPtCutH, double ptCutL, double ptCutH,
-             int hiBinL = 0, int hiBinH = 200, bool mix = false, bool isGen = false,
+  Parameters(double MinZPT, double MaxZPT, double MinTrackPT, double MaxTrackPT,
+             int MinHiBin = 0, int MaxHiBin = 200, bool mix = false, bool isGen = false,
              double scaleFactor = 1.0)
-    : zPtCutL(zPtCutL), zPtCutH(zPtCutH), ptCutL(ptCutL), ptCutH(ptCutH),
-      hiBinL(hiBinL), hiBinH(hiBinH), mix(mix), isGen(isGen), scaleFactor(scaleFactor) {}
+    : MinZPT(MinZPT), MaxZPT(MaxZPT), MinTrackPT(MinTrackPT), MaxTrackPT(MaxTrackPT),
+      MinHiBin(MinHiBin), MaxHiBin(MaxHiBin), mix(mix), isGen(isGen), scaleFactor(scaleFactor) {}
 
-  double zPtCutL;      // Lower limit of zpt
-  double zPtCutH;      // Upper limit of zpt
-  double ptCutL;       // Lower limit of pt
-  double ptCutH;       // Upper limit of pt
-  int hiBinL;          // Lower limit of hiBin
-  int hiBinH;          // Upper limit of hiBin
-  bool mix;            // Mix flag
-  bool isGen;          // isGen flag
-  double scaleFactor;  // Scale factor
+  double MinZPT;        // Lower limit of zpt
+  double MaxZPT;        // Upper limit of zpt
+  double MinTrackPT;    // Lower limit of pt
+  double MaxTrackPT;    // Upper limit of pt
+  int MinHiBin;         // Lower limit of hiBin
+  int MaxHiBin;         // Upper limit of hiBin
+  bool mix;             // Mix flag
+  bool isGen;           // isGen flag
+  double scaleFactor;   // Scale factor
+  string input;         // Input file name
+  string output;         // Output file name
 
   void printParameters() const 
   {
-    cout << "zPtCutL: " << zPtCutL << endl;
-    cout << "zPtCfutH: " << zPtCutH << endl;
-    cout << "ptCutL: " << ptCutL << endl;
-    cout << "ptCutH: " << ptCutH << endl;
-    cout << "hiBinL: " << hiBinL << endl;
-    cout << "hiBinH: " << hiBinH << endl;
+    cout << "MinZPT: " << MinZPT << endl;
+    cout << "zPtCfutH: " << MaxZPT << endl;
+    cout << "MinTrackPT: " << MinTrackPT << endl;
+    cout << "MaxTrackPT: " << MaxTrackPT << endl;
+    cout << "MinHiBin: " << MinHiBin << endl;
+    cout << "MaxHiBin: " << MaxHiBin << endl;
     cout << "mix: " << mix << endl;
     cout << "isGen: " << isGen << endl;
     if (mix) cout <<"Event mixing!"<<endl;
@@ -60,20 +63,20 @@ class Parameters
 
 //======= eventSelection =====================================//
 // Check if the event mass eventSelection criteria
-// ZPtCutL < zPt < ZPtCutH
-// hiBinL , hiBin < hiBinH
+// MinZPT < zPt < MaxZPT
+// MinHiBin , hiBin < MaxHiBin
 //============================================================//
 bool eventSelection(ZHadronMessenger *b, const Parameters& par)
 {
    bool foundZ = false;
-   if (b->hiBin< par.hiBinL) return 0;
-   if (b->hiBin>=par.hiBinH) return 0;
+   if (b->hiBin< par.MinHiBin) return 0;
+   if (b->hiBin>=par.MaxHiBin) return 0;
    if (b->zMass->size()==0) return 0;
    if ((*b->zMass)[0]<60) return 0;
    if ((*b->zMass)[0]>120) return 0;
    if (fabs((*b->zEta)[0])>2) return 0;
-   if ((*b->zPt)[0]<par.zPtCutL) return 0;
-   if ((*b->zPt)[0]>par.zPtCutH) return 0;
+   if ((*b->zPt)[0]<par.MinZPT) return 0;
+   if ((*b->zPt)[0]>par.MaxZPT) return 0;
 
    foundZ=1;   
    return foundZ;
@@ -81,14 +84,14 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par)
 
 //======= trackSelection =====================================//
 // Check if the track pass selection criteria
-// ZPtCutL < zPt < ZPtCutH
-// hiBinL , hiBin < hiBinH
+// MinZPT < zPt < MaxZPT
+// MinHiBin , hiBin < MaxHiBin
 //============================================================//
 bool trackSelection(ZHadronMessenger *b, Parameters par, int j) 
 {
     //if ((*b->trackMuTagged)[j]) return false;  
-    if ((*b->trackPt)[j]>par.ptCutH) return false;  
-    if ((*b->trackPt)[j]<par.ptCutL) return false;  
+    if ((*b->trackPt)[j]>par.MaxTrackPT) return false;  
+    if ((*b->trackPt)[j]<par.MinTrackPT) return false;  
     return true;
 }
 
@@ -98,14 +101,21 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j)
 //============================================================//
 void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par)
 {
+
     double nZ=0;
     h->Sumw2();
     par.printParameters();
-    
-    for (unsigned long i=0;i<b->GetEntries()*par.scaleFactor;i++) {
+    unsigned long nEntry = b->GetEntries()*par.scaleFactor;
+    ProgressBar Bar(cout, nEntry);
+    Bar.SetStyle(-1);
+
+    for (unsigned long i=0;i<nEntry;i++) {
        bool foundZ=false;
        b->GetEntry(i);
-       if (i%1000==0) cout <<i<<" / "<<b->GetEntries()<<endl;
+       if (i%300==0){
+          Bar.Update(i);
+          Bar.Print();
+       }
        
        // check if the event pass the selection criteria
        if (eventSelection(b, par)) {
@@ -139,13 +149,14 @@ void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par)
                 double trackPhi = (*b->trackPhi)[j];
 	        double trackEta = (*b->trackEta)[j];
 		double trackDphi = DeltaPhi(trackPhi, zPhi);
+		double trackDphi2 = DeltaPhi(zPhi, trackPhi);
 	        double trackDeta = fabs(trackEta- zEta);
 		double weight = (b->NCollWeight)*(*b->trackWeight)[j]*(b->ZWeight); //(*b->trackResidualWeight)[j]*
 		
 		h->Fill(trackDeta,trackDphi,weight);
  	        h->Fill(-trackDeta,trackDphi,weight);
- 	        h->Fill(trackDeta,-trackDphi,weight);
- 	        h->Fill(-trackDeta,-trackDphi,weight);
+ 	        h->Fill(trackDeta,trackDphi2,weight);
+ 	        h->Fill(-trackDeta,trackDphi2,weight);
 	     }
           }
        }
@@ -228,96 +239,19 @@ public:
 // Main analysis
 //============================================================//
 
-int compareDataMCLoop(double ZptCutL=20, double ZptCutH=300, double ptL=0.5, double ptH=2, double hiBinL=0, double hiBinH=60)
+int compareDataMCLoop(Parameters &par)
 {
    TCanvas *c = new TCanvas("c", "", 800, 800);
 
-   // Initialize a Parameters object with default values
-   Parameters par(ZptCutL, ZptCutH, ptL, ptH, hiBinL, hiBinH);
-   par.isGen = 0;
-   par.mix = 0;
-   par.scaleFactor = 1;
-
-   // Initialize a Parameters object with default values for pp
-   Parameters parPP(ZptCutL, ZptCutH, ptL, ptH, -10, 10);
-   parPP.isGen = 0;
-   parPP.mix = 0;
-   parPP.scaleFactor = 1;
-
    // Analyze Data
-   DataAnalyzer analyzerData("sample/Skim_RECO.root", "Tree", "Data");
+   DataAnalyzer analyzerData(par.input.c_str(), "Tree", "Data");
    analyzerData.analyze(par);
 
-   par.scaleFactor = 1;
 
-   // Analyze MC
-   DataAnalyzer analyzerMC("sample/Skim_RECO.root", "Tree", "MC");
-   analyzerMC.analyze(parPP);
-
-   // Analyze MC Gen level
-   DataAnalyzer analyzerMCGen("sample/Skim_GEN.root", "Tree", "MCGen");
-   par.isGen = 1;
-   analyzerMCGen.analyze(parPP);
-
-   // Analyze pp Data
-   DataAnalyzer analyzerPP("sample/Skim_RECO.root", "Tree", "ppData");
-   analyzerPP.analyze(parPP);
-
-   TFile *outf = new TFile(Form("result/output_data_%.1f_%.1f_%.0f_%.0f_%.0f_%.0f.root", ptL, ptH, ZptCutL, ZptCutH, hiBinL, hiBinH), "recreate");
+   TFile *outf = new TFile(par.output.c_str(), "recreate");
    analyzerData.writeHistograms(outf);
-   analyzerMC.writeHistograms(outf);
-   analyzerMCGen.writeHistograms(outf);
-   analyzerPP.writeHistograms(outf);
 
    cout << "done!" << endl;
-   
-
-   // Plotting
-   outf->cd();
-   analyzerMC.hDiff->SetLineColor(2);
-   analyzerMC.hDiff->SetMarkerColor(2);
-   analyzerMCGen.hDiff->SetLineColor(4);
-   analyzerMCGen.hDiff->SetMarkerColor(4);
-   analyzerPP.hDiff->SetLineColor(6);
-   analyzerPP.hDiff->SetMarkerColor(6);
-
-   HistogramRangeChecker checker;
-   checker.checkHistogramRange(analyzerMC.hDiff);
-   cout <<checker.getMinValue()<<" "<<checker.getMaxValue()<<endl;
-   checker.checkHistogramRange(analyzerMCGen.hDiff);
-   cout <<checker.getMinValue()<<" "<<checker.getMaxValue()<<endl;
-   checker.checkHistogramRange(analyzerData.hDiff);
-   cout <<checker.getMinValue()<<" "<<checker.getMaxValue()<<endl;
-   checker.checkHistogramRange(analyzerPP.hDiff);
-   cout <<checker.getMinValue()<<" "<<checker.getMaxValue()<<endl;
-   
-
-
-   analyzerMC.hDiff->SetAxisRange(checker.getMinValue() - (checker.getMaxValue() - checker.getMinValue()) * 0.1,
-                                  checker.getMaxValue() + (checker.getMaxValue() - checker.getMinValue()) * 0.1, "Y");
-   analyzerMC.hDiff->SetAxisRange(0, 3.2, "X");
-
-   TLegend *leg = new TLegend(0.5, 0.7, 0.9, 0.9);
-   leg->SetBorderSize(0);
-   leg->AddEntry(analyzerData.hDiff, Form("Data %.0f-%.0f%%", hiBinL / 2., hiBinH / 2.), "pl");
-   leg->AddEntry(analyzerMC.hDiff, "MC", "pl");
-   leg->AddEntry(analyzerMCGen.hDiff, "MC Gen", "pl");
-   leg->AddEntry(analyzerPP.hDiff, "pp Data", "pl");
-   leg->AddEntry(analyzerMC.hDiff, Form("%.1f<Track p_{T}<%.1f", ptL, ptH), "");
-   leg->AddEntry(analyzerMC.hDiff, Form("%.0f<Z p_{T}<%.0f", ZptCutL, ZptCutH), "");
-
-   analyzerMC.hDiff->SetXTitle("#Delta#phi(Z,track)");
-   analyzerMC.hDiff->SetYTitle("#Delta N_{ch} / Event");
-   analyzerMC.hDiff->Draw();
-   analyzerMCGen.hDiff->Draw("hist same");
-   analyzerData.hDiff->Draw("same");
-   analyzerPP.hDiff->Draw("same");
-   leg->Draw();
-
-   c->SaveAs(Form("result/Z_%.1f_%.1f_%.0f_%.0f_%.0f_%.0f.gif", ptL, ptH, ZptCutL, ZptCutH, hiBinL, hiBinH));
-   c->SaveAs(Form("result/Z_%.1f_%.1f_%.0f_%.0f_%.0f_%.0f.pdf", ptL, ptH, ZptCutL, ZptCutH, hiBinL, hiBinH));
-   c->Write();
-
    cout << outf->GetName() << endl;
    return 1;
 }
@@ -327,10 +261,28 @@ int main(int argc, char *argv[])
 {
    CommandLine CL(argc, argv);
 
-   string Default = "DYJetsToLL_MLL-50_TuneCP5_HydjetDrumMB_5p02TeV-amcatnloFXFX-pythia8_merged.root";
-   vector<string> Input = CL.GetStringVector("Input", {Default});
+   string Default = "sample/HISingleMuon.root";
+   string Input = CL.Get("Input", Default);
    string Output        = CL.Get("Output", "output.root");
+   bool IsData                        = CL.GetBool("IsData", false);
+   bool IsPP                          = CL.GetBool("IsPP", false);
+   bool IsBackground                  = CL.GetBool("IsBackground", false);
+   double Fraction                    = CL.GetDouble("Fraction", 1.00);
+   double MinZPT                      = CL.GetDouble("MinZPT", 40);
+   double MinTrackPT                  = CL.GetDouble("MinTrackPT", 1);
+   double MaxZPT                      = CL.GetDouble("MaxZPT", 200);
+   double MaxTrackPT                  = CL.GetDouble("MaxTrackPT", 2);
+   int MaxHiBin                         = CL.GetInt("MaxHiBin", 0);
+   int MinHiBin                         = CL.GetInt("MinHiBin", 200);
+ 
+   // Parameter sets
+   Parameters par(MinZPT, MaxZPT, MinTrackPT, MaxTrackPT, MaxHiBin, MinHiBin);
+   par.isGen = 0;
+   par.mix = 0;
+   par.scaleFactor = 1;
+   par.input = Input;
+   par.output = Output;
 
-   //Zhadron(Input, Output);
-   compareDataMCLoop();
+   compareDataMCLoop(par);
+   
 }
