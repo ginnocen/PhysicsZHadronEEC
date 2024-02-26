@@ -40,6 +40,7 @@ class Parameters {
   double scaleFactor;   // Scale factor
   string input;         // Input file name
   string output;        // Output file name
+  string mixFile;       // Mix File name
   int nThread;          // Number of Threads
   int nChunk;           // Process the Nth chunk
   bool mix;             // Mix flag
@@ -99,7 +100,7 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
 //============================================================//
 // Z hadron dphi calculation
 //============================================================//
-double getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
+double getDphi(ZHadronMessenger *b, ZHadronMessenger *MMix, TH2D *h, const Parameters& par) {
 
     double nZ=0;
     h->Sumw2();
@@ -128,15 +129,14 @@ double getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
 	  // find a mixed event
 	  for (unsigned int nMix=0;nMix<((par.nMix-1)*par.mix+1);nMix++) {
 	     bool foundMix = 0;
-	     nZ+=(b->NCollWeight);    // Ncoll reweighting in the event level.
 	     if (par.mix) {
 	        while (foundMix==0) {
 		
 	           mix_i = (mix_i+1);
-		   if (mix_i>=b->GetEntries()) mix_i=0;
+		   if (mix_i>=MMix->GetEntries()) mix_i=0;
 		   if (i==mix_i)  break;
-		   b->GetEntry(mix_i);
-		   if (eventSelection(b, par)) foundMix=1;
+		   MMix->GetEntry(mix_i);
+		   if (eventSelection(MMix, par)) foundMix=1;
 	        }
 	     }
 	  
@@ -144,13 +144,14 @@ double getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
 	        cout <<"Can not find a mixed event!!! Event = "<<i<<endl;
 	        break;
 	     }
-	  
-	     for (unsigned long j=0;j<b->trackPhi->size();j++) {
-                if (!trackSelection(b, par, j)) continue;  
-                double trackDphi = DeltaPhi((*b->trackPhi)[j], zPhi);
-		double trackDphi2 = DeltaPhi(zPhi, (*b->trackPhi)[j]);
-	        double trackDeta = fabs((*b->trackEta)[j]- zEta);
-		double weight = (b->NCollWeight)*(*b->trackWeight)[j]*(b->ZWeight); //(*b->trackResidualWeight)[j]*
+	     
+	     nZ+=(b->NCollWeight);    // Ncoll reweighting in the event level.
+	     for (unsigned long j=0;j<(par.mix ? MMix->trackPhi->size(): b->trackPhi->size());j++) {
+                if (!trackSelection((par.mix ? MMix: b), par, j)) continue;  
+                double trackDphi  = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi((*b->trackPhi)[j], zPhi);
+		double trackDphi2 = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi(zPhi, (*b->trackPhi)[j]);
+	        double trackDeta  = par.mix ? fabs((*MMix->trackEta)[j]- zEta) : fabs((*b->trackEta)[j]- zEta);
+		double weight = par.mix ? (MMix->NCollWeight)*(*MMix->trackWeight)[j]*(MMix->ZWeight) : (b->NCollWeight)*(*b->trackWeight)[j]*(b->ZWeight); //(*b->trackResidualWeight)[j]*
 		
 		h->Fill(trackDeta,trackDphi,weight);
  	        h->Fill(-trackDeta,trackDphi,weight);
@@ -168,8 +169,8 @@ double getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
 
 class DataAnalyzer {
 public:
-  DataAnalyzer(const char* filename, const char* treename, const char *mytitle = "Data") :
-     inf(new TFile(filename)), MZHadron(new ZHadronMessenger(*inf,string("Tree"))), title(mytitle) {}
+  DataAnalyzer(const char* filename, const char* mixFilename, const char *mytitle = "Data") :
+     inf(new TFile(filename)), MZHadron(new ZHadronMessenger(*inf,string("Tree"))), mixFile(new TFile(mixFilename)), MMix(new ZHadronMessenger(*mixFile,string("Tree"))), title(mytitle) {}
 
   ~DataAnalyzer() {
     deleteHistograms();
@@ -181,13 +182,13 @@ public:
     par.mix = false;
     h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI, M_PI);
     hNZ = new TH1D(Form("hNZ%s", title.c_str()),"",1,0,1);
-    hNZ->SetBinContent(1,getDphi(MZHadron, h, par));
+    hNZ->SetBinContent(1,getDphi(MZHadron, MMix, h, par));
 
     // Second histogram with mix=true
     par.mix = true;
     hMix = new TH2D(Form("hMix%s", title.c_str()), "", 20, -4, 4, 20, -M_PI, M_PI);
     hNZMix = new TH1D(Form("hNZMix%s", title.c_str()),"",1,0,1);
-    hNZMix->SetBinContent(1,getDphi(MZHadron, hMix, par));
+    hNZMix->SetBinContent(1,getDphi(MZHadron,MMix, hMix, par));
   }
   
   void writeHistograms(TFile* outf) {
@@ -199,7 +200,9 @@ public:
   }
 
   TFile *inf;
+  TFile *mixFile;
   ZHadronMessenger *MZHadron;
+  ZHadronMessenger *MMix;
   TH2D *h=0;
   TH2D *hMix=0;
   TH1D *hNZ;
@@ -230,7 +233,7 @@ int compareDataMCLoop(Parameters &par)
    TCanvas *c = new TCanvas("c", "", 800, 800);
 
    // Analyze Data
-   DataAnalyzer analyzerData(par.input.c_str(), "Tree", "Data");
+   DataAnalyzer analyzerData(par.input.c_str(), par.mixFile.c_str(), "Data");
    analyzerData.analyze(par);
 
 
@@ -245,24 +248,26 @@ int compareDataMCLoop(Parameters &par)
 
 int main(int argc, char *argv[])
 {
+
+   // Read command line
    CommandLine CL(argc, argv);
 
-   string Default = "sample/HISingleMuon.root";
-   string Input = CL.Get("Input", Default);
-   string Output        = CL.Get("Output", "output.root");
-   bool IsData                        = CL.GetBool("IsData", false);
-   bool IsPP                          = CL.GetBool("IsPP", false);
-   bool IsBackground                  = CL.GetBool("IsBackground", false);
-   double Fraction                    = CL.GetDouble("Fraction", 1.00);
-   double MinZPT                      = CL.GetDouble("MinZPT", 40);
-   double MinTrackPT                  = CL.GetDouble("MinTrackPT", 1);
-   double MaxZPT                      = CL.GetDouble("MaxZPT", 120);
-   double MaxTrackPT                  = CL.GetDouble("MaxTrackPT", 2);
-   int MaxHiBin                       = CL.GetInt("MaxHiBin", 0);
-   int MinHiBin                       = CL.GetInt("MinHiBin", 200);
-   int nThread                        = CL.GetInt("nThread",1);
-   int nChunk                         = CL.GetInt("nChunk",1);
-   int nMix                           = CL.GetInt("nMix",10);
+   string Input      = CL.Get("Input", "sample/HISingleMuon.root");                 // Input file
+   string MixFile    = CL.Get("MixFile", "sample/HISingleMuon.root");               // Input file
+   string Output     = CL.Get("Output", "output.root");   // Output file
+   bool IsData       = CL.GetBool("IsData", false);       // Determines whether the analysis is being run on actual data.
+   bool IsPP         = CL.GetBool("IsPP", false);         // Flag to indicate if the analysis is for Proton-Proton collisions.
+   bool IsBackground = CL.GetBool("IsBackground", false); // Indicates whether the analysis is being run on a background dataset.
+   double Fraction   = CL.GetDouble("Fraction", 1.00);    // Fraction of event processed in the sample
+   double MinZPT     = CL.GetDouble("MinZPT", 40);        // Minimum Z particle transverse momentum threshold for event selection.
+   double MinTrackPT = CL.GetDouble("MinTrackPT", 1);     // Minimum track transverse momentum threshold for track selection.
+   double MaxZPT     = CL.GetDouble("MaxZPT", 120);       // Maximum Z particle transverse momentum threshold for event selection.
+   double MaxTrackPT = CL.GetDouble("MaxTrackPT", 2);     // Maximum track transverse momentum threshold for track selection.
+   int MaxHiBin      = CL.GetInt("MaxHiBin", 0);          // Maximum hiBin value for event selection. hiBin is a variable often used in heavy-ion collision experiments.
+   int MinHiBin      = CL.GetInt("MinHiBin", 200);        // Minimum hiBin value for event selection.
+   int nThread       = CL.GetInt("nThread", 1);           // The number of threads to be used for parallel processing.
+   int nChunk        = CL.GetInt("nChunk", 1);            // Specifies which chunk (segment) of the data to process, used in parallel processing.
+   int nMix          = CL.GetInt("nMix", 10);             // Number of mixed events to be considered in the analysis.
 
    // Parameter sets
    Parameters par(MinZPT, MaxZPT, MinTrackPT, MaxTrackPT, MaxHiBin, MinHiBin);
@@ -270,6 +275,7 @@ int main(int argc, char *argv[])
    par.mix = 0;
    par.scaleFactor = Fraction;
    par.input = Input;
+   par.mixFile = MixFile;
    par.output = Output;
    par.nThread = nThread;
    par.nChunk = nChunk;
