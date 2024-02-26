@@ -12,8 +12,10 @@
 
 using namespace std;
 
-#include "utilities.h"
-#include "Messenger.h"
+
+
+#include "utilities.h"     // Yen-Jie's random utility functions
+#include "Messenger.h"     
 #include "CommandLine.h"
 #include "ProgressBar.h"
 
@@ -109,7 +111,7 @@ double getDphi(ZHadronMessenger *b, ZHadronMessenger *MMix, TH2D *h, const Param
     unsigned long iStart = nEntry*(par.nChunk-1)/par.nThread;
     unsigned long iEnd = nEntry*par.nChunk/par.nThread;
     ProgressBar Bar(cout, iEnd-iStart);
-    Bar.SetStyle(-1);
+    Bar.SetStyle(1);
 
     for (unsigned long i=iStart;i<iEnd;i++) {
        bool foundZ=false;
@@ -180,13 +182,13 @@ public:
   void analyze(Parameters& par) {
     // First histogram with mix=false
     par.mix = false;
-    h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI, M_PI);
+    h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hNZ = new TH1D(Form("hNZ%s", title.c_str()),"",1,0,1);
     hNZ->SetBinContent(1,getDphi(MZHadron, MMix, h, par));
 
     // Second histogram with mix=true
     par.mix = true;
-    hMix = new TH2D(Form("hMix%s", title.c_str()), "", 20, -4, 4, 20, -M_PI, M_PI);
+    hMix = new TH2D(Form("hMix%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hNZMix = new TH1D(Form("hNZMix%s", title.c_str()),"",1,0,1);
     hNZMix->SetBinContent(1,getDphi(MZHadron,MMix, hMix, par));
   }
