@@ -8,7 +8,6 @@
 #include <TLegend.h>
 #include <TNtuple.h>
 
-//#include "Tree.C"
 #include <iostream>
 
 using namespace std;
@@ -19,13 +18,11 @@ using namespace std;
 #include "ProgressBar.h"
 
 
-
 //============================================================//
 // Define analysis parameters
 //============================================================//
 
-class Parameters 
-{
+class Parameters {
   public:
   Parameters(double MinZPT, double MaxZPT, double MinTrackPT, double MaxTrackPT,
              int MinHiBin = 0, int MaxHiBin = 200, bool mix = false, bool isGen = false,
@@ -45,8 +42,7 @@ class Parameters
   string input;         // Input file name
   string output;         // Output file name
 
-  void printParameters() const 
-  {
+  void printParameters() const {
     cout << "MinZPT: " << MinZPT << endl;
     cout << "zPtCfutH: " << MaxZPT << endl;
     cout << "MinTrackPT: " << MinTrackPT << endl;
@@ -66,8 +62,7 @@ class Parameters
 // MinZPT < zPt < MaxZPT
 // MinHiBin , hiBin < MaxHiBin
 //============================================================//
-bool eventSelection(ZHadronMessenger *b, const Parameters& par)
-{
+bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
    bool foundZ = false;
    if (b->hiBin< par.MinHiBin) return 0;
    if (b->hiBin>=par.MaxHiBin) return 0;
@@ -87,8 +82,7 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par)
 // MinZPT < zPt < MaxZPT
 // MinHiBin , hiBin < MaxHiBin
 //============================================================//
-bool trackSelection(ZHadronMessenger *b, Parameters par, int j) 
-{
+bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
     //if ((*b->trackMuTagged)[j]) return false;  
     if ((*b->trackPt)[j]>par.MaxTrackPT) return false;  
     if ((*b->trackPt)[j]<par.MinTrackPT) return false;  
@@ -99,8 +93,7 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j)
 //============================================================//
 // Z hadron dphi calculation
 //============================================================//
-void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par)
-{
+void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
 
     double nZ=0;
     h->Sumw2();
@@ -123,9 +116,10 @@ void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par)
           double zEta = (*b->zEta)[0];	  
 
 	  double mix_i = i;
+	  
+	  // find a mixed event
 	  for (unsigned int nMix=0;nMix<(9*par.mix+1);nMix++) {
-	    //cout <<"mix"<<endl;
-   	     bool foundMix = 0;
+	     bool foundMix = 0;
 	     nZ+=(b->NCollWeight);    // Ncoll reweighting in the event level.
 	     if (par.mix) {
 	        while (foundMix==0) {
@@ -133,24 +127,21 @@ void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par)
 	           mix_i = (mix_i+1);
 		   if (mix_i>=b->GetEntries()) mix_i=0;
 		   if (i==mix_i)  break;
-		   //cout <<mix_i<<endl;
-	           b->GetEntry(mix_i);
+		   b->GetEntry(mix_i);
 		   if (eventSelection(b, par)) foundMix=1;
 	        }
 	     }
 	  
-	     if (foundMix==0&&par.mix){
+	     if (foundMix==0&&par.mix) {
 	        cout <<"Can not find a mixed event!!! Event = "<<i<<endl;
 	        break;
 	     }
 	  
 	     for (unsigned long j=0;j<b->trackPhi->size();j++) {
                 if (!trackSelection(b, par, j)) continue;  
-                double trackPhi = (*b->trackPhi)[j];
-	        double trackEta = (*b->trackEta)[j];
-		double trackDphi = DeltaPhi(trackPhi, zPhi);
-		double trackDphi2 = DeltaPhi(zPhi, trackPhi);
-	        double trackDeta = fabs(trackEta- zEta);
+                double trackDphi = DeltaPhi((*b->trackPhi)[j], zPhi);
+		double trackDphi2 = DeltaPhi(zPhi, (*b->trackPhi)[j]);
+	        double trackDeta = fabs((*b->trackEta)[j]- zEta);
 		double weight = (b->NCollWeight)*(*b->trackWeight)[j]*(b->ZWeight); //(*b->trackResidualWeight)[j]*
 		
 		h->Fill(trackDeta,trackDphi,weight);
@@ -170,7 +161,6 @@ class DataAnalyzer {
 public:
   DataAnalyzer(const char* filename, const char* treename, const char *mytitle = "Data") :
      inf(new TFile(filename)), MZHadron(new ZHadronMessenger(*inf,string("Tree"))), title(mytitle) {}
-
 
   ~DataAnalyzer() {
     deleteHistograms();
