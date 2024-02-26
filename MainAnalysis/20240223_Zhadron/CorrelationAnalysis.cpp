@@ -26,9 +26,9 @@ class Parameters {
   public:
   Parameters(double MinZPT, double MaxZPT, double MinTrackPT, double MaxTrackPT,
              int MinHiBin = 0, int MaxHiBin = 200, bool mix = false, bool isGen = false,
-             double scaleFactor = 1.0)
+             double scaleFactor = 1.0, double nMix = 1)
     : MinZPT(MinZPT), MaxZPT(MaxZPT), MinTrackPT(MinTrackPT), MaxTrackPT(MaxTrackPT),
-      MinHiBin(MinHiBin), MaxHiBin(MaxHiBin), mix(mix), isGen(isGen), scaleFactor(scaleFactor) {}
+      MinHiBin(MinHiBin), MaxHiBin(MaxHiBin), mix(mix), isGen(isGen), scaleFactor(scaleFactor), nMix(nMix) {}
 
   double MinZPT;        // Lower limit of zpt
   double MaxZPT;        // Upper limit of zpt
@@ -36,11 +36,14 @@ class Parameters {
   double MaxTrackPT;    // Upper limit of pt
   int MinHiBin;         // Lower limit of hiBin
   int MaxHiBin;         // Upper limit of hiBin
-  bool mix;             // Mix flag
   bool isGen;           // isGen flag
   double scaleFactor;   // Scale factor
   string input;         // Input file name
-  string output;         // Output file name
+  string output;        // Output file name
+  int nThread;          // Number of Threads
+  int nChunk;           // Process the Nth chunk
+  bool mix;             // Mix flag
+  int nMix;             // Number of mixed events
 
   void printParameters() const {
     cout << "MinZPT: " << MinZPT << endl;
@@ -51,6 +54,9 @@ class Parameters {
     cout << "MaxHiBin: " << MaxHiBin << endl;
     cout << "mix: " << mix << endl;
     cout << "isGen: " << isGen << endl;
+    cout << "input: " << input << endl;
+    cout << "output: " << output << endl;
+    cout << "nChunk/nThread: " << nChunk << "/" << nThread << endl;
     if (mix) cout <<"Event mixing!"<<endl;
     cout << "scaleFactor: " << scaleFactor << endl;
   }
@@ -93,20 +99,22 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
 //============================================================//
 // Z hadron dphi calculation
 //============================================================//
-void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
+double getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
 
     double nZ=0;
     h->Sumw2();
     par.printParameters();
     unsigned long nEntry = b->GetEntries()*par.scaleFactor;
-    ProgressBar Bar(cout, nEntry);
+    unsigned long iStart = nEntry*(par.nChunk-1)/par.nThread;
+    unsigned long iEnd = nEntry*par.nChunk/par.nThread;
+    ProgressBar Bar(cout, iEnd-iStart);
     Bar.SetStyle(-1);
 
-    for (unsigned long i=0;i<nEntry;i++) {
+    for (unsigned long i=iStart;i<iEnd;i++) {
        bool foundZ=false;
        b->GetEntry(i);
        if (i%300==0){
-          Bar.Update(i);
+          Bar.Update(i-iStart);
           Bar.Print();
        }
        
@@ -118,7 +126,7 @@ void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
 	  double mix_i = i;
 	  
 	  // find a mixed event
-	  for (unsigned int nMix=0;nMix<(9*par.mix+1);nMix++) {
+	  for (unsigned int nMix=0;nMix<((par.nMix-1)*par.mix+1);nMix++) {
 	     bool foundMix = 0;
 	     nZ+=(b->NCollWeight);    // Ncoll reweighting in the event level.
 	     if (par.mix) {
@@ -153,7 +161,8 @@ void getDphi(ZHadronMessenger *b, TH2D *h, const Parameters& par) {
        }
     }
     cout <<"done"<<nZ<<endl;
-    h->Scale(1./((double) nZ));
+    return nZ;
+    //h->Scale(1./((double) nZ));
 }
 
 
@@ -166,56 +175,43 @@ public:
     deleteHistograms();
     closeFile();
   }
-  
+
   void analyze(Parameters& par) {
-    par.mix=false;
-    hCut2 = project2D(par);
-    hCut2->SetName(Form("h%s_2",title.c_str()));
-    par.mix=true;
-    hCut2mix = project2D(par);
-    hCut2mix->SetName(Form("hmix%s_2",title.c_str()));
-    hCut2mix->Draw();
-    hDiff2D = (TH2D*) hCut2->Clone(Form("hDiff2D%s",title.c_str()));
-    hDiff2D->Add(hCut2mix,-1);
-    hDiff = (TH1D*) hDiff2D->ProjectionY(Form("hDiff%s",title.c_str()));
-    
+    // First histogram with mix=false
+    par.mix = false;
+    h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI, M_PI);
+    hNZ = new TH1D(Form("hNZ%s", title.c_str()),"",1,0,1);
+    hNZ->SetBinContent(1,getDphi(MZHadron, h, par));
+
+    // Second histogram with mix=true
+    par.mix = true;
+    hMix = new TH2D(Form("hMix%s", title.c_str()), "", 20, -4, 4, 20, -M_PI, M_PI);
+    hNZMix = new TH1D(Form("hNZMix%s", title.c_str()),"",1,0,1);
+    hNZMix->SetBinContent(1,getDphi(MZHadron, hMix, par));
   }
   
   void writeHistograms(TFile* outf) {
     outf->cd();
-    smartWrite(hCut1);
-    smartWrite(hCut2);
-    smartWrite(hCut2mix);
-    smartWrite(hDiff);
-    smartWrite(hDiff2D);
+    smartWrite(h);
+    smartWrite(hMix);
+    smartWrite(hNZ);
+    smartWrite(hNZMix);
   }
-
-  TH2D* getCut1() { return hCut1; }
-  TH2D* getCut2() { return hCut2; }
-
 
   TFile *inf;
   ZHadronMessenger *MZHadron;
-  TH2D *hCut1=0, *hCut2=0;
-  TH2D *hCut2mix=0;
-  TH2D *hDiff2D=0;
-  TH1D *hDiff=0;
+  TH2D *h=0;
+  TH2D *hMix=0;
+  TH1D *hNZ;
+  TH1D *hNZMix;
   string title;
-
-  TH2D* project2D(const Parameters& par) {
-    TH2D *h = new TH2D("h", "", 20,-4,4, 20, -M_PI, M_PI);
-    cout <<"getDPhi!"<<endl;
-    getDphi(MZHadron, h, par);
-    return h;
-  }
   
   private:
   void deleteHistograms() {
-    delete hCut1;
-    delete hCut2;
-    delete hCut2mix;
-    delete hDiff2D;
-    delete hDiff;
+    delete h;
+    delete hMix;
+    delete hNZ;
+    delete hNZMix;
   }
 
   void closeFile() {
@@ -260,18 +256,24 @@ int main(int argc, char *argv[])
    double Fraction                    = CL.GetDouble("Fraction", 1.00);
    double MinZPT                      = CL.GetDouble("MinZPT", 40);
    double MinTrackPT                  = CL.GetDouble("MinTrackPT", 1);
-   double MaxZPT                      = CL.GetDouble("MaxZPT", 200);
+   double MaxZPT                      = CL.GetDouble("MaxZPT", 120);
    double MaxTrackPT                  = CL.GetDouble("MaxTrackPT", 2);
-   int MaxHiBin                         = CL.GetInt("MaxHiBin", 0);
-   int MinHiBin                         = CL.GetInt("MinHiBin", 200);
- 
+   int MaxHiBin                       = CL.GetInt("MaxHiBin", 0);
+   int MinHiBin                       = CL.GetInt("MinHiBin", 200);
+   int nThread                        = CL.GetInt("nThread",1);
+   int nChunk                         = CL.GetInt("nChunk",1);
+   int nMix                           = CL.GetInt("nMix",10);
+
    // Parameter sets
    Parameters par(MinZPT, MaxZPT, MinTrackPT, MaxTrackPT, MaxHiBin, MinHiBin);
    par.isGen = 0;
    par.mix = 0;
-   par.scaleFactor = 1;
+   par.scaleFactor = Fraction;
    par.input = Input;
    par.output = Output;
+   par.nThread = nThread;
+   par.nChunk = nChunk;
+   par.nMix = nMix;
 
    compareDataMCLoop(par);
    
