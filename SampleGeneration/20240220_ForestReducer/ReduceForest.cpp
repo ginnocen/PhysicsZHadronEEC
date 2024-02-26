@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
    int AlternateTrackSelection        = DoAlternateTrackSelection ? CL.GetInt("AlternateTrackSelection") : 0;
    bool DoSumET                       = CL.GetBool("DoSumET", false);
    double MuonVeto                    = CL.GetDouble("MuonVeto", 0.01);
-   bool CheckZ                        = MinZPT > 0 ? true : false;
+   bool CheckZ                        = CL.GetBool("CheckZ", true);
    string TrackEfficiencyPath         = (DoGenLevel == false) ? CL.Get("TrackEfficiencyPath") : "";
    bool DoTrackResidual               = DoGenLevel ? false : CL.GetBool("DoTrackResidual", false);
    vector<string> TrackResidualPath   = (DoTrackResidual == true) ? CL.GetStringVector("TrackResidualPath") : vector<string>();
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 
       MZHadron.SignalHF = DoGenLevel ? GetGenHFSum(&MGen) : (DoSumET ? MEvent.hiHF : GetHFSum(&MPF));
       MZHadron.SignalVZ = MEvent.vz;
-
+      
       bool GoodGenZ = MZHadron.genZPt->size() > 0 && (MZHadron.genZPt->at(0) > MinZPT);
       bool GoodRecoZ = MZHadron.zPt->size() > 0 && (MZHadron.zPt->at(0) > MinZPT);
       if(CheckZ == true)
@@ -497,7 +497,7 @@ int main(int argc, char *argv[])
       ////////////////////////////
       ////////// Tracks //////////
       ////////////////////////////
-
+         
       int NTrack = DoGenLevel ? MGen.Mult : (IsPP ? MTrackPP.nTrk : MTrack.TrackPT->size());
       for(int iT = 0; iT < NTrack; iT++)
       {
