@@ -12,12 +12,10 @@
 
 using namespace std;
 
-
-
 #include "utilities.h"     // Yen-Jie's random utility functions
-#include "Messenger.h"     
-#include "CommandLine.h"
-#include "ProgressBar.h"
+#include "Messenger.h"     // Yi's Messengers for reading data files
+#include "CommandLine.h"   // Yi's Commandline bundle
+#include "ProgressBar.h"   // Yi's fish progress bar
 
 
 //============================================================//
@@ -116,7 +114,7 @@ double getDphi(ZHadronMessenger *b, ZHadronMessenger *MMix, TH2D *h, const Param
     for (unsigned long i=iStart;i<iEnd;i++) {
        bool foundZ=false;
        b->GetEntry(i);
-       if (i%300==0){
+       if (i%30000==0){
           Bar.Update(i-iStart);
           Bar.Print();
        }
@@ -151,7 +149,7 @@ double getDphi(ZHadronMessenger *b, ZHadronMessenger *MMix, TH2D *h, const Param
 	     for (unsigned long j=0;j<(par.mix ? MMix->trackPhi->size(): b->trackPhi->size());j++) {
                 if (!trackSelection((par.mix ? MMix: b), par, j)) continue;  
                 double trackDphi  = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi((*b->trackPhi)[j], zPhi);
-		double trackDphi2 = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi(zPhi, (*b->trackPhi)[j]);
+		double trackDphi2 = par.mix ? DeltaPhi(zPhi,(*MMix->trackPhi)[j]) : DeltaPhi(zPhi, (*b->trackPhi)[j]);
 	        double trackDeta  = par.mix ? fabs((*MMix->trackEta)[j]- zEta) : fabs((*b->trackEta)[j]- zEta);
 		double weight = par.mix ? (MMix->NCollWeight)*(*MMix->trackWeight)[j]*(MMix->ZWeight) : (b->NCollWeight)*(*b->trackWeight)[j]*(b->ZWeight); //(*b->trackResidualWeight)[j]*
 		
@@ -165,7 +163,6 @@ double getDphi(ZHadronMessenger *b, ZHadronMessenger *MMix, TH2D *h, const Param
     }
     cout <<"done"<<nZ<<endl;
     return nZ;
-    //h->Scale(1./((double) nZ));
 }
 
 
@@ -254,12 +251,13 @@ int main(int argc, char *argv[])
    // Read command line
    CommandLine CL(argc, argv);
 
-   string Input      = CL.Get("Input", "sample/HISingleMuon.root");                 // Input file
-   string MixFile    = CL.Get("MixFile", "sample/HISingleMuon.root");               // Input file
-   string Output     = CL.Get("Output", "output.root");   // Output file
+   // File names
+   string Input      = CL.Get("Input",   "sample/HISingleMuon.root");                 // Input file
+   string MixFile    = CL.Get("MixFile", "sample/HISingleMuon.root");               // Input Mix file
+   string Output     = CL.Get("Output",  "output.root");                             // Output file
+
    bool IsData       = CL.GetBool("IsData", false);       // Determines whether the analysis is being run on actual data.
    bool IsPP         = CL.GetBool("IsPP", false);         // Flag to indicate if the analysis is for Proton-Proton collisions.
-   bool IsBackground = CL.GetBool("IsBackground", false); // Indicates whether the analysis is being run on a background dataset.
    double Fraction   = CL.GetDouble("Fraction", 1.00);    // Fraction of event processed in the sample
    double MinZPT     = CL.GetDouble("MinZPT", 40);        // Minimum Z particle transverse momentum threshold for event selection.
    double MinTrackPT = CL.GetDouble("MinTrackPT", 1);     // Minimum track transverse momentum threshold for track selection.
