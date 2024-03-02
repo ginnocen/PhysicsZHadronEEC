@@ -337,7 +337,8 @@ int main(int argc, char *argv[])
       bool GoodRecoZ = MZHadron.zPt->size() > 0 && (MZHadron.zPt->at(0) > MinZPT);
       if(CheckZ == true)
       {
-         if(DoGenLevel == true && GoodGenZ == false)
+         // Yen-Jie: Propose to save the charged hadron information when either GoodGenZ or GoodRecoZ is identified 
+         if(DoGenLevel == true && (GoodGenZ == false && GoodRecoZ == false))
          {
             MZHadron.FillEntry();
             continue;
