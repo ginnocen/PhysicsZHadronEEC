@@ -583,6 +583,8 @@ int main(int argc, char *argv[])
          double TrackCorrection = 1;
          if(DoGenLevel == false)
          {
+            // cout << TrackPT << " " << TrackEta << " " << MZHadron.hiBin << endl;
+
             if(IsPP == true)
                TrackCorrection = TrackEfficiencyPP->getCorrection(TrackPT, TrackEta);
             else
