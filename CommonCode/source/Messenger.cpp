@@ -1896,7 +1896,7 @@ bool ZHadronMessenger::Initialize(TTree *ZHadronTree, bool SkipTrack)
    return Initialize(SkipTrack);
 }
 
-bool ZHadronMessenger::Initialize(SkipTrack)
+bool ZHadronMessenger::Initialize(bool SkipTrack)
 {
    if(Tree == nullptr)
       return false;
