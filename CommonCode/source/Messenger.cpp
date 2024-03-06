@@ -1815,16 +1815,16 @@ bool PbPbTrackTreeMessenger::PassZHadron2022CutTight(int index)
    return true;
 }
 
-ZHadronMessenger::ZHadronMessenger(TFile &File, std::string TreeName)
+ZHadronMessenger::ZHadronMessenger(TFile &File, std::string TreeName, bool SkipTrack)
 {
    Initialized = false;
    WriteMode = false;
    
    Tree = (TTree *)File.Get(TreeName.c_str());
-   Initialize();
+   Initialize(SkipTrack);
 }
 
-ZHadronMessenger::ZHadronMessenger(TFile *File, std::string TreeName)
+ZHadronMessenger::ZHadronMessenger(TFile *File, std::string TreeName, bool SkipTrack)
 {
    Initialized = false;
    WriteMode = false;
@@ -1833,15 +1833,15 @@ ZHadronMessenger::ZHadronMessenger(TFile *File, std::string TreeName)
       Tree = (TTree *)File->Get(TreeName.c_str());
    else
       Tree = nullptr;
-   Initialize();
+   Initialize(SkipTrack);
 }
 
-ZHadronMessenger::ZHadronMessenger(TTree *ZHadronTree)
+ZHadronMessenger::ZHadronMessenger(TTree *ZHadronTree, bool SkipTrack)
 {
    Initialized = false;
    WriteMode = false;
 
-   Initialize(ZHadronTree);
+   Initialize(ZHadronTree, SkipTrack);
 }
    
 ZHadronMessenger::~ZHadronMessenger()
@@ -1890,13 +1890,13 @@ ZHadronMessenger::~ZHadronMessenger()
    }
 }
    
-bool ZHadronMessenger::Initialize(TTree *ZHadronTree)
+bool ZHadronMessenger::Initialize(TTree *ZHadronTree, bool SkipTrack)
 {
    Tree = ZHadronTree;
-   return Initialize();
+   return Initialize(SkipTrack);
 }
 
-bool ZHadronMessenger::Initialize()
+bool ZHadronMessenger::Initialize(SkipTrack)
 {
    if(Tree == nullptr)
       return false;
@@ -1981,16 +1981,32 @@ bool ZHadronMessenger::Initialize()
    Tree->SetBranchAddress("genZEta", &genZEta);
    Tree->SetBranchAddress("genZPhi", &genZPhi);
    Tree->SetBranchAddress("genZPt", &genZPt);
-   Tree->SetBranchAddress("trackPt", &trackPt);
-   Tree->SetBranchAddress("trackPDFId", &trackPDFId);
-   Tree->SetBranchAddress("trackEta", &trackEta);
-   Tree->SetBranchAddress("trackPhi", &trackPhi);
-   Tree->SetBranchAddress("trackMuTagged", &trackMuTagged);
-   Tree->SetBranchAddress("trackMuDR", &trackMuDR);
-   Tree->SetBranchAddress("trackWeight", &trackWeight);
-   Tree->SetBranchAddress("trackResidualWeight", &trackResidualWeight);
-   Tree->SetBranchAddress("trackCharge", &trackCharge);
-   Tree->SetBranchAddress("subevent", &subevent);
+   if(SkipTrack == false)
+   {
+      Tree->SetBranchAddress("trackPt", &trackPt);
+      Tree->SetBranchAddress("trackPDFId", &trackPDFId);
+      Tree->SetBranchAddress("trackEta", &trackEta);
+      Tree->SetBranchAddress("trackPhi", &trackPhi);
+      Tree->SetBranchAddress("trackMuTagged", &trackMuTagged);
+      Tree->SetBranchAddress("trackMuDR", &trackMuDR);
+      Tree->SetBranchAddress("trackWeight", &trackWeight);
+      Tree->SetBranchAddress("trackResidualWeight", &trackResidualWeight);
+      Tree->SetBranchAddress("trackCharge", &trackCharge);
+      Tree->SetBranchAddress("subevent", &subevent);
+   }
+   else
+   {
+      Tree->SetBranchStatus("trackPt", false);
+      Tree->SetBranchStatus("trackPDFId", false);
+      Tree->SetBranchStatus("trackEta", false);
+      Tree->SetBranchStatus("trackPhi", false);
+      Tree->SetBranchStatus("trackMuTagged", false);
+      Tree->SetBranchStatus("trackMuDR", false);
+      Tree->SetBranchStatus("trackWeight", false);
+      Tree->SetBranchStatus("trackResidualWeight", false);
+      Tree->SetBranchStatus("trackCharge", false);
+      Tree->SetBranchStatus("subevent", false);
+   }
 
    Tree->SetBranchAddress("muEta1", &muEta1);
    Tree->SetBranchAddress("muEta2", &muEta2);

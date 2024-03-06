@@ -573,12 +573,12 @@ private:
    bool Initialized;
 
 public:   
-   ZHadronMessenger(TFile &File, std::string TreeName = "tree");
-   ZHadronMessenger(TFile *File, std::string TreeName = "tree");
-   ZHadronMessenger(TTree *ZHadronTree = nullptr);
+   ZHadronMessenger(TFile &File, std::string TreeName = "tree", bool SkipTrack = false);
+   ZHadronMessenger(TFile *File, std::string TreeName = "tree", bool SkipTrack = false);
+   ZHadronMessenger(TTree *ZHadronTree = nullptr, bool SkipTrack = false);
    ~ZHadronMessenger();
-   bool Initialize(TTree *ZHadronTree);
-   bool Initialize();
+   bool Initialize(TTree *ZHadronTree, bool SkipTrack = false);
+   bool Initialize(bool SkipTrack = false);
    int GetEntries();
    bool GetEntry(int iEntry);
    bool SetBranch(TTree *T);
