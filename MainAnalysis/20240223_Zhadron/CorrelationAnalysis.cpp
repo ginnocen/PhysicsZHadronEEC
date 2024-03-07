@@ -96,14 +96,15 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
 
 
 bool matching(ZHadronMessenger *a, ZHadronMessenger *b) {
-    if (fabs(a->hiHF-b->hiHF-97.13)<10) return 1;
+    if (a->hiHF<97.13&&b->hiHF<97.13) return 1;
+    if (fabs(a->hiHF-b->hiHF-10)<100) return 1;
     return 0;
 }
 
 //============================================================//
 // Z hadron dphi calculation
 //============================================================//
-float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, TH2D *h, TH2D *hSub0, const Parameters& par) {
+float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMessenger *MMixEvt, TH2D *h, TH2D *hSub0, const Parameters& par) {
     float nZ = 0;
     h->Sumw2();
     par.printParameters();
@@ -119,7 +120,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, TH2D *h, TH2D 
           
     for (unsigned long i = iStart; i < iEnd; i++) {
        MZSignal->GetEntry(i);
-       if (i % 100000 == 0) {
+       if (i % 10000 == 0) {
           Bar.Update(i - iStart);
           Bar.Print();
        }
@@ -136,24 +137,24 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, TH2D *h, TH2D 
              if (par.mix) {
                 while (!foundMix) {
                    mix_i = (mix_i + 1);
-                   if (mix_i >= MMix->GetEntries()) mix_i = 0;
+                   if (mix_i >= MMixEvt->GetEntries()) mix_i = 0;
                    if (mixstart_i == mix_i) break;
-                   MMix->GetEntry(mix_i);
-                   if ((eventSelection(MMix, par)&&par.isSelfMixing)||(matching(MZSignal,MMix)&&!par.isSelfMixing)) foundMix = true;
+                   MMixEvt->GetEntry(mix_i);
+                   if ((eventSelection(MMixEvt, par)&&par.isSelfMixing)||(matching(MZSignal,MMixEvt)&&!par.isSelfMixing)) foundMix = true;
                 }
              }
              if (!foundMix && par.mix) {
-                cout << "Cannot find a mixed event!!! Event = " << i << endl;
+                cout << "Cannot find a mixed event!!! Event = " << i <<" "<< MZSignal->hiHF<< endl;
                 break;
              }
-	     
+	     MMix->GetEntry(mix_i);
              nZ += (MZSignal->NCollWeight);  // Ncoll reweighting at the event level.
              for (unsigned long j = 0; j < (par.mix ? MMix->trackPhi->size() : MZSignal->trackPhi->size()); j++) {
                 if (!trackSelection((par.mix ? MMix : MZSignal), par, j)) continue;
                 float trackDphi  = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi((*MZSignal->trackPhi)[j], zPhi);
                 float trackDphi2 = par.mix ? DeltaPhi(zPhi, (*MMix->trackPhi)[j]) : DeltaPhi(zPhi, (*MZSignal->trackPhi)[j]);
                 float trackDeta  = par.mix ? fabs((*MMix->trackEta)[j] - zEta) : fabs((*MZSignal->trackEta)[j] - zEta);
-                float weight = par.mix ? (MZSignal->NCollWeight) * (*MMix->trackWeight)[j] * (MMix->ZWeight) : (MZSignal->NCollWeight) * (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
+                float weight = par.mix ? (MMix->NCollWeight) * (*MMix->trackWeight)[j] * (MMix->ZWeight) : (MZSignal->NCollWeight) * (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
                 h->Fill( trackDeta, trackDphi2, weight);
@@ -176,7 +177,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, TH2D *h, TH2D 
 class DataAnalyzer {
 public:
   DataAnalyzer(const char* filename, const char* mixFilename, const char *mytitle = "Data") :
-     inf(new TFile(filename)), MZHadron(new ZHadronMessenger(*inf,string("Tree"))), mixFile(new TFile(mixFilename)), MMix(new ZHadronMessenger(*mixFile,string("Tree"))), title(mytitle) {}
+     inf(new TFile(filename)), MZHadron(new ZHadronMessenger(*inf,string("Tree"))), mixFile(new TFile(mixFilename)), mixFileClone(new TFile(mixFilename)), MMix(new ZHadronMessenger(*mixFile,string("Tree"))), MMixEvt(new ZHadronMessenger(*mixFileClone,string("Tree"),true)), title(mytitle) {}
 
   ~DataAnalyzer() {
     deleteHistograms();
@@ -189,13 +190,13 @@ public:
     h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hSub0 = new TH2D(Form("hSub0%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hNZ = new TH1D(Form("hNZ%s", title.c_str()),"",1,0,1);
-    hNZ->SetBinContent(1,getDphi(MZHadron, MMix, h, hSub0, par));
+    hNZ->SetBinContent(1,getDphi(MZHadron, MMix, MMixEvt, h, hSub0, par));
 
     // Second histogram with mix=true
     par.mix = true;
     hMix = new TH2D(Form("hMix%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hNZMix = new TH1D(Form("hNZMix%s", title.c_str()),"",1,0,1);
-    hNZMix->SetBinContent(1,getDphi(MZHadron,MMix, hMix, 0, par));
+    hNZMix->SetBinContent(1,getDphi(MZHadron,MMix, MMixEvt, hMix, 0, par));
   }
   
   void writeHistograms(TFile* outf) {
@@ -209,7 +210,8 @@ public:
 
   TFile *inf;
   TFile *mixFile;
-  ZHadronMessenger *MZHadron, *MMix;
+  TFile *mixFileClone;
+  ZHadronMessenger *MZHadron, *MMix, *MMixEvt;
   TH2D *h=0, *hSub0=0, *hMix=0;
   TH1D *hNZ, *hNZMix;
   string title;
