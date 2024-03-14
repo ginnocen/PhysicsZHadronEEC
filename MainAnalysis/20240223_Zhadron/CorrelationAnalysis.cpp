@@ -58,9 +58,7 @@ public:
        cout << "Process the Nth chunk: " << nChunk << endl;
        cout << "Mix flag: " << (mix ? "true" : "false") << endl;
        cout << "Number of mixed events: " << nMix << endl;
-       if (mix) {
-           cout << "Event mixing!" << endl;
-       }
+       if (mix) cout << "Event mixing!" << endl;
    }
 };
 
@@ -98,13 +96,12 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
 // ======= Define mixed event matching criteria
 bool matching(ZHadronMessenger *a, ZHadronMessenger *b, double shift=1000) {
 
-   // 1036 is the maxima of SignalHF in pythia
+// 1036 is the maxima of SignalHF in pythia
 //   double shift = 1018.0541;
 //   double shift = //1268.69;
 //    if (a->hiHF<97.13&&b->hiHF<97.13) return 1;
     if (a->SignalHF<shift*1.05&&b->SignalHF<shift*1.05) return 1;
     if ((b->SignalHF/(a->SignalHF-shift))<1.02&&b->SignalHF/(a->SignalHF-shift)>1) return 1;
-//    if (a->hiBin==b->hiBin) return 1;
     return 0;
 }
 
@@ -124,10 +121,10 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
     Bar.SetStyle(1);
     unsigned long mix_i = iStart;
     unsigned long mixstart_i = mix_i;
-                  
+    int deltaI = (iEnd-iStart)/100+1;              
     for (unsigned long i = iStart; i < iEnd; i++) {
        MZSignal->GetEntry(i);
-       if (i % 10000 == 0) {
+       if (i % deltaI == 0) {
           Bar.Update(i - iStart);
           Bar.Print();
        }
@@ -141,7 +138,6 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
           for (unsigned int nMix = 0; nMix < targetMix; nMix++) {
              bool foundMix = false;
 	     mixstart_i = mix_i;
-	     //double shift = par.hShift->GetRandom();
              if (par.mix) {
                 while (!foundMix) {
                    mix_i = (mix_i + 1);
@@ -204,13 +200,13 @@ public:
     h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hSub0 = new TH2D(Form("hSub0%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hNZ = new TH1D(Form("hNZ%s", title.c_str()),"",1,0,1);
-    hNZ->SetBinContent(1,getDphi(MZHadron, MMix, MMixEvt, h, hSub0, par));
+    hNZ->SetBinContent(1,getDphi(MZHadron, MMix, MMixEvt, h, hSub0, par));               // Dphi analysis
 
     // Second histogram with mix=true
     par.mix = true;
     hMix = new TH2D(Form("hMix%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hNZMix = new TH1D(Form("hNZMix%s", title.c_str()),"",1,0,1);
-    hNZMix->SetBinContent(1,getDphi(MZHadron,MMix, MMixEvt, hMix, 0, par, ntDiagnose));
+    hNZMix->SetBinContent(1,getDphi(MZHadron,MMix, MMixEvt, hMix, 0, par, ntDiagnose));  // Dphi analysis with mixing
   }
   
   void writeHistograms(TFile* outf) {
@@ -242,44 +238,35 @@ public:
 int main(int argc, char *argv[])
 {
    if (printHelpMessage(argc, argv)) return 0;
+
    // Read command line
    CommandLine CL(argc, argv);
-
-   // Parameter sets
-   float MinZPT     = CL.GetDouble("MinZPT", 40);         // Minimum Z particle transverse momentum threshold for event selection.
-   float MinTrackPT = CL.GetDouble("MinTrackPT", 1);      // Minimum track transverse momentum threshold for track selection.
-   float MaxZPT     = CL.GetDouble("MaxZPT", 120);        // Maximum Z particle transverse momentum threshold for event selection.
-   float MaxTrackPT = CL.GetDouble("MaxTrackPT", 2);      // Maximum track transverse momentum threshold for track selection.
-   int MaxHiBin      = CL.GetInt("MaxHiBin", 200);        // Maximum hiBin value for event selection. hiBin.
-   int MinHiBin      = CL.GetInt("MinHiBin", 0);          // Minimum hiBin value for event selection.
+   float MinZPT      = CL.GetDouble("MinZPT", 40);         // Minimum Z particle transverse momentum threshold for event selection.
+   float MinTrackPT  = CL.GetDouble("MinTrackPT", 1);      // Minimum track transverse momentum threshold for track selection.
+   float MaxZPT      = CL.GetDouble("MaxZPT", 120);        // Maximum Z particle transverse momentum threshold for event selection.
+   float MaxTrackPT  = CL.GetDouble("MaxTrackPT", 2);      // Maximum track transverse momentum threshold for track selection.
+   int MaxHiBin      = CL.GetInt   ("MaxHiBin", 200);      // Maximum hiBin value for event selection. hiBin.
+   int MinHiBin      = CL.GetInt   ("MinHiBin", 0);        // Minimum hiBin value for event selection.
 
    Parameters par(MinZPT, MaxZPT, MinTrackPT, MaxTrackPT, MinHiBin, MaxHiBin);
-   par.input         = CL.Get("Input",   "sample/HISingleMuon.root");                // Input file
-   par.mixFile       = CL.Get("MixFile", "sample/HISingleMuon.root");                // Input Mix file
-   par.output        = CL.Get("Output",  "output.root");                             // Output file
-   par.isSelfMixing  = CL.GetBool("IsSelfMixing", true);  // Determine if the analysis is self-mixing
-   par.isGenZ        = CL.GetBool("IsGenZ", false);       // Determine if the analysis is using Gen level Z     
-   bool IsData       = CL.GetBool("IsData", false);       // Determines whether the analysis is being run on actual data.
-   bool IsPP         = CL.GetBool("IsPP", false);         // Flag to indicate if the analysis is for Proton-Proton collisions.
-   par.scaleFactor   = CL.GetDouble("Fraction", 1.00);    // Fraction of event processed in the sample
-   par.nThread       = CL.GetInt("nThread", 1);           // The number of threads to be used for parallel processing.
-   par.nChunk        = CL.GetInt("nChunk", 1);            // Specifies which chunk (segment) of the data to process, used in parallel processing.
-   par.nMix          = CL.GetInt("nMix", 10);             // Number of mixed events to be considered in the analysis.
+   par.input         = CL.Get      ("Input",   "sample/HISingleMuon.root");                // Input file
+   par.mixFile       = CL.Get      ("MixFile", "sample/HISingleMuon.root");                // Input Mix file
+   par.output        = CL.Get      ("Output",  "output.root");                             // Output file
+   par.isSelfMixing  = CL.GetBool  ("IsSelfMixing", true); // Determine if the analysis is self-mixing
+   par.isGenZ        = CL.GetBool  ("IsGenZ", false);      // Determine if the analysis is using Gen level Z     
+   bool IsData       = CL.GetBool  ("IsData", false);      // Determines whether the analysis is being run on actual data.
+   bool IsPP         = CL.GetBool  ("IsPP", false);        // Flag to indicate if the analysis is for Proton-Proton collisions.
+   par.scaleFactor   = CL.GetDouble("Fraction", 1.00);     // Fraction of event processed in the sample
+   par.nThread       = CL.GetInt   ("nThread", 1);         // The number of threads to be used for parallel processing.
+   par.nChunk        = CL.GetInt   ("nChunk", 1);          // Specifies which chunk (segment) of the data to process, used in parallel processing.
+   par.nMix          = CL.GetInt   ("nMix", 10);           // Number of mixed events to be considered in the analysis.
    par.mix = 0;
    
    if (par.isSelfMixing && par.input!=par.mixFile) {
       cout <<"Error! Self-mixing mode but assigned different input and mix files. Please check the macro."<<endl;
       return -1;
    }
-   TCanvas *c = new TCanvas("c", "", 800, 800);
-
-
-   TFile *infPythia = new TFile ("sample/pythia.root");
-   TTree *t = (TTree*) infPythia->Get("Tree");
-   par.hShift = new TH1D("hShift","",1000,0,6000);
-   t->Draw("SignalHF>>hShift");
-   
-     
+       
    // Analyze Data
    DataAnalyzer analyzer(par.input.c_str(), par.mixFile.c_str(), par.output.c_str(), "Data");
    analyzer.analyze(par);
