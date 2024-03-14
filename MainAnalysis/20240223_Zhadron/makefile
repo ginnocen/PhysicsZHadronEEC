@@ -1,7 +1,7 @@
 default: ExecuteCorrelationAnalysis
 
 ExecuteCorrelationAnalysis: CorrelationAnalysis.cpp
-	g++ CorrelationAnalysis.cpp -I. -I$(ProjectBase)/CommonCode/include \
+	g++ CorrelationAnalysis.cpp -O3 -I. -I$(ProjectBase)/CommonCode/include -I./include \
 		-o ExecuteCorrelationAnalysis `root-config --cflags --glibs` \
 		$(ProjectBase)/CommonCode/library/Messenger.o
 
