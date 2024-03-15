@@ -1850,10 +1850,12 @@ ZHadronMessenger::~ZHadronMessenger()
    {
       delete zMass;
       delete zEta;
+      delete zY;
       delete zPhi;
       delete zPt;
       delete genZMass;
       delete genZEta;
+      delete genZY;
       delete genZPhi;
       delete genZPt;
       delete trackPt;
@@ -1861,6 +1863,7 @@ ZHadronMessenger::~ZHadronMessenger()
       delete trackMuDR;
       delete trackPDFId;
       delete trackEta;
+      delete trackY;
       delete trackPhi;
       delete trackCharge;
 
@@ -1905,15 +1908,18 @@ bool ZHadronMessenger::Initialize(bool SkipTrack)
 
    zMass = nullptr;
    zEta = nullptr;
+   zY = nullptr;
    zPhi = nullptr;
    zPt = nullptr;
    genZMass = nullptr;
    genZEta = nullptr;
+   genZY = nullptr;
    genZPhi = nullptr;
    genZPt = nullptr;
    trackPt = nullptr;
    trackPDFId = nullptr;
    trackEta = nullptr;
+   trackY = nullptr;
    trackPhi = nullptr;
    trackMuTagged = nullptr;
    trackMuDR = nullptr;
@@ -1975,10 +1981,12 @@ bool ZHadronMessenger::Initialize(bool SkipTrack)
    
    Tree->SetBranchAddress("zMass", &zMass);
    Tree->SetBranchAddress("zEta", &zEta);
+   Tree->SetBranchAddress("zY", &zY);
    Tree->SetBranchAddress("zPhi", &zPhi);
    Tree->SetBranchAddress("zPt", &zPt);
    Tree->SetBranchAddress("genZMass", &genZMass);
    Tree->SetBranchAddress("genZEta", &genZEta);
+   Tree->SetBranchAddress("genZY", &genZY);
    Tree->SetBranchAddress("genZPhi", &genZPhi);
    Tree->SetBranchAddress("genZPt", &genZPt);
    if(SkipTrack == false)
@@ -1986,6 +1994,7 @@ bool ZHadronMessenger::Initialize(bool SkipTrack)
       Tree->SetBranchAddress("trackPt", &trackPt);
       Tree->SetBranchAddress("trackPDFId", &trackPDFId);
       Tree->SetBranchAddress("trackEta", &trackEta);
+      Tree->SetBranchAddress("trackY", &trackY);
       Tree->SetBranchAddress("trackPhi", &trackPhi);
       Tree->SetBranchAddress("trackMuTagged", &trackMuTagged);
       Tree->SetBranchAddress("trackMuDR", &trackMuDR);
@@ -1999,6 +2008,7 @@ bool ZHadronMessenger::Initialize(bool SkipTrack)
       Tree->SetBranchStatus("trackPt", false);
       Tree->SetBranchStatus("trackPDFId", false);
       Tree->SetBranchStatus("trackEta", false);
+      Tree->SetBranchStatus("trackY", false);
       Tree->SetBranchStatus("trackPhi", false);
       Tree->SetBranchStatus("trackMuTagged", false);
       Tree->SetBranchStatus("trackMuDR", false);
@@ -2061,15 +2071,17 @@ bool ZHadronMessenger::SetBranch(TTree *T)
 
    zMass = new std::vector<float>();
    zEta = new std::vector<float>();
+   zY = new std::vector<float>();
    zPhi = new std::vector<float>();
    zPt = new std::vector<float>();
    genZMass = new std::vector<float>();
-   genZEta = new std::vector<float>();
+   genZY = new std::vector<float>();
    genZPhi = new std::vector<float>();
    genZPt = new std::vector<float>();
    trackPt = new std::vector<float>();
    trackPDFId = new std::vector<float>();
    trackEta = new std::vector<float>();
+   trackY = new std::vector<float>();
    trackPhi = new std::vector<float>();
    trackMuTagged = new std::vector<bool>();
    trackMuDR = new std::vector<float>();
@@ -2132,16 +2144,19 @@ bool ZHadronMessenger::SetBranch(TTree *T)
 
    Tree->Branch("zMass",                  &zMass);
    Tree->Branch("zEta",                   &zEta);
+   Tree->Branch("zY",                     &zY);
    Tree->Branch("zPhi",                   &zPhi);
    Tree->Branch("zPt",                    &zPt);
    Tree->Branch("genZMass",               &genZMass);
    Tree->Branch("genZEta",                &genZEta);
+   Tree->Branch("genZY",                  &genZY);
    Tree->Branch("genZPhi",                &genZPhi);
    Tree->Branch("genZPt",                 &genZPt);
    Tree->Branch("trackPt",                &trackPt);
    Tree->Branch("trackPDFId",             &trackPDFId);
    Tree->Branch("trackPhi",               &trackPhi);
    Tree->Branch("trackEta",               &trackEta);
+   Tree->Branch("trackY",                 &trackY);
    Tree->Branch("trackMuTagged",          &trackMuTagged);
    // Tree->Branch("trackMuDR",              &trackMuDR);
    Tree->Branch("trackWeight",            &trackWeight);
@@ -2202,16 +2217,19 @@ void ZHadronMessenger::Clear()
 
    zMass->clear();
    zEta->clear();
+   zY->clear();
    zPhi->clear();
    zPt->clear();
    genZMass->clear();
    genZEta->clear();
+   genZY->clear();
    genZPhi->clear();
    genZPt->clear();
    trackPt->clear();
    trackPDFId->clear();
    trackPhi->clear();
    trackEta->clear();
+   trackY->clear();
    trackMuTagged->clear();
    trackMuDR->clear();
    trackWeight->clear();
@@ -2275,10 +2293,12 @@ void ZHadronMessenger::CopyNonTrack(ZHadronMessenger &M)
   
    if(zMass != nullptr && M.zMass != nullptr)   *zMass = *(M.zMass);
    if(zEta != nullptr && M.zEta != nullptr)   *zEta = *(M.zEta);
+   if(zY != nullptr && M.zY != nullptr)   *zY = *(M.zY);
    if(zPhi != nullptr && M.zPhi != nullptr)   *zPhi = *(M.zPhi);
    if(zPt != nullptr && M.zPt != nullptr)   *zPt = *(M.zPt);
    if(genZMass != nullptr && M.genZMass != nullptr)   *genZMass = *(M.genZMass);
    if(genZEta != nullptr && M.genZEta != nullptr)   *genZEta = *(M.genZEta);
+   if(genZY != nullptr && M.genZY != nullptr)   *genZY = *(M.genZY);
    if(genZPhi != nullptr && M.genZPhi != nullptr)   *genZPhi = *(M.genZPhi);
    if(genZPt != nullptr && M.genZPt != nullptr)   *genZPt = *(M.genZPt);
    

@@ -527,15 +527,18 @@ public:
    
    std::vector<float> *zMass;
    std::vector<float> *zEta;
+   std::vector<float> *zY;
    std::vector<float> *zPhi;
    std::vector<float> *zPt;
    std::vector<float> *genZMass;
    std::vector<float> *genZEta;
+   std::vector<float> *genZY;
    std::vector<float> *genZPhi;
    std::vector<float> *genZPt;
    std::vector<float> *trackPt;
    std::vector<float> *trackPDFId;
    std::vector<float> *trackEta;
+   std::vector<float> *trackY;
    std::vector<float> *trackPhi;
    std::vector<bool> *trackMuTagged;
    std::vector<float> *trackMuDR;
