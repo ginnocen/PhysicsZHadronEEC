@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
    bool IsBackground                  = CL.GetBool("IsBackground", false);
    double Fraction                    = CL.GetDouble("Fraction", 1.00);
    double MinZPT                      = CL.GetDouble("MinZPT", 20);
-   double MinTrackPT                  = CL.GetDouble("MinTrackPT", 0);
+   double MinTrackPT                  = CL.GetDouble("MinTrackPT", 1);
    bool DoAlternateTrackSelection     = CL.GetBool("DoAlternateTrackSelection", false);
    int AlternateTrackSelection        = DoAlternateTrackSelection ? CL.GetInt("AlternateTrackSelection") : 0;
    bool DoSumET                       = CL.GetBool("DoSumET", false);
@@ -265,6 +265,7 @@ int main(int argc, char *argv[])
                MZHadron.genZPt->push_back  (VGenZ.Pt());
                MZHadron.genZPhi->push_back (VGenZ.Phi());
                MZHadron.genZEta->push_back (VGenZ.Eta());
+               MZHadron.genZY->push_back   (VGenZ.Rapidity());
 
                MZHadron.genMuPt1->push_back(MMu.GenPT[igen1]);
                MZHadron.genMuPt2->push_back(MMu.GenPT[igen2]);
@@ -307,6 +308,7 @@ int main(int argc, char *argv[])
 
          MZHadron.zMass->push_back(MMu.DiMass[ipair]);
          MZHadron.zEta->push_back(MMu.DiEta[ipair]);
+         MZHadron.zY->push_back(Z.Rapidity());
          MZHadron.zPhi->push_back(MMu.DiPhi[ipair]);
          MZHadron.zPt->push_back(MMu.DiPT[ipair]);
 
@@ -504,12 +506,6 @@ int main(int argc, char *argv[])
       {
          if(DoGenLevel == true)
          {
-            if(MGen.PT->at(iT) < MinTrackPT)
-               continue;
-            if(MGen.Eta->at(iT) < -2.4)
-               continue;
-            if(MGen.Eta->at(iT) > +2.4)
-               continue;
             if(MGen.DaughterCount->at(iT) > 0)
                continue;
             if(MGen.Charge->at(iT) == 0)
@@ -546,6 +542,16 @@ int main(int argc, char *argv[])
          double TrackPT  = DoGenLevel ? MGen.PT->at(iT) : (IsPP ? MTrackPP.trkPt[iT] : MTrack.TrackPT->at(iT));
          int TrackCharge = DoGenLevel ? MGen.Charge->at(iT) : (IsPP ? MTrackPP.trkCharge[iT] : MTrack.TrackCharge->at(iT));
          int SubEvent    = DoGenLevel ? (MGen.SubEvent->at(iT) + IsBackground) : (IsPP ? 0 : IsBackground);
+         
+         if(TrackPT < MinTrackPT)
+            continue;
+         if(TrackEta < -2.4)
+            continue;
+         if(TrackEta > +2.4)
+            continue;
+         
+         TLorentzVector V; 
+         V.SetPtEtaPhiM(TrackPT, TrackEta, TrackPhi, M_PI);
 
          if(CheckZ == true && (DoGenLevel ? (GoodGenZ == true) : (GoodRecoZ == true)))
          {
@@ -577,6 +583,7 @@ int main(int argc, char *argv[])
 
          MZHadron.trackPhi->push_back(TrackPhi);
          MZHadron.trackEta->push_back(TrackEta);
+         MZHadron.trackY->push_back(V.Rapidity());
          MZHadron.trackPt->push_back(TrackPT);
          MZHadron.subevent->push_back(SubEvent);
 
@@ -623,8 +630,13 @@ double GetHFSum(PFTreeMessenger *M)
 
    double Sum = 0;
    for(int iPF = 0; iPF < M->ID->size(); iPF++)
-      if(fabs(M->Eta->at(iPF)) > 3 && fabs(M->Eta->at(iPF)) < 5)
-         Sum = Sum + M->E->at(iPF);
+   {
+      if(fabs(M->Eta->at(iPF)) < 3)
+         continue;
+      if(fabs(M->Eta->at(iPF)) > 5)
+         continue;
+      Sum = Sum + M->E->at(iPF);
+   }
 
    // cout << Sum << endl;
 
@@ -646,6 +658,8 @@ double GetGenHFSum(GenParticleTreeMessenger *M)
       if(fabs(M->Eta->at(iGen)) > 5)
          continue;
       if(M->DaughterCount->at(iGen) > 0)
+         continue;
+      if(M->PT->at(iGen) < 0.4)   // for now...
          continue;
       Sum = Sum + M->PT->at(iGen) * cosh(M->Eta->at(iGen));
    }
