@@ -30,8 +30,6 @@ public:
     float MaxZPT;          // Upper limit of Z pt
     float MinTrackPT;      // Lower limit of track pt
     float MaxTrackPT;      // Upper limit of track pt
-    bool isSelfMixing;     // isSelfMixing flag
-    bool isGenZ;           // isGenZ flag
     float scaleFactor;     // Scale factor
     int MinHiBin;          // Lower limit of hiBin
     int MaxHiBin;          // Upper limit of hiBin
@@ -40,6 +38,10 @@ public:
     bool mix;              // Mix flag
     int nMix;              // Number of mixed events
     TH1D *hShift;
+    bool isSelfMixing;     // isSelfMixing flag
+    bool isGenZ;           // isGenZ flag
+    bool isMuTagged;       // Flag to enable/disable muon tagging requirement
+    bool isPUReject;       // Flag to reject PU sample for systemaitcs.
 
    void printParameters() const {
        cout << "Input file: " << input << endl;
@@ -58,6 +60,8 @@ public:
        cout << "Process the Nth chunk: " << nChunk << endl;
        cout << "Mix flag: " << (mix ? "true" : "false") << endl;
        cout << "Number of mixed events: " << nMix << endl;
+       cout << "Muon Tagging Enabled: " << (isMuTagged ? "true" : "false") << endl;
+       cout << "PU rejection: " << (isPUReject ? "true" : "false") << endl;
        if (mix) cout << "Event mixing!" << endl;
    }
 };
@@ -69,6 +73,7 @@ public:
 //============================================================//
 bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
    bool foundZ = false;            
+   if (par.isPUReject && b->NVertex!=1) return 0;
    if (b->hiBin< par.MinHiBin) return 0;
    if (b->hiBin>=par.MaxHiBin) return 0;
    if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
@@ -87,7 +92,7 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
 // MinZPT < zPt < MaxZPT &&  MinHiBin , hiBin < MaxHiBin
 //============================================================//
 bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
-    //if ((*b->trackMuTagged)[j]) return false;  
+    if (par.isMuTagged && (*b->trackMuTagged)[j]) return false; 
     if ((*b->trackPt)[j]>par.MaxTrackPT) return false;  
     if ((*b->trackPt)[j]<par.MinTrackPT) return false;
     return true;
@@ -144,8 +149,13 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                    if (mix_i >= MMixEvt->GetEntries()) mix_i = 0;
                    if (mixstart_i == mix_i) break;
                    MMixEvt->GetEntry(mix_i);
-                   if ((eventSelection(MMixEvt, par)&&par.isSelfMixing&&i!=mix_i)||(matching(MZSignal,MMixEvt)&&!par.isSelfMixing)) foundMix = true;
-                }
+                   if (par.isSelfMixing) {
+		      if (eventSelection(MMixEvt, par)&&par.isSelfMixing&&i!=mix_i) foundMix = true;
+                   } else {
+		      if (matching(MZSignal,MMixEvt)&&!par.isSelfMixing) foundMix = true;
+
+		   }
+		}
              }
              if (!foundMix && par.mix) {
                 cout << "Cannot find a mixed event!!! Event = " << i <<" "<< MZSignal->SignalHF<< endl;
@@ -159,7 +169,8 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 float trackDphi2 = par.mix ? DeltaPhi(zPhi, (*MMix->trackPhi)[j]) : DeltaPhi(zPhi, (*MZSignal->trackPhi)[j]);
                 float trackDeta  = par.mix ? fabs((*MMix->trackEta)[j] - zEta) : fabs((*MZSignal->trackEta)[j] - zEta);
                 //float weight = par.mix ? (MMix->NCollWeight) * (*MMix->trackWeight)[j] * (MMix->ZWeight) : (MZSignal->NCollWeight) * (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
-                float weight = par.mix ? (*MMix->trackWeight)[j] * (MZSignal->ZWeight) : (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
+                float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight);
+		weight*=(par.mix ? (*MMix->trackWeight)[j] : (*MZSignal->trackWeight)[j]);
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
                 h->Fill( trackDeta, trackDphi2, weight);
@@ -242,20 +253,22 @@ int main(int argc, char *argv[])
    // Read command line
    CommandLine CL(argc, argv);
    float MinZPT      = CL.GetDouble("MinZPT", 40);         // Minimum Z particle transverse momentum threshold for event selection.
+   float MaxZPT      = CL.GetDouble("MaxZPT", 200);        // Maximum Z particle transverse momentum threshold for event selection.
    float MinTrackPT  = CL.GetDouble("MinTrackPT", 1);      // Minimum track transverse momentum threshold for track selection.
-   float MaxZPT      = CL.GetDouble("MaxZPT", 120);        // Maximum Z particle transverse momentum threshold for event selection.
    float MaxTrackPT  = CL.GetDouble("MaxTrackPT", 2);      // Maximum track transverse momentum threshold for track selection.
-   int MaxHiBin      = CL.GetInt   ("MaxHiBin", 200);      // Maximum hiBin value for event selection. hiBin.
    int MinHiBin      = CL.GetInt   ("MinHiBin", 0);        // Minimum hiBin value for event selection.
+   int MaxHiBin      = CL.GetInt   ("MaxHiBin", 200);      // Maximum hiBin value for event selection. hiBin.
 
    Parameters par(MinZPT, MaxZPT, MinTrackPT, MaxTrackPT, MinHiBin, MaxHiBin);
-   par.input         = CL.Get      ("Input",   "sample/HISingleMuon.root");                // Input file
-   par.mixFile       = CL.Get      ("MixFile", "sample/HISingleMuon.root");                // Input Mix file
+   par.input         = CL.Get      ("Input",   "mergedSample/HISingleMuon-v4.root");                // Input file
+   par.mixFile       = CL.Get      ("MixFile", "mergedSample/HISingleMuon-v4.root");                // Input Mix file
    par.output        = CL.Get      ("Output",  "output.root");                             // Output file
    par.isSelfMixing  = CL.GetBool  ("IsSelfMixing", true); // Determine if the analysis is self-mixing
    par.isGenZ        = CL.GetBool  ("IsGenZ", false);      // Determine if the analysis is using Gen level Z     
    bool IsData       = CL.GetBool  ("IsData", false);      // Determines whether the analysis is being run on actual data.
    bool IsPP         = CL.GetBool  ("IsPP", false);        // Flag to indicate if the analysis is for Proton-Proton collisions.
+   par.isPUReject    = CL.GetBool  ("IsPUReject", false);  // Flag to reject PU sample for systemaitcs.
+   par.isMuTagged    = CL.GetBool  ("IsMuTagged", true);   // Default is true
    par.scaleFactor   = CL.GetDouble("Fraction", 1.00);     // Fraction of event processed in the sample
    par.nThread       = CL.GetInt   ("nThread", 1);         // The number of threads to be used for parallel processing.
    par.nChunk        = CL.GetInt   ("nChunk", 1);          // Specifies which chunk (segment) of the data to process, used in parallel processing.
