@@ -42,6 +42,8 @@ public:
     bool isGenZ;           // isGenZ flag
     bool isMuTagged;       // Flag to enable/disable muon tagging requirement
     bool isPUReject;       // Flag to reject PU sample for systemaitcs.
+    bool isHiBinUp;        // Flag to do systematics with HiBinUp
+    bool isHiBinDown;      // Flag to do systematics with HiBinDown
 
    void printParameters() const {
        cout << "Input file: " << input << endl;
@@ -66,16 +68,38 @@ public:
    }
 };
 
+
+//============================================================//
+// Function to check for configuration errors
+//============================================================//
+bool checkError(const Parameters& par) {
+    if (par.isSelfMixing && par.input != par.mixFile) {
+        std::cout << "Error! Self-mixing mode but assigned different input and mix files. Please check the macro." << std::endl;
+        return true;  // Return true indicates an error was found
+    }
+
+    if (par.isHiBinUp && par.isHiBinDown) {
+        std::cout << "Error! Cannot do hiBinUp and hiBinDown simultaneously!" << std::endl;
+        return true;  // Return true indicates an error was found
+    }
+
+    // No errors found
+    return false;
+}
+
+
 //======= eventSelection =====================================//
 // Check if the event mass eventSelection criteria
 // MinZPT < zPt < MaxZPT
 // MinHiBin , hiBin < MaxHiBin
 //============================================================//
 bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
+   int effectiveHiBin = par.isHiBinUp ? b->hiBinUp : (par.isHiBinDown ? b->hiBinDown : b->hiBin);
+
    bool foundZ = false;            
    if (par.isPUReject && b->NVertex!=1) return 0;
-   if (b->hiBin< par.MinHiBin) return 0;
-   if (b->hiBin>=par.MaxHiBin) return 0;
+   if (effectiveHiBin< par.MinHiBin) return 0;
+   if (effectiveHiBin>=par.MaxHiBin) return 0;
    if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
    if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])<60) return 0;
    if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])>120) return 0;
@@ -269,16 +293,15 @@ int main(int argc, char *argv[])
    bool IsPP         = CL.GetBool  ("IsPP", false);        // Flag to indicate if the analysis is for Proton-Proton collisions.
    par.isPUReject    = CL.GetBool  ("IsPUReject", false);  // Flag to reject PU sample for systemaitcs.
    par.isMuTagged    = CL.GetBool  ("IsMuTagged", true);   // Default is true
+   par.isHiBinUp     = CL.GetBool  ("IsHiBinUp", false);    // Default is false
+   par.isHiBinDown   = CL.GetBool  ("IsHiBinUp", false);    // Default is false
    par.scaleFactor   = CL.GetDouble("Fraction", 1.00);     // Fraction of event processed in the sample
    par.nThread       = CL.GetInt   ("nThread", 1);         // The number of threads to be used for parallel processing.
    par.nChunk        = CL.GetInt   ("nChunk", 1);          // Specifies which chunk (segment) of the data to process, used in parallel processing.
    par.nMix          = CL.GetInt   ("nMix", 10);           // Number of mixed events to be considered in the analysis.
    par.mix = 0;
    
-   if (par.isSelfMixing && par.input!=par.mixFile) {
-      cout <<"Error! Self-mixing mode but assigned different input and mix files. Please check the macro."<<endl;
-      return -1;
-   }
+   if (checkError(par)) return -1;
        
    // Analyze Data
    DataAnalyzer analyzer(par.input.c_str(), par.mixFile.c_str(), par.output.c_str(), "Data");

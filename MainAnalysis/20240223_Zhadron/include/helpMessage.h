@@ -25,14 +25,20 @@ int printHelpMessage(int argc, char *argv[]) {
               << "  --IsGenZ               Flag to use generated level Z information.\n"
               << "  --IsData               Flag to specify if the input is real data.\n"
               << "  --IsPP                 Flag for Proton-Proton collision data.\n"
+              << "  --IsMuTagged           Flag for doing Z decay muon matching.\n"
+              << "  --IsPUReject           Flag to reject PU sample for systematics.\n"
               << "  --Fraction <value>     Fraction of event to be processed.\n"
               << "  --nThread <value>      Number of threads for parallel processing.\n"
               << "  --nChunk <value>       Specifies which chunk of the data to process.\n"
-              << "  --nMix <value>         Number of mixed events to be used.\n\n"
+              << "  --nMix <value>         Number of mixed events to be used.\n"
+              << "  --IsHiBinUp            Flag to use the hiBinUp value for event selection.\n"
+              << "  --IsHiBinDown          Flag to use the hiBinDown value for event selection.\n\n"
               << "Example:\n"
               << "  " << argv[0] << " --Input sample/HISingleMuon.root --Output output.root --MinZPT 20 --MaxZPT 100\n";
-	   return 1;
+           return 1;
         }
     }
     return 0;  
 }
+
+
