@@ -551,7 +551,7 @@ int main(int argc, char *argv[])
             continue;
          
          TLorentzVector V; 
-         V.SetPtEtaPhiM(TrackPT, TrackEta, TrackPhi, M_PI);
+         V.SetPtEtaPhiM(TrackPT, TrackEta, TrackPhi, 0.139570);
 
          if(CheckZ == true && (DoGenLevel ? (GoodGenZ == true) : (GoodRecoZ == true)))
          {
