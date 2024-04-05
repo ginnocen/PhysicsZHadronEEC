@@ -516,6 +516,7 @@ public:
    float BackgroundHF;
    float SignalVZ;
 
+   float EventWeight;
    float NCollWeight;
    float ZWeight;
    float VZWeight;
