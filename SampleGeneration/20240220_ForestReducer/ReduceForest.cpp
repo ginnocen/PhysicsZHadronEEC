@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
          MZHadron.NPU = MEvent.npus->at(0);
       else
          MZHadron.NPU = 0;
+      MZHadron.EventWeight = MEvent.weight;
 
       ////////////////////////////
       ////////// Vertex //////////
@@ -551,7 +552,7 @@ int main(int argc, char *argv[])
             continue;
          
          TLorentzVector V; 
-         V.SetPtEtaPhiM(TrackPT, TrackEta, TrackPhi, M_PI);
+         V.SetPtEtaPhiM(TrackPT, TrackEta, TrackPhi, 0.139570);
 
          if(CheckZ == true && (DoGenLevel ? (GoodGenZ == true) : (GoodRecoZ == true)))
          {
