@@ -57,8 +57,11 @@ int main(int argc, char *argv[])
    {
       MZHadron.GetEntry(iE);
 
-      Bar.Update(iE);
-      Bar.Print();
+      if(EntryCount < 500 || (iE % (EntryCount / 300) == 0))
+      {
+         Bar.Update(iE);
+         Bar.Print();
+      }
 
       if(IsPP == false)
       {
