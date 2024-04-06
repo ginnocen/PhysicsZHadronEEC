@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
    {
       MZHadron.GetEntry(iE);
 
-      if(EntryCount < 300 || (iE % (EntryCount / 250) == 0))
+      if(EntryCount < 500 || (iE % (EntryCount / 300) == 0))
       {
          Bar.Update(iE);
          Bar.Print();

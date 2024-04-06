@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
          MZHadron.NPU = MEvent.npus->at(0);
       else
          MZHadron.NPU = 0;
+      MZHadron.EventWeight = MEvent.weight;
 
       ////////////////////////////
       ////////// Vertex //////////
