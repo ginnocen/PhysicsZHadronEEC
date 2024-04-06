@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
          }
       }
          
-      double EventWeight1 = MZHadron.VZWeight * MZHadron.ZWeight;
+      double EventWeight1 = MZHadron.EventWeight * MZHadron.VZWeight * MZHadron.ZWeight;
 
       if(IsPP == true && IsReco == true && MZHadron.NVertex != 1)
          continue;
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
       
          double EventWeight = EventWeight1;
          if(SelfMixingMode == false)
-            EventWeight = EventWeight1 * MZHadronBackground.VZWeight * MZHadronBackground.ZWeight;
+            EventWeight = EventWeight1 * MZHadronBackground.EventWeight * MZHadronBackground.VZWeight * MZHadronBackground.ZWeight;
 
          int N1 = (MZHadron.trackPt != nullptr) ? MZHadron.trackPt->size() : 0;
          int N2 = N1;
