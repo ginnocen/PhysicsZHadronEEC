@@ -92,6 +92,7 @@ bool HiEventTreeMessenger::GetEntry(int iEntry)
       return false;
 
    Tree->GetEntry(iEntry);
+
    return true;
 }
    
@@ -2059,6 +2060,30 @@ bool ZHadronMessenger::GetEntry(int iEntry)
       return false;
 
    Tree->GetEntry(iEntry);
+
+   // fill derived quantities
+   GoodGenZ = true;
+   if(genZY == nullptr)
+      GoodGenZ = false;
+   else if(genZY->size() == 0)
+      GoodGenZ = false;
+   else
+   {
+      if(genZMass->at(0) > 120 || genZMass->at(0) < 60)   GoodGenZ = false;
+      if(genZY->at(0) < -2.4 || genZY->at(0) > 2.4)       GoodGenZ = false;
+   }
+   
+   GoodRecoZ = true;
+   if(zY == nullptr)
+      GoodRecoZ = false;
+   else if(zY->size() == 0)
+      GoodRecoZ = false;
+   else
+   {
+      if(zMass->at(0) > 120 || zMass->at(0) < 60)   GoodRecoZ = false;
+      if(zY->at(0) < -2.4 || zY->at(0) > 2.4)       GoodRecoZ = false;
+   }
+
    return true;
 }
 

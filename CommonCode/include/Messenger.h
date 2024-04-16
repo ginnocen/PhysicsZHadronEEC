@@ -572,6 +572,10 @@ public:
    std::vector<float> *genMuDR;
    std::vector<float> *genMuDphiS;
 
+public:   // Derived quantities
+   bool GoodGenZ;
+   bool GoodRecoZ;
+
 private:
    bool WriteMode;
    bool Initialized;

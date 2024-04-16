@@ -21,11 +21,13 @@ int main(int argc, char *argv[])
    string BackgroundFileName = SelfMixingMode ? "NONE" : CL.Get("Background");
    string OutputFileName     = CL.Get("Output");
    double Fraction           = CL.GetDouble("Fraction", 1.00);
-   double MinPT              = CL.GetDouble("MinPT", 3.00);
+   double MinPT              = CL.GetDouble("MinPT", 2.5);
    bool IsPP                 = CL.GetBool("IsPP", false);
    bool IsReco               = CL.GetBool("IsReco", true);
    bool CheckZ               = CL.GetBool("CheckZ", true);
+   bool CheckBackgroundZ     = SelfMixingMode ? false : CL.GetBool("CheckBackgroundZ", false);
    bool CheckSignalHiBin     = CL.GetBool("CheckSignalHiBin", true);
+   bool DoZReweight          = CL.GetBool("DoZReweight", false);
    double HiBinMin           = CL.GetDouble("HiBinMin", 0);
    double HiBinMax           = CL.GetDouble("HiBinMax", 60);
    bool CheckSignalHF        = CL.GetBool("CheckSignalHF", false);
@@ -33,7 +35,12 @@ int main(int argc, char *argv[])
    double SignalHFMax        = CL.GetDouble("SignalHFMax", 155015.70);
    double HFShift            = CL.GetDouble("HFShift", 767.2);
    int OverSample            = SelfMixingMode ? 1 : CL.GetInt("OverSample", 100);
-   int SubEvent              = CL.GetInteger("SubEvent", -1);
+   vector<int> SubEvent      = CL.GetIntegerVector("SubEvent", vector<int>{-1});
+
+   if(SubEvent.size() == 0)
+      SubEvent = vector<int>{-1, -1};
+   if(SubEvent.size() == 1)
+      SubEvent.push_back(SubEvent[0]);
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
@@ -55,6 +62,8 @@ int main(int argc, char *argv[])
    TH1D HPhi("HPhi", ";#Delta#phi", 100, -M_PI, M_PI);
    TH1D HPT1("HPT1", ";p_{T}", 100, 0, 50);
    TH1D HPT2("HPT2", ";p_{T}", 100, 0, 50);
+   TH1D HDeltaR("HDeltaR", ";#DeltaR;", 100, 0, 4);
+   TH1D HDeltaREEC("HDeltaREEC", ";#DeltaR;", 100, 0, 4);
 
    TFile SignalFile(SignalFileName.c_str());
    TFile BackgroundFile(BackgroundFileName.c_str());
@@ -94,7 +103,9 @@ int main(int argc, char *argv[])
             if(MZHadron.SignalHF >= SignalHFMax)  continue;
          }
       }
-         
+      
+      if(IsReco == false)
+         MZHadron.VZWeight = 1;
       double EventWeight1 = MZHadron.EventWeight * MZHadron.VZWeight * MZHadron.ZWeight;
 
       if(IsPP == true && IsReco == true && MZHadron.NVertex != 1)
@@ -103,16 +114,13 @@ int main(int argc, char *argv[])
       {
          if(IsReco == true)
          {
-            if(MZHadron.zY == nullptr)
-               continue;
-            if(MZHadron.zY->size() == 0)
+            if(MZHadron.GoodRecoZ == false)
                continue;
             if(MZHadron.zPt->at(0) < 20)
                continue;
-            if(MZHadron.zMass->at(0) > 120 || MZHadron.zMass->at(0) < 60)
-               continue;
-            if(MZHadron.zY->at(0) < -2.4 || MZHadron.zY->at(0) > 2.4)
-               continue;
+
+            if(DoZReweight == true)
+               EventWeight1 = EventWeight1 * exp(MZHadron.zPt->at(0) * log(1.2) / 80);
 
             HZY.Fill(MZHadron.zY->at(0), EventWeight1);
             HZPT.Fill(MZHadron.zPt->at(0), EventWeight1);
@@ -120,20 +128,21 @@ int main(int argc, char *argv[])
          }
          else
          {
-            if(MZHadron.genZY == nullptr)
-               continue;
-            if(MZHadron.genZY->size() == 0)
+            if(MZHadron.GoodGenZ == false)
                continue;
             if(MZHadron.genZPt->at(0) < 20)
                continue;
-            if(MZHadron.genZMass->at(0) > 120 || MZHadron.genZMass->at(0) < 60)
-               continue;
-            if(MZHadron.genZY->at(0) < -2.4 || MZHadron.genZY->at(0) > 2.4)
-               continue;
+            
+            if(DoZReweight == true)
+               EventWeight1 = EventWeight1 * exp(MZHadron.genZPt->at(0) * log(1.2) / 80);
 
             HZY.Fill(MZHadron.genZY->at(0), EventWeight1);
             HZPT.Fill(MZHadron.genZPt->at(0), EventWeight1);
             HZMass.Fill(MZHadron.genZMass->at(0), EventWeight1);
+
+            // cout << "I'm here" << endl;
+            // cout << MZHadron.genZY->at(0) << " " << EventWeight1 << endl;
+            // cout << MZHadron.VZWeight << " " << MZHadron.ZWeight << endl;
          }
       }
 
@@ -142,6 +151,7 @@ int main(int argc, char *argv[])
          if(SelfMixingMode == false)
          {
             double BackgroundHF = -1;
+            bool GoodBackgroundZ = false;
             do
             {
                BackgroundIndex = BackgroundIndex + 1;
@@ -149,10 +159,20 @@ int main(int argc, char *argv[])
                   BackgroundIndex = 0;
                MZHadronBackground.GetEntry(BackgroundIndex);
                BackgroundHF = MZHadronBackground.SignalHF;
-            } while(BackgroundHF < SignalHFMin - HFShift || BackgroundHF > SignalHFMax - HFShift);
+
+               if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) > 20)
+                  GoodBackgroundZ = true;
+               if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) > 20)
+                  GoodBackgroundZ = true;
+
+            } while(BackgroundHF < SignalHFMin - HFShift || BackgroundHF > SignalHFMax - HFShift
+               || (MZHadronBackground.trackPt != nullptr && MZHadronBackground.trackPt->size() == 0)
+               || (CheckBackgroundZ == true && GoodBackgroundZ == false));
          }
       
          double EventWeight = EventWeight1;
+         if(IsReco == false)
+            MZHadronBackground.VZWeight = 1;
          if(SelfMixingMode == false)
             EventWeight = EventWeight1 * MZHadronBackground.EventWeight * MZHadronBackground.VZWeight * MZHadronBackground.ZWeight;
 
@@ -161,8 +181,14 @@ int main(int argc, char *argv[])
          if(SelfMixingMode == false)
             N2 = (MZHadronBackground.trackPt != nullptr) ? MZHadronBackground.trackPt->size() : 0;
 
+         if(N1 == 0)   // no track to mix into?
+            continue;
+         if(N2 == 0)
+            cout << "oho! N1 = " << N1 << ", N2 = " << N2 << endl;
+
          double SumWeight1 = 0;
       
+         // Z-hadron correlation plots.  We always need a good Z otherwise this does not make sense.
          if(CheckZ == true)
          {
             for(int iP = 0; iP < N2; iP++)
@@ -181,10 +207,24 @@ int main(int argc, char *argv[])
                   continue;
                if(PT < MinPT)
                   continue;
-            
+
                int SubEvent2 = SelfMixingMode ? MZHadron.subevent->at(iP) : MZHadronBackground.subevent->at(iP);
-               if(SubEvent >= 0 && SubEvent2 != SubEvent)
+               if(SubEvent[1] >= 0 && SubEvent2 != SubEvent[1])
                   continue;
+
+               // if(PT > 20 && SelfMixingMode == false)
+               // {
+               //    cout << "Track " << Eta << " " << Phi << " " << PT << endl;
+               //    cout << "Z " << MZHadronBackground.genZY->at(0)
+               //       << " " << MZHadronBackground.genZPhi->at(0)
+               //       << " " << MZHadronBackground.genZPt->at(0) << endl;
+               //    cout << "Mu1 " << MZHadronBackground.genMuEta1->at(0)
+               //       << " " << MZHadronBackground.genMuPhi1->at(0)
+               //       << " " << MZHadronBackground.genMuPt1->at(0) << endl;
+               //    cout << "Mu2 " << MZHadronBackground.genMuEta2->at(0)
+               //       << " " << MZHadronBackground.genMuPhi2->at(0)
+               //       << " " << MZHadronBackground.genMuPt2->at(0) << endl;
+               // }
 
                HZHEta.Fill(+DEta, 0.5 * TrackWeight);
                HZHEta.Fill(-DEta, 0.5 * TrackWeight);
@@ -194,6 +234,7 @@ int main(int argc, char *argv[])
             }
          }
 
+         // Track-pair correlation plots.  Here we do not necessary need a good Z
          for(int iP1 = 0; iP1 < N1; iP1++)
          {
             double PT1 = MZHadron.trackPt->at(iP1);
@@ -206,7 +247,7 @@ int main(int argc, char *argv[])
             if(PT1 < MinPT)
                continue;
 
-            if(SubEvent >= 0 && MZHadron.subevent->at(iP1) != SubEvent)
+            if(SubEvent[0] >= 0 && MZHadron.subevent->at(iP1) != SubEvent[0])
                continue;
 
             SumWeight1 = SumWeight1 + Weight1;
@@ -228,10 +269,14 @@ int main(int argc, char *argv[])
                if(PT2 < MinPT)
                   continue;
 
-               if(SubEvent >= 0 && SubEvent2 != SubEvent)
+               if(SubEvent[1] >= 0 && SubEvent2 != SubEvent[1])
                   continue;
 
                double Weight = Weight1 * Weight2 * EventWeight;
+
+               double DeltaEta = Eta1 - Eta2;
+               double DeltaPhi = GetDeltaPhi(Phi1, Phi2);
+               double DeltaR = sqrt(DeltaEta * DeltaEta + DeltaPhi * DeltaPhi);
 
                HEtaPhi.Fill(Eta1 - Eta2, GetDeltaPhi(Phi1, Phi2), 0.25 * Weight);
                HEtaPhi.Fill(Eta2 - Eta1, GetDeltaPhi(Phi1, Phi2), 0.25 * Weight);
@@ -243,6 +288,8 @@ int main(int argc, char *argv[])
                HPhi.Fill(-GetDeltaPhi(Phi1, Phi2), 0.5 * Weight);
                HPT1.Fill(max(PT1, PT2), Weight);
                HPT2.Fill(min(PT1, PT2), Weight);
+               HDeltaR.Fill(DeltaR, Weight);
+               HDeltaREEC.Fill(DeltaR, Weight * PT1 * PT2);
             }
          }
          
@@ -275,6 +322,8 @@ int main(int argc, char *argv[])
    HPhi.Write();
    HPT1.Write();
    HPT2.Write();
+   HDeltaR.Write();
+   HDeltaREEC.Write();
 
    OutputFile.Close();
 
