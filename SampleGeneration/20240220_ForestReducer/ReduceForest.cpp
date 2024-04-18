@@ -357,6 +357,15 @@ int main(int argc, char *argv[])
       ////////// Z weights //////////
       ///////////////////////////////
 
+      MZHadron.InterSampleZWeight = 1;
+      if(IsPP == true && IsData == false)   // reweight Z from pp MC to embedded MC
+      {
+         if(DoGenLevel == true && GoodGenZ == true)
+            MZHadron.InterSampleZWeight = GetInterSampleZWeight(MZHadron.genZPt->at(0));
+         if(DoGenLevel == false && GoodRecoZ == true)
+            MZHadron.InterSampleZWeight = GetInterSampleZWeight(MZHadron.zPt->at(0));
+      }
+
       MZHadron.ZWeight = 1;
       if(DoGenLevel == false && GoodRecoZ == true)
       {
