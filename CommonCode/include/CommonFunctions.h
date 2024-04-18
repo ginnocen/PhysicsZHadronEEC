@@ -81,6 +81,7 @@ double GetZWeightPPDataTrigger(double PT, double Y);
 double GetVZWeightPbPb(double VZ);
 double GetVZWeightPP(double VZ);
 int GetHiBin(double hiHF, int Variation);
+double GetIntraSampleZWeight(double PT);
 
 // Function implementations
 
@@ -771,5 +772,26 @@ int GetHiBin(double hiHF, int Variation)
 
    return -1;
 }
+
+double GetIntraSampleZWeight(double PT)
+{
+   // This function applies on pp DYLL to get embedded DYLL based on Z PT
+
+   if(PT < 1)
+      PT = 1;
+   if(PT > 150)
+      PT = 150;
+
+   double P0 =     0.985164;
+   double P1 =  -0.00116944;
+   double P2 =  5.26231e-05;
+   double P3 = -2.21173e-07;
+
+   double Weight = P0 + P1 * PT + P2 * PT * PT + P3 * PT * PT * PT;
+
+   return Weight;
+}
+
+
 
 #endif
