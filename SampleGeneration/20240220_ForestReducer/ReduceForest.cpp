@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
    string TrackEfficiencyPath         = (DoGenLevel == false) ? CL.Get("TrackEfficiencyPath") : "";
    bool DoTrackResidual               = DoGenLevel ? false : CL.GetBool("DoTrackResidual", false);
    vector<string> TrackResidualPath   = (DoTrackResidual == true) ? CL.GetStringVector("TrackResidualPath") : vector<string>();
+   bool DoInterSampleZWeight          = CL.GetBool("DoInterSampleZWeight", (IsPP == true && IsData == false));
 
    string PFTreeName                  = IsPP ? "pfcandAnalyzer/pfTree" : "particleFlowAnalyser/pftree";
    PFTreeName                         = CL.Get("PFTree", PFTreeName);
@@ -358,7 +359,7 @@ int main(int argc, char *argv[])
       ///////////////////////////////
 
       MZHadron.InterSampleZWeight = 1;
-      if(IsPP == true && IsData == false)   // reweight Z from pp MC to embedded MC
+      if(DoInterSampleZWeight == true)   // reweight Z from pp MC to embedded MC
       {
          if(DoGenLevel == true && GoodGenZ == true)
             MZHadron.InterSampleZWeight = GetInterSampleZWeight(MZHadron.genZPt->at(0));
