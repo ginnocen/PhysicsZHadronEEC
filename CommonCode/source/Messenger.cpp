@@ -1968,6 +1968,7 @@ bool ZHadronMessenger::Initialize(bool SkipTrack)
 
    Tree->SetBranchAddress("EventWeight", &EventWeight);
    Tree->SetBranchAddress("NCollWeight", &NCollWeight);
+   Tree->SetBranchAddress("InterSampleZWeight", &InterSampleZWeight);
    Tree->SetBranchAddress("ZWeight", &ZWeight);
    Tree->SetBranchAddress("VZWeight", &VZWeight);
    Tree->SetBranchAddress("ExtraZWeight", &ExtraZWeight);
@@ -2156,6 +2157,7 @@ bool ZHadronMessenger::SetBranch(TTree *T)
 
    Tree->Branch("EventWeight",            &EventWeight,  "EventWeight/F");
    Tree->Branch("NCollWeight",            &NCollWeight,  "NCollWeight/F");
+   Tree->Branch("InterSampleZWeight",     &InterSampleZWeight,"InterSampleZWeight/F");
    Tree->Branch("ZWeight",                &ZWeight,      "ZWeight/F");
    Tree->Branch("VZWeight",               &VZWeight,     "VZWeight/F");
    Tree->Branch("ExtraZWeight",           &ExtraZWeight, "ExtraZWeight[12]/F");
@@ -2229,6 +2231,7 @@ void ZHadronMessenger::Clear()
 
    EventWeight = 1;
    NCollWeight = 1;
+   InterSampleZWeight = 1;
    ZWeight = 1;
    VZWeight = 1;
    for(int i = 0; i < 12; i++)
@@ -2306,6 +2309,7 @@ void ZHadronMessenger::CopyNonTrack(ZHadronMessenger &M)
 
    EventWeight  = M.EventWeight;
    NCollWeight  = M.NCollWeight;
+   InterSampleZWeight = M.InterSampleZWeight;
    ZWeight      = M.ZWeight;
    VZWeight     = M.VZWeight;
    for(int i = 0; i < 12; i++)

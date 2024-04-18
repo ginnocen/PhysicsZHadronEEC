@@ -518,6 +518,7 @@ public:
 
    float EventWeight;
    float NCollWeight;
+   float InterSampleZWeight;
    float ZWeight;
    float VZWeight;
    float ExtraZWeight[12];
