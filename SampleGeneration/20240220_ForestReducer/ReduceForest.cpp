@@ -17,7 +17,7 @@ using namespace std;
 
 int main(int argc, char *argv[]);
 double GetHFSum(PFTreeMessenger *M);
-double GetGenHFSum(GenParticleTreeMessenger *M);
+double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
 
 int main(int argc, char *argv[])
 {
@@ -336,6 +336,7 @@ int main(int argc, char *argv[])
 
       MZHadron.SignalHF = DoGenLevel ? GetGenHFSum(&MGen) : (DoSumET ? MEvent.hiHF : GetHFSum(&MPF));
       MZHadron.SignalVZ = MEvent.vz;
+      MZHadron.SubEvent0HF = DoGenLevel ? GetGenHFSum(&MGen) : -1;
       
       bool GoodGenZ = MZHadron.genZPt->size() > 0 && (MZHadron.genZPt->at(0) > MinZPT);
       bool GoodRecoZ = MZHadron.zPt->size() > 0 && (MZHadron.zPt->at(0) > MinZPT);
@@ -654,7 +655,7 @@ double GetHFSum(PFTreeMessenger *M)
    return Sum;
 }
 
-double GetGenHFSum(GenParticleTreeMessenger *M)
+double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent)
 {
    if(M == nullptr)
       return -1;
@@ -672,6 +673,13 @@ double GetGenHFSum(GenParticleTreeMessenger *M)
          continue;
       if(M->PT->at(iGen) < 0.4)   // for now...
          continue;
+
+      if(SubEvent >= 0)   // if SubEvent >= 0, check subevent
+      {
+         if(M->SubEvent->at(iGen) != SubEvent)
+            continue;
+      }
+
       Sum = Sum + M->PT->at(iGen) * cosh(M->Eta->at(iGen));
    }
 
