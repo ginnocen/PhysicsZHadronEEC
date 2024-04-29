@@ -514,6 +514,7 @@ public:
 
    float SignalHF;
    float BackgroundHF;
+   float SubEvent0HF;
    float SignalVZ;
 
    float EventWeight;

@@ -1964,6 +1964,7 @@ bool ZHadronMessenger::Initialize(bool SkipTrack)
    
    Tree->SetBranchAddress("SignalHF", &SignalHF);
    Tree->SetBranchAddress("BackgroundHF", &BackgroundHF);
+   Tree->SetBranchAddress("SubEvent0HF", &SubEvent0HF);
    Tree->SetBranchAddress("SignalVZ", &SignalVZ);
 
    Tree->SetBranchAddress("EventWeight", &EventWeight);
@@ -2153,6 +2154,7 @@ bool ZHadronMessenger::SetBranch(TTree *T)
 
    Tree->Branch("SignalHF",               &SignalHF,     "SignalHF/F");
    Tree->Branch("BackgroundHF",           &BackgroundHF, "BackgroundHF/F");
+   Tree->Branch("SubEvent0HF",            &SubEvent0HF,  "SubEvent0HF/F");
    Tree->Branch("SignalVZ",               &SignalVZ,     "SignalVZ/F");
 
    Tree->Branch("EventWeight",            &EventWeight,  "EventWeight/F");
@@ -2227,6 +2229,7 @@ void ZHadronMessenger::Clear()
 
    SignalHF = -1;
    BackgroundHF = -1;
+   SubEvent0HF = -1;
    SignalVZ = -999;
 
    EventWeight = 1;
@@ -2305,6 +2308,7 @@ void ZHadronMessenger::CopyNonTrack(ZHadronMessenger &M)
 
    SignalHF     = M.SignalHF;
    BackgroundHF = M.BackgroundHF;
+   SubEvent0HF  = M.SubEvent0HF;
    SignalVZ     = M.SignalVZ;
 
    EventWeight  = M.EventWeight;
