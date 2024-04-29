@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
 
       MZHadron.SignalHF = DoGenLevel ? GetGenHFSum(&MGen) : (DoSumET ? MEvent.hiHF : GetHFSum(&MPF));
       MZHadron.SignalVZ = MEvent.vz;
-      MZHadron.SubEvent0HF = DoGenLevel ? GetGenHFSum(&MGen) : -1;
+      MZHadron.SubEvent0HF = DoGenLevel ? GetGenHFSum(&MGen, 0) : -1;
       
       bool GoodGenZ = MZHadron.genZPt->size() > 0 && (MZHadron.genZPt->at(0) > MinZPT);
       bool GoodRecoZ = MZHadron.zPt->size() > 0 && (MZHadron.zPt->at(0) > MinZPT);
