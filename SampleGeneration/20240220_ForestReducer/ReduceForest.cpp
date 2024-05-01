@@ -21,7 +21,7 @@ double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
 
 int main(int argc, char *argv[])
 {
-   string VersionString = "V0.0";
+   string VersionString = "V7.0";
    
    CommandLine CL(argc, argv);
 
