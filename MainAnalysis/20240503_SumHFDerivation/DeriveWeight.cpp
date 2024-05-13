@@ -9,16 +9,29 @@ using namespace std;
 
 #include "CommandLine.h"
 #include "PlotHelper4.h"
+#include "SetStyle.h"
 
 int main(int argc, char *argv[])
 {
-   TFile FileDY("Input/DYLLMC_Gen.root");
-   TFile FileMB("Input/MinBiasMC_Gen.root");
+   SetThesisStyle();
+
+   CommandLine CL(argc, argv);
+
+   string FileNameDY = CL.Get("DY", "Input/DYLLMC_Gen.root");
+   string FileNameMB = CL.Get("MB", "Input/MinBiasMC_Gen.root");
+   string OutputFileName = CL.Get("Output", "GenWeight_Centrality010.root");
+   string PDFFileName = CL.Get("PDF", "SumHFWeight.pdf");
+
+   string HFShift = CL.Get("HFShift", "(745.5-117.6*exp(-0.1148*genZPt[0]))");
+   string Selection = CL.Get("Selection", "(genZPt[0] > 20 && hiBin >= 0 && hiBin < 20)");
+
+   TFile FileDY(FileNameDY.c_str());
+   TFile FileMB(FileNameMB.c_str());
 
    TTree *TDY = (TTree *)FileDY.Get("Tree");
    TTree *TMB = (TTree *)FileMB.Get("Tree");
 
-   TFile OutputFile("GenWeight_Centrality010.root", "RECREATE");
+   TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
    int NBins = 200;
    double Bins[201] = {0};
@@ -30,12 +43,25 @@ int main(int argc, char *argv[])
    TH1D HMB("HMB", ";;", NBins, Bins);
    TH1D HDY("HDY", ";;", NBins, Bins);
 
-   TDY->SetAlias("HFShift", "(745.5-117.6*exp(-0.1148*genZPt[0]))");
-   TDY->Draw("SignalHF-HFShift>>HDY", "genZPt[0] > 20 && hiBin >= 0 && hiBin < 20");
-   TMB->Draw("SignalHF>>HMB", "");
+   HMB.SetStats(0);
+   HDY.SetStats(0);
 
-   PdfFileHelper PdfFile("SumHFWeight.pdf");
+   TDY->SetAlias("HFShift", HFShift.c_str());
+   TDY->Draw("SignalHF-HFShift>>HDY", Selection.c_str());
+   TMB->Draw("SignalHF>>HMB", "");
+   
+   TH1D *HRatio = (TH1D *)HDY.Clone("HRatio");
+   HRatio->Divide(&HMB);
+
+   HMB.SetLineColor(kBlue);
+   HDY.SetLineColor(kRed);
+   HMB.SetLineWidth(2);
+   HDY.SetLineWidth(2);
+
+   PdfFileHelper PdfFile(PDFFileName);
    PdfFile.AddTextPage("SumHF Weights");
+
+   PdfFile.AddTextPage({"HF Shift = \"" + HFShift + "\"", "Selection = \"" + Selection + "\""});
 
    TCanvas Canvas;
    Canvas.SetLogx();
@@ -46,9 +72,6 @@ int main(int argc, char *argv[])
 
    PdfFile.AddCanvas(Canvas);
 
-   TH1D *HRatio = (TH1D *)HDY.Clone("HRatio");
-   HRatio->Divide(&HMB);
-
    PdfFile.AddPlot(HRatio, "", true, false, false, true);
 
    PdfFile.AddTimeStampPage();
@@ -57,7 +80,8 @@ int main(int argc, char *argv[])
    OutputFile.cd();
 
    TF1 F("HFShift", "[0]-[1]*exp(-[2]*x)", 0, 1000);
-   F.SetParameters(745.5, 117.6, 0.1148);
+   // F.SetParameters(745.5, 117.6, 0.1148);
+   F.SetParameters(763.1539360425459-82.36975543861207, 101.2995115409047, 0.09666472578946463);
 
    HMB.Write();
    HDY.Write();
