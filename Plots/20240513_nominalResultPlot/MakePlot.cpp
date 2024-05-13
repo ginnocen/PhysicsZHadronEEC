@@ -22,7 +22,7 @@ void SetAxis(TGaxis *A);
 TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color);
 TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color);
 void HistogramSelfSubtract(TH1D *H);
-TH1D *SubtractHistogram(TH1D *H, TH1D *HRef);
+//TH1D *SubtractHistogram(TH1D *H, TH1D *HRef);
 void PrintHistogram(TFile *F, string Name);
 void PrintHistogram(TH1D *H);
 
@@ -34,27 +34,13 @@ int main(int argc, char *argv[])
 
    string OutputBase = CL.Get("OutputBase", "Plot");
 
-   vector<string> DataFiles       = CL.GetStringVector("DataFiles",
-      vector<string>{"Root/PPData.root", "Root/Data.root"});
-   bool SkipSubtract              = CL.GetBool("SkipSubtract", true);
-   vector<string> SubtractFiles   = CL.GetStringVector("SubtractFiles",
-      vector<string>{"None", "Root/DataMix.root"});
-   double SubtractFudgeFactor     = CL.GetDouble("SubtractFudgeFactor", 1.00);
-   bool SkipSelfSubtract          = CL.GetBool("SkipSelfSubtract", false);
+   vector<string> DataFiles       = CL.GetStringVector("DataFiles", vector<string>{"pp.root","test.root"});
    bool SkipSystematics           = CL.GetBool("SkipSystematics", false);
    vector<string> SystematicFiles = (SkipSystematics == false) ? CL.GetStringVector("SystematicFiles") : vector<string>();
-   vector<string> CurveLabels     = CL.GetStringVector("CurveLabels",
-      vector<string>{"pp", "PbPb 0-30%"});
+   vector<string> CurveLabels     = CL.GetStringVector("CurveLabels", vector<string>{"pp", "PbPb 0-30%"});
    string ToPlot                  = CL.Get("ToPlot", "DeltaPhi");
-   vector<string> Tags            = CL.GetStringVector("Tags",
-   vector<string>
-   {
-      "Centrality_0_30_ZPT_40_200_TrackPT_10_20_PV_0_10",
-      "Centrality_0_30_ZPT_40_200_TrackPT_20_50_PV_0_10",
-      "Centrality_0_30_ZPT_40_200_TrackPT_50_100_PV_0_10",
-      // "Centrality_30_90_ZPT_40_200_TrackPT_10_20_PV_0_10",
-      // "Centrality_30_90_ZPT_40_200_TrackPT_20_50_PV_0_10",
-      // "Centrality_30_90_ZPT_40_200_TrackPT_50_100_PV_0_10"
+   vector<string> Tags            = CL.GetStringVector("Tags", vector<string> {
+         "Result", "Result", "Result"
    });
    vector<string> SecondTags      = CL.GetStringVector("SecondTags", vector<string>());
    vector<string> Labels          = CL.GetStringVector("Labels",
@@ -126,24 +112,11 @@ int main(int argc, char *argv[])
    for(int iF = 0; iF < NFile; iF++)
       File[iF] = new TFile(DataFiles[iF].c_str());
    
-   vector<TFile *> SubtractFile(NFile);
-   if(SkipSubtract == false)
-   {
-      for(int iF = 0; iF < NFile; iF++)
-         SubtractFile[iF] = new TFile(SubtractFiles[iF].c_str());
-   }
-   
    vector<TFile *> SysFile(NFile);
    if(SkipSystematics == false)
    {
       for(int iF = 0; iF < NFile; iF++)
          SysFile[iF] = new TFile(SystematicFiles[iF].c_str());
-
-      // for(int iF = 0; iF < NFile; iF++)
-      // {
-      //    for(int iC = 0; iC < NColumn; iC++)
-      //       PrintHistogram(SysFile[iF], Form("H%s_%s", ToPlot.c_str(), Tags[iC].c_str()));
-      // }
    }
 
    // Setup canvas and pads
@@ -234,30 +207,12 @@ int main(int argc, char *argv[])
          string Tag = Tags[iC];
          if(SecondTags.size() == NColumn && iF == 1)
             Tag = SecondTags[iC];
-            
-         // cout << "???" << endl;
-         // PrintHistogram(SysFile[iF], Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-         // PrintHistogram(File[iF], Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-         
+         //cout <<"Get:" <<File[iF]<<" "<< ToPlot<<" "<< Tag<<" "<< Colors[iF]<<endl;
          HData[iC][iF] = GetHistogram(File[iF], ToPlot, Tag, Colors[iF]);
-         
-         if(SkipSubtract == false)
-         {
-            TH1D *HSubtract = GetHistogram(SubtractFile[iF], ToPlot, Tag, Colors[iF]);
-            if(HSubtract != nullptr)
-               HData[iC][iF]->Add(HSubtract, -1 * SubtractFudgeFactor);
-         }
-         
-         if(SkipSelfSubtract == false)
-            HistogramSelfSubtract(HData[iC][iF]);
-         
-         // PrintHistogram(File[iF], Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-         // PrintHistogram(HData[iC][iF]);
-         
-         // PrintHistogram(SysFile[iF], Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
       }
    }
    
+   // Retrieve systematics
    vector<vector<TH1D *>> HDataSys(NColumn);
    if(SkipSystematics == false)
    {
@@ -270,30 +225,10 @@ int main(int argc, char *argv[])
             string Tag = Tags[iC];
             if(SecondTags.size() == NColumn && iF == 1)
                Tag = SecondTags[iC];
-            
-            // cout << "!!!" << endl;
-            // PrintHistogram(SysFile[iF], Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-            
             HDataSys[iC][iF] = BuildSystematics(SysFile[iF], HData[iC][iF], ToPlot, Tag, Colors[iF]);
-   
-            // PrintHistogram(SysFile[iF], Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
          }   
       }
 
-   }
-   
-   vector<vector<TH1D *>> HDataDiff(NColumn);
-   vector<vector<TH1D *>> HDataSysDiff(NColumn);
-   for(int iC = 0; iC < NColumn; iC++)
-   {
-      HDataDiff[iC].resize(NFile);
-      HDataSysDiff[iC].resize(NFile);
-      for(int iF = 0; iF < NFile; iF++)
-      {
-         HDataDiff[iC][iF] = SubtractHistogram(HData[iC][iF], HData[iC][0]);
-         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr)
-            HDataSysDiff[iC][iF] = SubtractHistogram(HDataSys[iC][iF], HData[iC][0]);
-      }
    }
 
    // Setup legend
@@ -308,12 +243,12 @@ int main(int argc, char *argv[])
    {
       Pad[iC]->cd();
       HWorld[iC]->Draw("axis");
-
+      cout <<iC<<endl;
       for(int iF = 0; iF < NFile; iF++)
       {
-         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr)
-            HDataSys[iC][iF]->Draw("same e2");
-         HData[iC][iF]->Draw("same");
+         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr) HDataSys[iC][iF]->Draw("same e2");
+	 HData[iC][iF]->Draw("same");
+	 cout <<iF<<endl;
       }
 
       Latex.SetTextAngle(0);
@@ -338,21 +273,27 @@ int main(int argc, char *argv[])
          Legend.Draw();
       }
 
+
+      // Draw difference
       RPad[iC]->cd();
       HRWorld[iC]->Draw("axis");
       
       for(int iF = 0; iF < NFile; iF++)
       {
-         if(SkipSystematics == false && HDataSysDiff[iC][iF] != nullptr)
-            HDataSysDiff[iC][iF]->Draw("same e2");
-         HDataDiff[iC][iF]->Draw("same");
+         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr) {
+            TH1D *hDiffSys = (TH1D*) HDataSys[iC][iF]->Clone(Form("hDiffSys_%d_%d",iC,iF));
+   	    hDiffSys->Add(HDataSys[iC][0], -1);
+	    hDiffSys->Draw("same e2");
+	 }   
+	    
+         TH1D *hDiff = (TH1D*) HData[iC][iF]->Clone(Form("hDiff_%d_%d",iC,iF));
+	 hDiff->Add(HData[iC][0], -1);
+	 hDiff->Draw("same");
       }
    }
 
    // Finally we have the plots
    Canvas.SaveAs((OutputBase + ".pdf").c_str());
-   // Canvas.SaveAs((OutputBase + ".png").c_str());
-   // Canvas.SaveAs((OutputBase + ".C").c_str());
 
    // Close input files
    for(int iF = 0; iF < NFile; iF++)
@@ -410,17 +351,15 @@ void SetAxis(TGaxis *A)
 
 TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color)
 {
-   TH1D *H  = (TH1D *)F->Get(Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-   TH1D *HN = (TH1D *)F->Get(Form("HN_%s", Tag.c_str()));
-
-   if(H == nullptr || HN == nullptr)
+   TH1D *H  = (TH1D *)F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str()));
+   if(H == nullptr)
       return nullptr;
 
    static int ID = 0;
    ID = ID + 1;
    H = (TH1D *)H->Clone(Form("H%d", ID));
 
-   double Integral = HN->GetBinContent(1);
+   double Integral = 1;//HN->GetBinContent(1);
 
    H->Scale(1 / Integral);
    for(int i = 1; i <= H->GetNbinsX(); i++)
@@ -445,26 +384,26 @@ TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color)
 
 TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color)
 {
-   TH1D *HSys = (TH1D *)F->Get(Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-   if(HSys == nullptr)
-      return nullptr;
-   // HSys = (TH1D *)HSys->Clone();
-
-   // PrintHistogram(F, Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-   
    static int ID = 0;
    ID = ID + 1;
+   TH1D *HSys = (TH1D *)(F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str())));
+   HSys = (TH1D*)HSys->Clone(Form("HSysValue%d",ID));
+   if(HSys == nullptr)
+      return nullptr;
+
+   for(int i = 1; i <= H->GetNbinsX(); i++)
+   {
+      double XMin = H->GetXaxis()->GetBinLowEdge(i);
+      double XMax = H->GetXaxis()->GetBinUpEdge(i);
+
+      HSys->SetBinContent(i, HSys->GetBinContent(i) / (XMax - XMin));
+      HSys->SetBinError(i, HSys->GetBinError(i) / (XMax - XMin));
+   }
+   
    TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
    for(int i = 1; i <= H->GetNbinsX(); i++)
       HResult->SetBinError(i, HSys->GetBinContent(i));
    HResult->SetFillColorAlpha(Color, 0.25);
-         
-   // PrintHistogram(F, Form("H%s_%s", ToPlot.c_str(), Tag.c_str()));
-
-   // cout << F->GetName() << endl;
-   // cout << H->GetName() << endl;
-   // for(int i = 1; i <= H->GetNbinsX(); i++)
-   //    cout << i << " " << HSys->GetBinContent(i) << endl;
 
    return HResult;
 }
