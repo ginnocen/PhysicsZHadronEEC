@@ -8,6 +8,7 @@ using namespace std;
 #include "CommandLine.h"
 #include "ProgressBar.h"
 #include "Messenger.h"
+#include "CommonFunctions.h"
 
 int main(int argc, char *argv[]);
 double GetDeltaPhi(double Phi1, double Phi2);
@@ -21,7 +22,7 @@ int main(int argc, char *argv[])
    string BackgroundFileName = SelfMixingMode ? "NONE" : CL.Get("Background");
    string OutputFileName     = CL.Get("Output");
    double Fraction           = CL.GetDouble("Fraction", 1.00);
-   double MinPT              = CL.GetDouble("MinPT", 2.5);
+   double MinPT              = CL.GetDouble("MinPT", 1.5);
    bool IsPP                 = CL.GetBool("IsPP", false);
    bool IsReco               = CL.GetBool("IsReco", true);
    bool CheckZ               = CL.GetBool("CheckZ", true);
@@ -41,6 +42,12 @@ int main(int argc, char *argv[])
       SubEvent = vector<int>{-1, -1};
    if(SubEvent.size() == 1)
       SubEvent.push_back(SubEvent[0]);
+
+   double BinMin = 0.001;
+   double BinMax = 4;
+   double Bins[101] = {0};
+   for(int iB = 0; iB <= 100; iB++)
+      Bins[iB] = BinMin * exp((log(BinMax) - log(BinMin)) / 100 * iB);
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
@@ -64,6 +71,8 @@ int main(int argc, char *argv[])
    TH1D HPT2("HPT2", ";p_{T}", 100, 0, 50);
    TH1D HDeltaR("HDeltaR", ";#DeltaR;", 100, 0, 4);
    TH1D HDeltaREEC("HDeltaREEC", ";#DeltaR;", 100, 0, 4);
+   TH1D HDeltaRLog("HDeltaRLog", ";#DeltaR;", 100, Bins);
+   TH1D HDeltaREECLog("HDeltaREECLog", ";#DeltaR;", 100, Bins);
 
    TFile SignalFile(SignalFileName.c_str());
    TFile BackgroundFile(BackgroundFileName.c_str());
@@ -119,8 +128,10 @@ int main(int argc, char *argv[])
             if(MZHadron.zPt->at(0) < 20)
                continue;
 
+            // if(DoZReweight == true)
+            //    EventWeight1 = EventWeight1 * exp(MZHadron.zPt->at(0) * log(1.2) / 80);
             if(DoZReweight == true)
-               EventWeight1 = EventWeight1 * exp(MZHadron.zPt->at(0) * log(1.2) / 80);
+               EventWeight1 = EventWeight1 * GetInterSampleZWeight(MZHadron.zPt->at(0));
 
             HZY.Fill(MZHadron.zY->at(0), EventWeight1);
             HZPT.Fill(MZHadron.zPt->at(0), EventWeight1);
@@ -133,8 +144,10 @@ int main(int argc, char *argv[])
             if(MZHadron.genZPt->at(0) < 20)
                continue;
             
+            // if(DoZReweight == true)
+            //    EventWeight1 = EventWeight1 * exp(MZHadron.genZPt->at(0) * log(1.2) / 80);
             if(DoZReweight == true)
-               EventWeight1 = EventWeight1 * exp(MZHadron.genZPt->at(0) * log(1.2) / 80);
+               EventWeight1 = EventWeight1 * GetInterSampleZWeight(MZHadron.genZPt->at(0));
 
             HZY.Fill(MZHadron.genZY->at(0), EventWeight1);
             HZPT.Fill(MZHadron.genZPt->at(0), EventWeight1);
@@ -212,20 +225,6 @@ int main(int argc, char *argv[])
                if(SubEvent[1] >= 0 && SubEvent2 != SubEvent[1])
                   continue;
 
-               // if(PT > 20 && SelfMixingMode == false)
-               // {
-               //    cout << "Track " << Eta << " " << Phi << " " << PT << endl;
-               //    cout << "Z " << MZHadronBackground.genZY->at(0)
-               //       << " " << MZHadronBackground.genZPhi->at(0)
-               //       << " " << MZHadronBackground.genZPt->at(0) << endl;
-               //    cout << "Mu1 " << MZHadronBackground.genMuEta1->at(0)
-               //       << " " << MZHadronBackground.genMuPhi1->at(0)
-               //       << " " << MZHadronBackground.genMuPt1->at(0) << endl;
-               //    cout << "Mu2 " << MZHadronBackground.genMuEta2->at(0)
-               //       << " " << MZHadronBackground.genMuPhi2->at(0)
-               //       << " " << MZHadronBackground.genMuPt2->at(0) << endl;
-               // }
-
                HZHEta.Fill(+DEta, 0.5 * TrackWeight);
                HZHEta.Fill(-DEta, 0.5 * TrackWeight);
                HZHPhi.Fill(+DPhi, 0.5 * TrackWeight);
@@ -290,6 +289,8 @@ int main(int argc, char *argv[])
                HPT2.Fill(min(PT1, PT2), Weight);
                HDeltaR.Fill(DeltaR, Weight);
                HDeltaREEC.Fill(DeltaR, Weight * PT1 * PT2);
+               HDeltaRLog.Fill(DeltaR, Weight);
+               HDeltaREECLog.Fill(DeltaR, Weight * PT1 * PT2);
             }
          }
          
@@ -324,6 +325,8 @@ int main(int argc, char *argv[])
    HPT2.Write();
    HDeltaR.Write();
    HDeltaREEC.Write();
+   HDeltaRLog.Write();
+   HDeltaREECLog.Write();
 
    OutputFile.Close();
 

@@ -42,7 +42,8 @@ TestRunNoCentrality: Execute
 TestRunGen: Execute
 	./Execute --Signal Input/ppMCGen.root --Background None --SelfMixing true --Output ppMCxppMC_Gen.root \
 		--IsPP true
-	./Execute --Signal Input/DYLLGen.root --Background None --SelfMixing true --Output DYLLxDYLL_Gen.root
+	./Execute --Signal Input/DYLLGen.root --Background None --SelfMixing true --Output DYLLxDYLL_Gen.root \
+		--CheckSignalHiBin true --SignalHiBinMin 20 --SignalHiBinMax 60
 	./Execute --Signal Input/DYLLGen.root --Background Input/HydjetGen.root --SelfMixing false \
 		--Output DYLLxHydjet_Nominal_Gen.root --HFShift 817.4 --SignalHFMin 43688.527 --SignalHFMax 181342.2
 
@@ -99,9 +100,12 @@ TestRunGenSelf: Execute
 	hadd -f DYLLS1xDYLLS1_Different.root DYLLS1xDYLLS1_Different1.root DYLLS1xDYLLS1_Different2.root
 
 Test: Execute
-	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLS1xDYLLS1.root \
-		--IsPP false --IsReco false --CheckSignalHiBin false --CheckSignalHF false --CheckZ false --Fraction 1 \
-		--SubEvent 1,1
+	./Execute --Signal Input/PPMC_Gen.root --Background None --SelfMixing true --Output ppMCxppMC.root \
+		--IsPP true --IsReco false --CheckZ true --CheckSignalHiBin false --CheckSignalHF false
+	./Execute --Signal Input/PPMC_Gen.root --Background None --SelfMixing true --Output ppMCxppMC_Reweight.root \
+		--IsPP true --IsReco false --CheckZ true --CheckSignalHiBin false --CheckSignalHF false --DoZReweight true
+	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLS0xDYLLS0.root \
+		--IsPP false --IsReco false --CheckSignalHiBin false --CheckSignalHF false --CheckZ true --SubEvent 0,0
 
 Execute: FillCorrelation.cpp
 	g++ FillCorrelation.cpp -o Execute \
@@ -113,13 +117,18 @@ TestRunPlot: ExecutePlot
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,HydjetxHydjet.root,HydjetxHydjet_Different.root --Coefficients -1,1,-2,-1,2 --Histograms HZY,HZPT,HZMass,HPhi,HEta,HPT1,HPT2 --Output FullPlotsAlternate.pdf
 	./ExecutePlot --Input ppMCxHydjet.root,DYLLxHydjet_Nominal.root,HydjetxHydjet_Different.root --Coefficients -1,1,-1 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass --Output PartialPlots.pdf
 	./ExecutePlot --Input ppMCxppMC.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,DYLLS0xDYLLS0.root --Coefficients -1,1,-1,0 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlots.pdf
-	./ExecutePlot --Input ppMCxppMC_Reweight.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,DYLLS0xDYLLS0.root --Coefficients -1,1,-1,0 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsReweight.pdf
+	./ExecutePlot --Input ppMCxppMC_Reweight.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,DYLLS0xDYLLS0.root --Coefficients 0,1,-1,0 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsReweight.pdf
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root --Coefficients -1,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsAlternate.pdf
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root --Coefficients 0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsSelf.pdf
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsSelf.pdf
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different1.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsSelf1.pdf
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsSelf2.pdf
 
 TestRunGenPlot: ExecutePlot
 	./ExecutePlot --Input ppMCxppMC_Gen.root,DYLLxDYLL_Gen.root,DYLLxHydjet_Nominal_Gen.root --Histograms HPhi
+
+TestRunGenWeightPlot: ExecutePlot
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,ppMCxppMC.root,ppMCxppMC_Reweight.root --Coefficients 1,0,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsWeighting.pdf
 
 ExecutePlot: QuickPlot.cpp
 	g++ QuickPlot.cpp -o ExecutePlot \

@@ -34,10 +34,12 @@ int main(int argc, char *argv[])
    vector<TH2D *> H2(N);
 
    PdfFileHelper PdfFile(OutputFileName);
-   PdfFile.AddTextPage("Juicy plots");
+   PdfFile.AddTextPage("Good plots");
 
    for(string H : Histograms)
    {
+      PdfFile.AddTextPage(H);
+
       vector<TH1D *> H1(N);
       for(int i = 0; i < N; i++)
       {
@@ -51,8 +53,9 @@ int main(int argc, char *argv[])
 
       for(int i = 0; i < N; i++)
       {
+         H1[i]->SetTitle(Form("Sum of all entries = %.2f", H1[i]->Integral()));
          PdfFile.AddPlot(H1[i]);
-         PdfFile.AddTextPage(Form("Sum of all entries = %.2f", H1[i]->Integral()));
+         H1[i]->SetTitle("");
          cout << InputFileNames[i] << " " << H1[i]->Integral() << endl;
          // PdfFile.AddPlot(H2[i], "colz");
       }
@@ -124,6 +127,24 @@ int main(int argc, char *argv[])
       HDiff->SetMarkerColor(HDiff->GetLineColor());
       // PdfFile.AddPlot(HDiff, "hist");
       PdfFile.AddPlot(HDiff, "");
+      
+      TH2D HWorld3("HWorld3", ";;", 100, XMin, XMax, 100, 0, 2);
+      HWorld3.GetXaxis()->SetTitle(H1[0]->GetXaxis()->GetTitle());
+      HWorld3.GetYaxis()->SetTitle(Form("Ratio to %s", InputFileNames[0].c_str()));
+      HWorld3.SetStats(0);
+      HWorld3.Draw();
+      for(int i = 0; i < N; i++)
+      {
+         TH1D *HRatio = (TH1D *)H1[i]->Clone(Form("HRatio%d", i));
+         HRatio->SetMarkerStyle(20);
+         HRatio->SetMarkerColor(HRatio->GetLineColor());
+         HRatio->Divide(H1[0]);
+         HRatio->Draw("same");
+      }
+
+      Legend.Draw();
+      Canvas.SetLogy(false);
+      PdfFile.AddCanvas(Canvas);
    }
 
    PdfFile.AddTimeStampPage();
