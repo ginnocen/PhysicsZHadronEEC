@@ -21,7 +21,7 @@ double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
 
 int main(int argc, char *argv[])
 {
-   string VersionString = "V7.0";
+   string VersionString = "V7.1";
    
    CommandLine CL(argc, argv);
 
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
       }
       
       MEvent.GetEntry(iE);
-      if(DoGenLevel == true)   MGen.GetEntry(iE);
+      MGen.GetEntry(iE);
       if(IsPP == true)         MTrackPP.GetEntry(iE);
       else                     MTrack.GetEntry(iE);
       MPF.GetEntry(iE);
@@ -336,7 +336,8 @@ int main(int argc, char *argv[])
 
       MZHadron.SignalHF = DoGenLevel ? GetGenHFSum(&MGen) : (DoSumET ? MEvent.hiHF : GetHFSum(&MPF));
       MZHadron.SignalVZ = MEvent.vz;
-      MZHadron.SubEvent0HF = DoGenLevel ? GetGenHFSum(&MGen, 0) : -1;
+      MZHadron.SubEvent0HF = GetGenHFSum(&MGen, 0);
+      MZHadron.SubEventAllHF = GetGenHFSum(&MGen, -1);
       
       bool GoodGenZ = MZHadron.genZPt->size() > 0 && (MZHadron.genZPt->at(0) > MinZPT);
       bool GoodRecoZ = MZHadron.zPt->size() > 0 && (MZHadron.zPt->at(0) > MinZPT);
