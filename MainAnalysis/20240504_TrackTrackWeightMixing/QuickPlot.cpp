@@ -10,6 +10,10 @@ using namespace std;
 #include "PlotHelper4.h"
 #include "SetStyle.h"
 
+int main(int argc, char *argv[]);
+void DivideByBinWidth(TH1D *H);
+double Integral(TH1D *H);
+
 int main(int argc, char *argv[])
 {
    vector<int> Colors = GetCVDColors6();
@@ -59,6 +63,9 @@ int main(int argc, char *argv[])
          H1[i] = (TH1D *)InputFiles[i]->Get(H.c_str());
          TH1D *HCount = (TH1D *)InputFiles[i]->Get("HCount");
          H1[i]->Scale(MixingScale[i] / HCount->GetBinContent(1));
+         DivideByBinWidth(H1[i]);
+
+         cout << "Histogram " << H << ", index " << i << ", integral = " << HCount->GetBinContent(1) << endl;
 
          // H2[i] = (TH2D *)InputFiles[i]->Get("HEtaPhi");
          // H2[i]->Scale(1 / HCount->GetBinContent(1));
@@ -66,10 +73,10 @@ int main(int argc, char *argv[])
 
       for(int i = 0; i < N; i++)
       {
-         H1[i]->SetTitle(Form("Sum of all entries = %.2f", H1[i]->Integral()));
+         H1[i]->SetTitle(Form("Sum of all entries = %.2f", Integral(H1[i])));
          PdfFile.AddPlot(H1[i]);
          H1[i]->SetTitle("");
-         cout << InputFileNames[i] << " " << H1[i]->Integral() << endl;
+         cout << InputFileNames[i] << " " << Integral(H1[i]) << endl;
          // PdfFile.AddPlot(H2[i], "colz");
       }
 
@@ -102,17 +109,17 @@ int main(int argc, char *argv[])
          H1[i]->SetLineWidth(2);
          H1[i]->SetLineColor(Colors[i]);
          H1[i]->Draw("hist same");
-         Legend.AddEntry(H1[i], Form("%s (%.3f) [%.0f]", InputFileNames[i].c_str(), H1[i]->Integral(), Coefficients[i]), "l");
+         Legend.AddEntry(H1[i], Form("%s (%.3f) [%.0g]", InputFileNames[i].c_str(), Integral(H1[i]), Coefficients[i]), "l");
       }
 
       TH1D *HDiff = (TH1D *)H1[0]->Clone("HDiff");
-      HDiff->SetLineWidth(2);
+      HDiff->SetLineWidth(1);
       HDiff->SetLineColor(Colors[N]);
-      HDiff->SetLineStyle(kDashed);
+      // HDiff->SetLineStyle(kDashed);
       HDiff->Scale(Coefficients[0]);
       for(int i = 1; i < N; i++)
          HDiff->Add(H1[i], Coefficients[i]);
-      Legend.AddEntry(HDiff, Form("Combined (%.3f)", HDiff->Integral()), "l");
+      Legend.AddEntry(HDiff, Form("Combined (%.3f)", Integral(HDiff)), "l");
       HDiff->Draw("hist same");
 
       Legend.Draw();
@@ -154,6 +161,9 @@ int main(int argc, char *argv[])
          HRatio->Divide(H1[0]);
          HRatio->Draw("same");
       }
+      TH1D *HDiffRatio = (TH1D *)HDiff->Clone("HDiffRatio");
+      HDiffRatio->Divide(H1[0]);
+      HDiffRatio->Draw("hist same");
 
       Legend.Draw();
       Canvas.SetLogy(false);
@@ -172,6 +182,40 @@ int main(int argc, char *argv[])
    return 0;
 }
 
+void DivideByBinWidth(TH1D *H)
+{
+   if(H == nullptr)
+      return;
+
+   int N = H->GetNbinsX();
+   for(int i = 1; i <= N; i++)
+   {
+      double L = H->GetXaxis()->GetBinLowEdge(i);
+      double R = H->GetXaxis()->GetBinUpEdge(i);
+
+      H->SetBinContent(i, H->GetBinContent(i) / (R - L));
+      H->SetBinError(i, H->GetBinError(i) / (R - L));
+   }
+}
+
+double Integral(TH1D *H)
+{
+   double Answer = 0;
+
+   if(H == nullptr)
+      return Answer;
+
+   int N = H->GetNbinsX();
+   for(int i = 1; i <= N; i++)
+   {
+      double L = H->GetXaxis()->GetBinLowEdge(i);
+      double R = H->GetXaxis()->GetBinUpEdge(i);
+
+      Answer = Answer + H->GetBinContent(i) * (R - L);
+   }
+
+   return Answer;
+}
 
 
 

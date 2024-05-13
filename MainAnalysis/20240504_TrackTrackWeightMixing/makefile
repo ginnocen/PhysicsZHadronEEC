@@ -1,88 +1,34 @@
 
 
-default: TestRunGenSelf TestRunPlot Deploy
-
-TestRunGenSelf: Execute
-	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLS0xDYLLS0.root \
-		--IsPP false --IsReco false --CheckSignalHiBin false --CheckSignalHF false --CheckZ true --SubEvent 0,0
-	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLxDYLL.root \
-		--IsPP false --IsReco false --CheckSignalHiBin false --CheckSignalHF false --CheckZ true --SubEvent -1,-1
-	./Execute --Signal Input/DYLLMC_Gen1.root --Background Input/DYLLMC_Gen2.root --SelfMixing false \
-		--IsPP false --IsReco false --Output DYLLxDYLLS1.root --HFShift 0 --OverSample 5 \
-		--CheckSignalHiBin false --CheckSignalHF false --SignalHFMin 0 --SignalHFMax 1000000 --CheckZ true \
-		--SubEvent -1,1 --CheckBackgroundZ true
-	./Execute --Signal Input/DYLLMC_Gen1.root --Background Input/DYLLMC_Gen2.root --SelfMixing false \
-		--IsPP false --IsReco false --Output DYLLxDYLLS0.root --HFShift 0 --OverSample 5 \
-		--CheckSignalHiBin false --CheckSignalHF false --SignalHFMin 0 --SignalHFMax 1000000 --CheckZ true \
-		--SubEvent -1,0 --CheckBackgroundZ true
-	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLS1xDYLLS1.root \
-		--IsPP false --IsReco false --CheckSignalHiBin false --CheckSignalHF false --CheckZ true --Fraction 1 \
-		--SubEvent 1,1 --CheckBackgroundZ true
-	./Execute --Signal Input/DYLLMC_Gen1.root --Background Input/DYLLMC_Gen2.root --SelfMixing false \
-		--Output DYLLS1xDYLLS1_Different1.root --CheckSignalHiBin false --CheckSignalHF false \
-		--SignalHFMin 0 --SignalHFMax 1000000 --HFShift 0 --OverSample 5 --CheckZ true \
-		--IsPP false --IsReco false --SubEvent 1,1 --CheckBackgroundZ true
-	./Execute --Signal Input/DYLLMC_Gen2.root --Background Input/DYLLMC_Gen1.root --SelfMixing false \
-		--Output DYLLS1xDYLLS1_Different2.root --CheckSignalHiBin false --CheckSignalHF false \
-		--SignalHFMin 0 --SignalHFMax 1000000 --HFShift 0 --OverSample 5 --CheckZ true \
-		--IsPP false --IsReco false --SubEvent 1,1 --CheckBackgroundZ true
-	hadd -f DYLLS1xDYLLS1_Different.root DYLLS1xDYLLS1_Different1.root DYLLS1xDYLLS1_Different2.root
-
-TestRunGen: Execute
-	# ./Execute --Signal Input/DYLLMC_Gen.root --Background Input/MinBiasMC_Gen.root --SelfMixing false \
-	# 	--IsPP false --IsReco false --Output DYLLxHydjet.root --HFShift 0 --OverSample 5 \
-	# 	--CheckSignalHiBin false --CheckSignalHF false --SignalHFMin 0 --SignalHFMax 1000000 --CheckZ true \
-	# 	--SubEvent -1,-1 --CheckBackgroundZ false
-	./Execute --Signal Input/MinBiasMC_Gen.root --Background None --SelfMixing true --Output HydjetxHydjet.root \
-		--IsPP false --IsReco false --CheckSignalHiBin false --CheckSignalHF false --CheckZ false --Fraction 1 \
-		--SubEvent -1,-1 --CheckBackgroundZ false
-	./Execute --Signal Input/MinBiasMC_Gen1.root --Background Input/MinBiasMC_Gen2.root --SelfMixing false \
-		--Output HydjetxHydjet_Different1.root --CheckSignalHiBin false --CheckSignalHF false \
-		--SignalHFMin 0 --SignalHFMax 1000000 --HFShift 0 --OverSample 5 --CheckZ false \
-		--IsPP false --IsReco false --SubEvent -1,-1 --CheckBackgroundZ false
-	./Execute --Signal Input/MinBiasMC_Gen2.root --Background Input/MinBiasMC_Gen1.root --SelfMixing false \
-		--Output HydjetxHydjet_Different2.root --CheckSignalHiBin false --CheckSignalHF false \
-		--SignalHFMin 0 --SignalHFMax 1000000 --HFShift 0 --OverSample 5 --CheckZ false \
-		--IsPP false --IsReco false --SubEvent -1,-1 --CheckBackgroundZ false
-	hadd -f HydjetxHydjet_Different.root HydjetxHydjet_Different1.root HydjetxHydjet_Different2.root
-
-TestRunGenCentrality: Execute
-	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLS0xDYLLS0_Centrality.root \
-		--IsPP false --IsReco false --CheckSignalHiBin true --CheckSignalHF false --CheckZ true --SubEvent 0,0 \
-		--SignalHFMin 20 --SignalHFMax 60
-	./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLxDYLL_Centrality.root \
-		--IsPP false --IsReco false --CheckSignalHiBin true --CheckSignalHF false --CheckZ true --SubEvent -1,-1 \
-		--SignalHFMin 20 --SignalHFMax 60
-	./Execute --Signal Input/DYLLMC_Gen.root --Background Input/MinBiasMC_Gen.root --SelfMixing false \
-		--IsPP false --IsReco false --Output DYLLxHydjet_Centrality.root --HFShift 0 --OverSample 5 \
-		--CheckSignalHiBin true --CheckSignalHF false --SignalHFMin 0 --SignalHFMax 1000000 --CheckZ true \
-		--SubEvent -1,-1 --CheckBackgroundZ true --SignalHFMin 20 --SignalHFMax 60
-	# ./Execute --Signal Input/DYLLMC_Gen1.root --Background Input/DYLLMC_Gen2.root --SelfMixing false \
-	# 	--IsPP false --IsReco false --Output DYLLxDYLLS0_Centrality.root --HFShift 0 --OverSample 5 \
-	# 	--CheckSignalHiBin true --CheckSignalHF false --SignalHFMin 0 --SignalHFMax 1000000 --CheckZ true \
-	# 	--SubEvent -1,0 --CheckBackgroundZ true --SignalHFMin 20 --SignalHFMax 60
-	# ./Execute --Signal Input/DYLLMC_Gen.root --Background None --SelfMixing true --Output DYLLS1xDYLLS1.root \
-	# 	--IsPP false --IsReco false --CheckSignalHiBin true --CheckSignalHF false --CheckZ true --Fraction 1 \
-	# 	--SubEvent 1,1 --CheckBackgroundZ true --SignalHFMin 20 --SignalHFMax 60
-	# ./Execute --Signal Input/DYLLMC_Gen1.root --Background Input/DYLLMC_Gen2.root --SelfMixing false \
-	# 	--Output DYLLS1xDYLLS1_Different1.root --CheckSignalHiBin false --CheckSignalHF false \
-	# 	--SignalHFMin 0 --SignalHFMax 1000000 --HFShift 0 --OverSample 5 --CheckZ true \
-	# 	--IsPP false --IsReco false --SubEvent 1,1 --CheckBackgroundZ true
-	# ./Execute --Signal Input/DYLLMC_Gen2.root --Background Input/DYLLMC_Gen1.root --SelfMixing false \
-	# 	--Output DYLLS1xDYLLS1_Different2.root --CheckSignalHiBin false --CheckSignalHF false \
-	# 	--SignalHFMin 0 --SignalHFMax 1000000 --HFShift 0 --OverSample 5 --CheckZ true \
-	# 	--IsPP false --IsReco false --SubEvent 1,1 --CheckBackgroundZ true
-	hadd -f DYLLS1xDYLLS1_Different.root DYLLS1xDYLLS1_Different1.root DYLLS1xDYLLS1_Different2.root
-
-
-Test: Execute
+# default: TestRun TestRunPlot Deploy
+default: TestRunRecoPlot Deploy
 
 Execute: FillCorrelation.cpp
 	g++ FillCorrelation.cpp -o Execute \
 		`root-config --cflags --libs` \
 		$(ProjectBase)/CommonCode/library/*.o -I$(ProjectBase)/CommonCode/include
 
+TestRun: Execute
+	bash RunReco.sh
+
 TestRunPlot: ExecutePlot
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Reco.root,DYLLxHydjet_Reco.root,PPMCxPPMC.root \
+		--Coefficients 0,0,1,-1,0 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsReco.pdf \
+		--SelfMixing 1,1,1,0,1
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL_Reco.root,DYLLxHydjet_Reco.root,HydjetxHydjet_Reco.root,HydjetxHydjet_Reco_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HDeltaR,HDeltaREEC --Output FullPlotsReco.pdf --SelfMixing 1,1,0,1,0
+
+TestRunRecoPlot: ExecutePlot
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality1030_Reco.root,DYLLxHydjet_Centrality1030_Reco.root \
+		--Coefficients 0,0,1,-1 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsCentrality1030Reco.pdf \
+		--SelfMixing 1,1,1,0
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality1030_Reco.root,DYLLxHydjet_Centrality1030_Reco.root \
+		--Coefficients 0,0,1,-1.004 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsCentrality1030RecoAdjusted.pdf \
+		--SelfMixing 1,1,1,0
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality010_Reco.root,DYLLxHydjet_Centrality010_Reco.root \
+		--Coefficients 0,0,1,-1 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsCentrality010Reco.pdf \
+		--SelfMixing 1,1,1,0
+
+TestRunGenPlot: ExecutePlot
 	# ./ExecutePlot --Input ppMCxppMC.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,HydjetxHydjet.root,HydjetxHydjet_Different.root --Coefficients -1,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass --Output FullPlots.pdf --SelfMixing 1,1,0,1,0
 	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,HydjetxHydjet.root,HydjetxHydjet_Different.root --Coefficients -1,1,-2,-1,2 --Histograms HZY,HZPT,HZMass,HPhi,HEta,HPT1,HPT2 --Output FullPlotsAlternate.pdf --SelfMixing 1,1,0,1,0
 	# ./ExecutePlot --Input ppMCxHydjet.root,DYLLxHydjet_Nominal.root,HydjetxHydjet_Different.root --Coefficients -1,1,-1 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass --Output PartialPlots.pdf --SelfMixing 0,0,0
@@ -90,7 +36,7 @@ TestRunPlot: ExecutePlot
 	# ./ExecutePlot --Input ppMCxppMC_Reweight.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,DYLLS0xDYLLS0.root --Coefficients 0,1,-1,0 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsReweight.pdf --SelfMixing 1,1,0,1
 	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root --Coefficients -1,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsAlternate.pdf --SelfMixing 1,1,0
 	##########
-	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root --Coefficients 0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsSelf.pdf --SelfMixing 1,1,0
+	./ExecutePlot --Input DYLLxHydjet.root,DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root --Coefficients 0,0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsSelf.pdf --SelfMixing 0,1,1,0
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsSelf.pdf --SelfMixing 1,1,0,1,0
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different1.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsSelf1.pdf --SelfMixing 1,1,0,1,0
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsSelf2.pdf --SelfMixing 1,1,0,1,0
@@ -113,7 +59,7 @@ TestRunPlot: ExecutePlot
 	./ExecutePlot --Input DYLLS0xDYLLS0_Centrality3050.root,DYLLxDYLL_Centrality3050.root,DYLLxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050_Different1.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsCentrality30501.pdf --SelfMixing 1,1,0,1,0
 	./ExecutePlot --Input DYLLS0xDYLLS0_Centrality3050.root,DYLLxDYLL_Centrality3050.root,DYLLxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsCentrality30502.pdf --SelfMixing 1,1,0,1,0
 
-TestRunGenPlot: ExecutePlot
+TestRunGenPlotTemp: ExecutePlot
 	./ExecutePlot --Input ppMCxppMC_Gen.root,DYLLxDYLL_Gen.root,DYLLxHydjet_Nominal_Gen.root --Histograms HPhi
 
 TestRunGenWeightPlot: ExecutePlot
