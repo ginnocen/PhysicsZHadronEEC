@@ -2104,6 +2104,7 @@ bool ZHadronMessenger::SetBranch(TTree *T)
    zPhi = new std::vector<float>();
    zPt = new std::vector<float>();
    genZMass = new std::vector<float>();
+   genZEta = new std::vector<float>();
    genZY = new std::vector<float>();
    genZPhi = new std::vector<float>();
    genZPt = new std::vector<float>();
