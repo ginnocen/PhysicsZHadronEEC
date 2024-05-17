@@ -106,7 +106,7 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
    if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
    if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])<60) return 0;
    if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])>120) return 0;
-   if (fabs((par.isGenZ ? (*b->genZEta)[0] : (*b->zEta)[0]))>2) return 0;
+   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))>2.4) return 0;
    if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])<par.MinZPT) return 0;
    if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])>par.MaxZPT) return 0;
    foundZ=1;   
@@ -131,8 +131,10 @@ bool matching(ZHadronMessenger *a, ZHadronMessenger *b, double shift) {
 //   double shift = 1018.0541;
 //   double shift = //1268.69;
 //    if (a->hiHF<97.13&&b->hiHF<97.13) return 1;
-    if (a->SignalHF<shift*1.05&&b->SignalHF<shift*1.05) return 1;
-    if ((b->SignalHF/(a->SignalHF-shift))<1.02&&b->SignalHF/(a->SignalHF-shift)>0.98) return 1;
+//    if (a->SignalHF<shift*1.05&&b->SignalHF<shift*1.05) return 1;
+//    if ((b->SignalHF/(a->SignalHF-shift))<1.02&&b->SignalHF/(a->SignalHF-shift)>0.97) return 1;
+    if (int((a->SignalHF-shift)/180)==int((b->SignalHF)/180)) return 1;
+//    if (fabs(b->SignalHF-a->SignalHF+shift)<300) return 1;
     return 0;
 }
 
@@ -203,6 +205,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 h->Fill(-trackDeta, trackDphi2, weight);
 		
 		if (!par.mix && (*MZSignal->subevent)[j]==0) {
+		   //cout <<"Event:"<<i<<" "<<trackDeta<<" "<<trackDphi2<<" "<<(*MZSignal->trackPt)[j]<<weight<<endl;
                    hSub0->Fill( trackDeta, trackDphi , weight);
                    hSub0->Fill(-trackDeta, trackDphi , weight);
                    hSub0->Fill( trackDeta, trackDphi2, weight);
