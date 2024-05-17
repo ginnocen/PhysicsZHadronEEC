@@ -14,6 +14,8 @@ int printHelpMessage(int argc, char *argv[]) {
               << "Options:\n"
               << "  --MinZPT <value>       Minimum Z particle transverse momentum threshold for event selection.\n"
               << "  --MaxZPT <value>       Maximum Z particle transverse momentum threshold for event selection.\n"
+              << "  --MinZY <value>        Minimum Z particle rapidity threshold for event selection.\n"
+              << "  --MaxZY <value>        Maximum Z particle rapidity threshold for event selection.\n"
               << "  --MinTrackPT <value>   Minimum track transverse momentum threshold for track selection.\n"
               << "  --MaxTrackPT <value>   Maximum track transverse momentum threshold for track selection.\n"
               << "  --MinHiBin <value>     Minimum hiBin value for event selection.\n"
@@ -33,6 +35,7 @@ int printHelpMessage(int argc, char *argv[]) {
               << "  --nMix <value>         Number of mixed events to be used.\n"
               << "  --IsHiBinUp            Flag to use the hiBinUp value for event selection.\n"
               << "  --IsHiBinDown          Flag to use the hiBinDown value for event selection.\n\n"
+              << "  --Shift                Shift of sumHF in MB matching\n\n"
               << "Example:\n"
               << "  " << argv[0] << " --Input sample/HISingleMuon.root --Output output.root --MinZPT 20 --MaxZPT 100\n";
            return 1;

@@ -12,65 +12,10 @@
 using namespace std;
 #include "utilities.h"     // Yen-Jie's random utility functions
 #include "helpMessage.h"   // Print out help message
+#include "parameter.h"     // The parameters used in the analysis
 #include "Messenger.h"     // Yi's Messengers for reading data files
 #include "CommandLine.h"   // Yi's Commandline bundle
 #include "ProgressBar.h"   // Yi's fish progress bar
-
-//============================================================//
-// Define analysis parameters
-//============================================================//
-class Parameters {
-public:
-    Parameters( float MinZPT, float MaxZPT, float MinTrackPT, float MaxTrackPT, int MinHiBin = 0, int MaxHiBin = 200, bool mix = false, float scaleFactor = 1.0, float nMix = 1)
-    : MinZPT(MinZPT), MaxZPT(MaxZPT), MinTrackPT(MinTrackPT), MaxTrackPT(MaxTrackPT), MinHiBin(MinHiBin), MaxHiBin(MaxHiBin), mix(mix), scaleFactor(scaleFactor), nMix(nMix) {}
-    string input;          // Input file name
-    string output;         // Output file name
-    string mixFile;        // Mix File name
-    float MinZPT;          // Lower limit of Z pt
-    float MaxZPT;          // Upper limit of Z pt
-    float MinTrackPT;      // Lower limit of track pt
-    float MaxTrackPT;      // Upper limit of track pt
-    float scaleFactor;     // Scale factor
-    float shift;           // shift in sumHF when doing mb matching
-    int MinHiBin;          // Lower limit of hiBin
-    int MaxHiBin;          // Upper limit of hiBin
-    int nThread;           // Number of Threads
-    int nChunk;            // Process the Nth chunk
-    bool mix;              // Mix flag
-    int nMix;              // Number of mixed events
-    TH1D *hShift;
-    bool isSelfMixing;     // isSelfMixing flag
-    bool isGenZ;           // isGenZ flag
-    bool isMuTagged;       // Flag to enable/disable muon tagging requirement
-    bool isPUReject;       // Flag to reject PU sample for systemaitcs.
-    bool isHiBinUp;        // Flag to do systematics with HiBinUp
-    bool isHiBinDown;      // Flag to do systematics with HiBinDown
-    bool isPP;             // Flag to check if this is a PP analysis
-
-   void printParameters() const {
-       cout << "Input file: " << input << endl;
-       cout << "Output file: " << output << endl;
-       cout << "Mix File: " << mixFile << endl;
-       cout << "MinZPT: " << MinZPT << " GeV/c" << endl;
-       cout << "MaxZPT: " << MaxZPT << " GeV/c" << endl;
-       cout << "MinTrackPT: " << MinTrackPT << " GeV/c" << endl;
-       cout << "MaxTrackPT: " << MaxTrackPT << " GeV/c" << endl;
-       cout << "isSelfMixing: " << (isSelfMixing ? "true" : "false") << endl;
-       cout << "isGenZ: " << (isGenZ ? "true" : "false") << endl;
-       cout << "Scale factor: " << scaleFactor << endl;
-       cout << "SumHF shift: " << shift << endl;
-       cout << "MinHiBin: " << MinHiBin << endl;
-       cout << "MaxHiBin: " << MaxHiBin << endl;
-       cout << "Number of Threads: " << nThread << endl;
-       cout << "Process the Nth chunk: " << nChunk << endl;
-       cout << "Mix flag: " << (mix ? "true" : "false") << endl;
-       cout << "Number of mixed events: " << nMix << endl;
-       cout << "Muon Tagging Enabled: " << (isMuTagged ? "true" : "false") << endl;
-       cout << "PU rejection: " << (isPUReject ? "true" : "false") << endl;
-       if (mix) cout << "Event mixing!" << endl;
-   }
-};
-
 
 //============================================================//
 // Function to check for configuration errors
@@ -90,7 +35,6 @@ bool checkError(const Parameters& par) {
     return false;
 }
 
-
 //======= eventSelection =====================================//
 // Check if the event mass eventSelection criteria
 // MinZPT < zPt < MaxZPT
@@ -106,7 +50,8 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
    if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
    if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])<60) return 0;
    if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])>120) return 0;
-   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))>2.4) return 0;
+   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))<=par.MinZY) return 0;
+   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))>=par.MaxZY) return 0;
    if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])<par.MinZPT) return 0;
    if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])>par.MaxZPT) return 0;
    foundZ=1;   
@@ -115,7 +60,6 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
 
 //======= trackSelection =====================================//
 // Check if the track pass selection criteria
-// MinZPT < zPt < MaxZPT &&  MinHiBin , hiBin < MaxHiBin
 //============================================================//
 bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
     if (par.isMuTagged && (*b->trackMuTagged)[j]) return false; 
@@ -161,7 +105,6 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
           Bar.Update(i - iStart);
           Bar.Print();
        }
-
        // Check if the event passes the selection criteria
        if (eventSelection(MZSignal, par)) {
           // Find a mixed akeevent
@@ -181,7 +124,6 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
 		      if (eventSelection(MMixEvt, par)&&par.isSelfMixing&&i!=mix_i) foundMix = true;
                    } else {
 		      if (matching(MZSignal,MMixEvt,par.shift)&&!par.isSelfMixing) foundMix = true;
-
 		   }
 		}
              }
@@ -308,6 +250,8 @@ int main(int argc, char *argv[])
    par.nChunk        = CL.GetInt   ("nChunk", 1);          // Specifies which chunk (segment) of the data to process, used in parallel processing.
    par.nMix          = CL.GetInt   ("nMix", 10);           // Number of mixed events to be considered in the analysis.
    par.shift         = CL.GetDouble("Shift", 971.74);       // Shift of sumHF in MB matching
+   par.MinZY         = CL.GetDouble("MinZY", 0);           // Minimum Z particle rapidity threshold for event selection.
+   par.MaxZY         = CL.GetDouble("MaxZY", 200);         // Maximum Z particle rapidity threshold for event selection.
    par.mix = 0;
    par.isPP = IsPP;
    
@@ -317,5 +261,6 @@ int main(int argc, char *argv[])
    DataAnalyzer analyzer(par.input.c_str(), par.mixFile.c_str(), par.output.c_str(), "Data");
    analyzer.analyze(par);
    analyzer.writeHistograms(analyzer.outf);
+   saveParametersToHistograms(par, analyzer.outf);
    cout << "done!" << analyzer.outf->GetName() << endl;
 }
