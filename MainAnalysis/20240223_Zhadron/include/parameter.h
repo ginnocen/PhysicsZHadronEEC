@@ -1,5 +1,66 @@
+//============================================================//
+// Define analysis parameters
+//============================================================//
+class Parameters {
+public:
+    Parameters( float MinZPT, float MaxZPT, float MinTrackPT, float MaxTrackPT, int MinHiBin = 0, int MaxHiBin = 200, bool mix = false, float scaleFactor = 1.0, float nMix = 1)
+    : MinZPT(MinZPT), MaxZPT(MaxZPT), MinTrackPT(MinTrackPT), MaxTrackPT(MaxTrackPT), MinHiBin(MinHiBin), MaxHiBin(MaxHiBin), mix(mix), scaleFactor(scaleFactor), nMix(nMix) {}
+    string input;          // Input file name
+    string output;         // Output file name
+    string mixFile;        // Mix File name
+    float MinZPT;          // Lower limit of Z pt
+    float MaxZPT;          // Upper limit of Z pt
+    float MinZY;          // Lower limit of Z rapidity
+    float MaxZY;          // Upper limit of Z rapidity
+    float MinTrackPT;      // Lower limit of track pt
+    float MaxTrackPT;      // Upper limit of track pt
+    float scaleFactor;     // Scale factor
+    float shift;           // shift in sumHF when doing mb matching
+    int MinHiBin;          // Lower limit of hiBin
+    int MaxHiBin;          // Upper limit of hiBin
+    int nThread;           // Number of Threads
+    int nChunk;            // Process the Nth chunk
+    bool mix;              // Mix flag
+    int nMix;              // Number of mixed events
+    TH1D *hShift;
+    bool isSelfMixing;     // isSelfMixing flag
+    bool isGenZ;           // isGenZ flag
+    bool isMuTagged;       // Flag to enable/disable muon tagging requirement
+    bool isPUReject;       // Flag to reject PU sample for systemaitcs.
+    bool isHiBinUp;        // Flag to do systematics with HiBinUp
+    bool isHiBinDown;      // Flag to do systematics with HiBinDown
+    bool isPP;             // Flag to check if this is a PP analysis
+
+   void printParameters() const {
+       cout << "Input file: " << input << endl;
+       cout << "Output file: " << output << endl;
+       cout << "Mix File: " << mixFile << endl;
+       cout << "MinZPT: " << MinZPT << " GeV/c" << endl;
+       cout << "MaxZPT: " << MaxZPT << " GeV/c" << endl;
+       cout << "MinZY: " << MinZY << "" << endl;
+       cout << "MaxZY: " << MaxZY << "" << endl;
+       cout << "MinTrackPT: " << MinTrackPT << " GeV/c" << endl;
+       cout << "MaxTrackPT: " << MaxTrackPT << " GeV/c" << endl;
+       cout << "isSelfMixing: " << (isSelfMixing ? "true" : "false") << endl;
+       cout << "isGenZ: " << (isGenZ ? "true" : "false") << endl;
+       cout << "Scale factor: " << scaleFactor << endl;
+       cout << "SumHF shift: " << shift << endl;
+       cout << "MinHiBin: " << MinHiBin << endl;
+       cout << "MaxHiBin: " << MaxHiBin << endl;
+       cout << "Number of Threads: " << nThread << endl;
+       cout << "Process the Nth chunk: " << nChunk << endl;
+       cout << "Mix flag: " << (mix ? "true" : "false") << endl;
+       cout << "Number of mixed events: " << nMix << endl;
+       cout << "Muon Tagging Enabled: " << (isMuTagged ? "true" : "false") << endl;
+       cout << "PU rejection: " << (isPUReject ? "true" : "false") << endl;
+       if (mix) cout << "Event mixing!" << endl;
+   }
+};
+
 void saveParametersToHistograms(const Parameters& par, TFile* outf) {
     outf->cd();  // Navigate to the output file directory
+    outf->mkdir("par"); // Create a directory named "par"
+    outf->cd("par"); // Change to the "par" directory
 
     // Create and fill histograms for each parameter
     TH1D* hMinZPT = new TH1D("parMinZPT", "parMinZPT", 1, 0, 1);
