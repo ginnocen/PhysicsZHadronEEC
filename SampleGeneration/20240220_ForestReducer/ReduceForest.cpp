@@ -21,7 +21,7 @@ double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
 
 int main(int argc, char *argv[])
 {
-   string VersionString = "V7.1";
+   string VersionString = "V7.2";
    
    CommandLine CL(argc, argv);
 
@@ -614,7 +614,8 @@ int main(int argc, char *argv[])
          if(DoTrackResidual == true && DoGenLevel == false)
             TrackResidualCorrection = TrackResidual.GetCorrectionFactor(TrackPT, TrackEta, TrackPhi, MZHadron.hiBin);
          MZHadron.trackWeight->push_back(TrackCorrection * TrackResidualCorrection);
-         MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
+         // MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
+         MZHadron.trackResidualWeight->push_back(1);
       }
 
       MZHadron.FillEntry();
