@@ -132,7 +132,9 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 break;
              }
 	     MMix->GetEntry(mix_i);
-             nZ += 1;//(MZSignal->NCollWeight);  // Ncoll reweighting at the event level.
+             nZ += (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight) * 
+	           ((par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]));
+	     
              for (unsigned long j = 0; j < (par.mix ? MMix->trackPhi->size() : MZSignal->trackPhi->size()); j++) {
                 if (!trackSelection((par.mix ? MMix : MZSignal), par, j)) continue;
                 float trackDphi  = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi((*MZSignal->trackPhi)[j], zPhi);
@@ -141,7 +143,8 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 //float weight = par.mix ? (MMix->NCollWeight) * (*MMix->trackWeight)[j] * (MMix->ZWeight) : (MZSignal->NCollWeight) * (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
                 float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight);
 		weight*= (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]);
-		weight*=(par.mix ? (*MMix->trackWeight)[j]*(*MMix->trackResidualWeight)[j] : (*MZSignal->trackWeight)[j]*(*MZSignal->trackResidualWeight)[j]);
+		//weight*=(par.mix ? (*MMix->trackWeight)[j]*(*MMix->trackResidualWeight)[j] : (*MZSignal->trackWeight)[j]*(*MZSignal->trackResidualWeight)[j]);
+                weight*=(par.mix ? (*MMix->trackWeight)[j] : (*MZSignal->trackWeight)[j]);
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
                 h->Fill( trackDeta, trackDphi2, weight);
