@@ -28,7 +28,7 @@ void PrintHistogram(TH1D *H);
 
 int main(int argc, char *argv[])
 {
-   vector<int> Colors = GetPrimaryColors();
+   vector<int> Colors = GetCVDColors6();
 
    CommandLine CL(argc, argv);
 
