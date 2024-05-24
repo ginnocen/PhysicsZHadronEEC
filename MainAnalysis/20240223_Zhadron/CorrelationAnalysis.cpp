@@ -44,7 +44,7 @@ bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
    int effectiveHiBin = par.isHiBinUp ? b->hiBinUp : (par.isHiBinDown ? b->hiBinDown : b->hiBin);
 
    bool foundZ = false;            
-   if (par.isPUReject && b->NVertex!=1) return 0;
+   if (par.isPUReject && par.isPP && b->NVertex!=1) return 0;    // Only apply PU rejection (single vertex requirement) in pp analysis
    if (effectiveHiBin< par.MinHiBin) return 0;
    if (effectiveHiBin>=par.MaxHiBin) return 0;
    if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
@@ -132,7 +132,9 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 break;
              }
 	     MMix->GetEntry(mix_i);
-             nZ += 1;//(MZSignal->NCollWeight);  // Ncoll reweighting at the event level.
+             nZ += (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight) * 
+	           ((par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]));
+	     
              for (unsigned long j = 0; j < (par.mix ? MMix->trackPhi->size() : MZSignal->trackPhi->size()); j++) {
                 if (!trackSelection((par.mix ? MMix : MZSignal), par, j)) continue;
                 float trackDphi  = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi((*MZSignal->trackPhi)[j], zPhi);
@@ -140,7 +142,9 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 float trackDeta  = par.mix ? fabs((*MMix->trackEta)[j] - zY) : fabs((*MZSignal->trackEta)[j] - zY);
                 //float weight = par.mix ? (MMix->NCollWeight) * (*MMix->trackWeight)[j] * (MMix->ZWeight) : (MZSignal->NCollWeight) * (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
                 float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight);
-		weight*=(par.mix ? (*MMix->trackWeight)[j]*(*MMix->trackResidualWeight)[j] : (*MZSignal->trackWeight)[j]*(*MZSignal->trackResidualWeight)[j]);
+		weight*= (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]);
+		//weight*=(par.mix ? (*MMix->trackWeight)[j]*(*MMix->trackResidualWeight)[j] : (*MZSignal->trackWeight)[j]*(*MZSignal->trackResidualWeight)[j]);
+                weight*=(par.mix ? (*MMix->trackWeight)[j] : (*MZSignal->trackWeight)[j]);
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
                 h->Fill( trackDeta, trackDphi2, weight);
@@ -241,7 +245,7 @@ int main(int argc, char *argv[])
    par.output        = CL.Get      ("Output",  "output.root");                             	// Output file
    par.isSelfMixing  = CL.GetBool  ("IsSelfMixing", true); // Determine if the analysis is self-mixing
    par.isGenZ        = CL.GetBool  ("IsGenZ", false);      // Determine if the analysis is using Gen level Z     
-   par.isPUReject    = CL.GetBool  ("IsPUReject", false);  // Flag to reject PU sample for systemaitcs.
+   par.isPUReject    = CL.GetBool  ("IsPUReject", true);  // Flag to reject PU sample for systemaitcs.
    par.isMuTagged    = CL.GetBool  ("IsMuTagged", true);   // Default is true
    par.isHiBinUp     = CL.GetBool  ("IsHiBinUp", false);   // Default is false
    par.isHiBinDown   = CL.GetBool  ("IsHiBinDown", false); // Default is false
@@ -252,6 +256,7 @@ int main(int argc, char *argv[])
    par.shift         = CL.GetDouble("Shift", 971.74);       // Shift of sumHF in MB matching
    par.MinZY         = CL.GetDouble("MinZY", 0);           // Minimum Z particle rapidity threshold for event selection.
    par.MaxZY         = CL.GetDouble("MaxZY", 200);         // Maximum Z particle rapidity threshold for event selection.
+   par.ExtraZWeight  = CL.GetInt   ("ExtraZWeight",-1);    // Do Muon systematics, -1 means no extraweight.
    par.mix = 0;
    par.isPP = IsPP;
    

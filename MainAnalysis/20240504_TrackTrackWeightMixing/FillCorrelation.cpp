@@ -39,12 +39,15 @@ int main(int argc, char *argv[])
    string OutputFileName        = CL.Get("Output");
    double Fraction              = CL.GetDouble("Fraction", 1.00);
    double MinPT                 = CL.GetDouble("MinPT", 3);
+   double MaxPT                 = CL.GetDouble("MaxPT", -1);
+   double MinZPT                = CL.GetDouble("MinZPT", 20);
    bool IsPP                    = CL.GetBool("IsPP", false);
    bool IsReco                  = CL.GetBool("IsReco", true);
    bool CheckZ                  = CL.GetBool("CheckZ", true);
    bool CheckBackgroundZ        = SelfMixingMode ? false : CL.GetBool("CheckBackgroundZ", false);
    bool DoZReweight             = CL.GetBool("DoZReweight", false);
    bool CheckSignalHiBin        = CL.GetBool("CheckSignalHiBin", true);
+   bool CheckBackgroundHiBin    = CL.GetBool("CheckBackgroundHiBin", false);
    double HiBinMin              = CL.GetDouble("HiBinMin", 20);
    double HiBinMax              = CL.GetDouble("HiBinMax", 60);
    string SignalHFShiftFileName = CL.Get("SignalHFShiftFile", "NONE");
@@ -60,6 +63,10 @@ int main(int argc, char *argv[])
    double Bins[101] = {0};
    for(int iB = 0; iB <= 100; iB++)
       Bins[iB] = BinMin * exp((log(BinMax) - log(BinMin)) / 100 * iB);
+
+   cout << endl;
+   cout << "Creating output file " << OutputFileName << endl;
+   cout << endl;
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
@@ -77,8 +84,8 @@ int main(int argc, char *argv[])
    TH1D HZMass("HZMass", ";m_{Z}", 100, 40, 140);
    
    // Z-hadron correlations
-   TH1D HZHEta("HZHEta", ";y_{Z} - #eta_{h}", 100, -3, 3);
-   TH1D HZHPhi("HZHPhi", ";#Delta#phi_{Z,h}", 100, -M_PI, M_PI);
+   TH1D HZHEta("HZHEta", ";y_{Z} - #eta_{h}", 100, 0, 3.5);
+   TH1D HZHPhi("HZHPhi", ";#Delta#phi_{Z,h}", 100, 0, M_PI);
    TH1D HZHPT("HZHPT", ";p_{T,H}", 100, 0, 100);
    TH1D HZHPTP1("HZHPTP1", ";p_{T,H}", 100, 0, 100);
    TH1D HZHPTP2("HZHPTP2", ";p_{T,H}", 100, 0, 100);
@@ -162,7 +169,7 @@ int main(int argc, char *argv[])
          if(IsReco == true)
          {
             if(MZHadron.GoodRecoZ == false)   continue;
-            if(MZHadron.zPt->at(0) < 20)      continue;
+            if(MZHadron.zPt->at(0) < MinZPT)  continue;
 
             if(DoZReweight == true)
                EventWeight = EventWeight * GetInterSampleZWeight(MZHadron.zPt->at(0));
@@ -173,8 +180,8 @@ int main(int argc, char *argv[])
          }
          else
          {
-            if(MZHadron.GoodGenZ == false)    continue;
-            if(MZHadron.genZPt->at(0) < 20)   continue;
+            if(MZHadron.GoodGenZ == false)       continue;
+            if(MZHadron.genZPt->at(0) < MinZPT)  continue;
             
             if(DoZReweight == true)
                EventWeight = EventWeight * GetInterSampleZWeight(MZHadron.genZPt->at(0));
@@ -214,15 +221,21 @@ int main(int argc, char *argv[])
             BarB.Print();
          }
          
+         if(IsPP == false)
+         {
+            if(CheckBackgroundHiBin == true && MZHadronBackground.hiBin < HiBinMin)       continue;
+            if(CheckBackgroundHiBin == true && MZHadronBackground.hiBin >= HiBinMax)      continue;
+         }
+
          if(MZHadronBackground.trackPt == nullptr)
             continue;
          // if(MZHadronBackground.trackPt->size() == 0)
          //    continue;
 
          bool GoodBackgroundZ = false;
-         if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) > 20)
+         if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) > MinZPT)
             GoodBackgroundZ = true;
-         if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) > 20)
+         if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) > MinZPT)
             GoodBackgroundZ = true;
          if(CheckBackgroundZ == true && GoodBackgroundZ == false)
             continue;
@@ -280,11 +293,13 @@ int main(int argc, char *argv[])
             }
          }
       }
-      else
+      else   // NB > NS
       {
-         int iB = 0;
          for(int iS = 0; iS < NS; iS++)
          {
+            Matches.push_back(Match(SignalEvent[iS], BackgroundEvent[iS]));
+            
+            /*
             int N = NB / NS;
             if(iS < NB % NS)
                N = N + 1;
@@ -294,6 +309,7 @@ int main(int argc, char *argv[])
                Matches.push_back(Match(SignalEvent[iS], BackgroundEvent[iB]));
                iB = iB + 1;
             }
+            */
          }
       }
    }
@@ -301,7 +317,7 @@ int main(int argc, char *argv[])
    // Finally we actually loop over the matched events and build the stuffs
    int MatchCount = Matches.size();
 
-   cout << "NS = " << NS << ", NB = " << NB << endl;
+   cout << "NS = " << NS << ", NB = " << NB << ", NS/NB = " << float(NS) / NB << endl;
    cout << "Match count = " << MatchCount << endl;
 
    ProgressBar Bar(cout, MatchCount);
@@ -314,6 +330,8 @@ int main(int argc, char *argv[])
          Bar.Update(iM);
          Bar.Print();
       }
+
+      int iParts = rand() % 4;
 
       // cout << Matches[iM].Signal.Index << " " << Matches[iM].Background.Index << endl;
       
@@ -358,6 +376,7 @@ int main(int argc, char *argv[])
       {
          if(MZHadron.trackMuTagged->at(iP) == true)                         continue;
          if(MZHadron.trackPt->at(iP) < MinPT)                               continue;
+         if(MaxPT > 0 && MZHadron.trackPt->at(iP) > MaxPT)                  continue;
          if(SubEvent[0] >= 0 && MZHadron.subevent->at(iP) != SubEvent[0])   continue;
 
          PT1.push_back(MZHadron.trackPt->at(iP));
@@ -384,6 +403,7 @@ int main(int argc, char *argv[])
          {
             if(MZHadronBackground.trackMuTagged->at(iP) == true)                         continue;
             if(MZHadronBackground.trackPt->at(iP) < MinPT)                               continue;
+            if(MaxPT > 0 && MZHadronBackground.trackPt->at(iP) > MaxPT)                  continue;
             if(SubEvent[1] >= 0 && MZHadronBackground.subevent->at(iP) != SubEvent[1])   continue;
 
             PT2.push_back(MZHadronBackground.trackPt->at(iP));
@@ -412,14 +432,15 @@ int main(int argc, char *argv[])
             HZHPhi.Fill(+DPhi, 0.5 * TrackWeight);
             HZHPhi.Fill(-DPhi, 0.5 * TrackWeight);
             HZHPT.Fill(PT2[iP], TrackWeight);
-            if(iM % 4 == 0)   HZHPTP1.Fill(PT2[iP], TrackWeight);
-            if(iM % 4 == 1)   HZHPTP2.Fill(PT2[iP], TrackWeight);
-            if(iM % 4 == 2)   HZHPTP3.Fill(PT2[iP], TrackWeight);
-            if(iM % 4 == 3)   HZHPTP4.Fill(PT2[iP], TrackWeight);
+            if(iParts == 0)   HZHPTP1.Fill(PT2[iP], TrackWeight);
+            if(iParts == 1)   HZHPTP2.Fill(PT2[iP], TrackWeight);
+            if(iParts == 2)   HZHPTP3.Fill(PT2[iP], TrackWeight);
+            if(iParts == 3)   HZHPTP4.Fill(PT2[iP], TrackWeight);
          }
       }
 
       // Track-pair correlation plots.  Here we do not necessary need a good Z
+      /*
       for(int iP1 = 0; iP1 < N1; iP1++)
       {
          SumWeight1 = SumWeight1 + TrackWeight1[iP1];
@@ -450,21 +471,23 @@ int main(int argc, char *argv[])
             HDeltaRLog.Fill(DeltaR, Weight);
             HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
             
-            if(iM % 4 == 0)   HPT1P1.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            if(iM % 4 == 1)   HPT1P2.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            if(iM % 4 == 2)   HPT1P3.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            if(iM % 4 == 3)   HPT1P4.Fill(max(PT1[iP1], PT2[iP2]), Weight);
+            if(iParts == 0)   HPT1P1.Fill(max(PT1[iP1], PT2[iP2]), Weight);
+            if(iParts == 1)   HPT1P2.Fill(max(PT1[iP1], PT2[iP2]), Weight);
+            if(iParts == 2)   HPT1P3.Fill(max(PT1[iP1], PT2[iP2]), Weight);
+            if(iParts == 3)   HPT1P4.Fill(max(PT1[iP1], PT2[iP2]), Weight);
          }
       }
+      */
 
-      if(N1 > 0)
+      // cout << EventWeight << " " << N1 << endl;
+      // if(N1 > 0)
       {
          HCount.Fill(0.0, EventWeight);
          HCount.Fill(1.0, EventWeight * SumWeight1);
-         if(iM % 4 == 0)   HCount.Fill(2.0, EventWeight);
-         if(iM % 4 == 1)   HCount.Fill(3.0, EventWeight);
-         if(iM % 4 == 2)   HCount.Fill(4.0, EventWeight);
-         if(iM % 4 == 3)   HCount.Fill(5.0, EventWeight);
+         if(iParts == 0)   HCount.Fill(2.0, EventWeight);
+         if(iParts == 1)   HCount.Fill(3.0, EventWeight);
+         if(iParts == 2)   HCount.Fill(4.0, EventWeight);
+         if(iParts == 3)   HCount.Fill(5.0, EventWeight);
       }
    }
    Bar.Update(MatchCount);
