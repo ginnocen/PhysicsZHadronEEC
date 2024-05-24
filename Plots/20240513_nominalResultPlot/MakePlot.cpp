@@ -26,8 +26,42 @@ void HistogramSelfSubtract(TH1D *H);
 void PrintHistogram(TFile *F, string Name);
 void PrintHistogram(TH1D *H);
 
+
+void PrintUsage()
+{
+    cout << "Usage: program [options]" << endl;
+    cout << "Options:" << endl;
+    cout << "  --help                Print this help message" << endl;
+    cout << "  --OutputBase=BASE     Set the output base name (default: Plot)" << endl;
+    cout << "  --DataFiles=FILES     Set the data files (default: pp.root, test.root)" << endl;
+    cout << "  --SkipSystematics     Skip systematics calculation (default: false)" << endl;
+    cout << "  --SystematicFiles=FILES Set the systematic files" << endl;
+    cout << "  --CurveLabels=LABELS  Set the curve labels (default: pp, PbPb 0-30%)" << endl;
+    cout << "  --ToPlot=PLOT         Set the plot name (default: DeltaPhi)" << endl;
+    cout << "  --Tags=TAGS           Set the tags (default: Result1_2, Result2_4, Result4_10)" << endl;
+    cout << "  --SecondTags=TAGS     Set the second tags" << endl;
+    cout << "  --Labels=LABELS       Set the labels" << endl;
+    cout << "  --ExtraInfo=INFO      Set the extra information" << endl;
+    cout << "  --XMin=MIN            Set the X axis minimum (default: 0)" << endl;
+    cout << "  --XMax=MAX            Set the X axis maximum (default: PI)" << endl;
+    cout << "  --YMin=MIN            Set the Y axis minimum (default: -5)" << endl;
+    cout << "  --YMax=MAX            Set the Y axis maximum (default: 5)" << endl;
+    cout << "  --RMin=MIN            Set the R axis minimum (default: -5)" << endl;
+    cout << "  --RMax=MAX            Set the R axis maximum (default: 5)" << endl;
+    cout << "  --XAxisLabel=LABEL    Set the X axis label (default: |#Delta#phi_{trk,Z}|)" << endl;
+    cout << "  --YAxisLabel=LABEL    Set the Y axis label (default: <#DeltaN_{ch}>/event)" << endl;
+    cout << "  --RAxisLabel=LABEL    Set the R axis label (default: Difference to pp)" << endl;
+    cout << "  --LegendLeft=VALUE    Set the legend left position (default: 0.08)" << endl;
+    cout << "  --LegendBottom=VALUE  Set the legend bottom position (default: 0.60)" << endl;
+}
+
 int main(int argc, char *argv[])
 {
+    if (argc > 1 && string(argv[1]) == "--help")
+    {
+        PrintUsage();
+        return 0;
+    }
    vector<int> Colors = GetCVDColors6();
 
    CommandLine CL(argc, argv);
@@ -39,19 +73,17 @@ int main(int argc, char *argv[])
    vector<string> SystematicFiles = (SkipSystematics == false) ? CL.GetStringVector("SystematicFiles") : vector<string>();
    vector<string> CurveLabels     = CL.GetStringVector("CurveLabels", vector<string>{"pp", "PbPb 0-30%"});
    string ToPlot                  = CL.Get("ToPlot", "DeltaPhi");
+   
    vector<string> Tags            = CL.GetStringVector("Tags", vector<string> {
-         "Result", "Result", "Result"
+         "Result1_2", "Result2_4", "Result4_10"
    });
    vector<string> SecondTags      = CL.GetStringVector("SecondTags", vector<string>());
    vector<string> Labels          = CL.GetStringVector("Labels",
    vector<string>
    {
       "1 < p_{T}^{trk} < 2 GeV",
-      "2 < p_{T}^{trk} < 5 GeV",
-      "5 < p_{T}^{trk} < 10 GeV",
-      // "30-90%, 1 < p_{T}^{trk} < 2 GeV",
-      // "30-90%, 2 < p_{T}^{trk} < 5 GeV",
-      // "30-90%, 5 < p_{T}^{trk} < 10 GeV"
+      "2 < p_{T}^{trk} < 4 GeV",
+      "4 < p_{T}^{trk} < 10 GeV",
    });
 
    vector<string> ExtraInfo       = CL.GetStringVector("ExtraInfo",
@@ -64,8 +96,8 @@ int main(int argc, char *argv[])
    if(SystematicFiles.size() == 0)
       SkipSystematics = true;
 
-   string PbPbLumi = "1.X nb^{-1}";
-   string PPLumi = "3XX pb^{-1}";
+   string PbPbLumi = "1.67 nb^{-1}";
+   string PPLumi = "301 pb^{-1}";
 
    int NFile = DataFiles.size();
    int NColumn = Tags.size();
@@ -73,7 +105,7 @@ int main(int argc, char *argv[])
    double XMin = CL.GetDouble("XMin", 0);
    double XMax = CL.GetDouble("XMax", M_PI);
    double YMin = CL.GetDouble("YMin", -5);
-   double YMax = CL.GetDouble("YMax", 10);
+   double YMax = CL.GetDouble("YMax", 5);
    double RMin = CL.GetDouble("RMin", -5);
    double RMax = CL.GetDouble("RMax", 5);
 
@@ -105,7 +137,7 @@ int main(int argc, char *argv[])
    double XRPadHeight   = RPadHeight/ CanvasHeight;
 
    double LegendLeft    = CL.GetDouble("LegendLeft", 0.08);
-   double LegendBottom  = CL.GetDouble("LegendBottom", 0.40);
+   double LegendBottom  = CL.GetDouble("LegendBottom", 0.60);
 
    // Open input files
    vector<TFile *> File(NFile);
@@ -362,14 +394,6 @@ TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color)
    double Integral = 1;//HN->GetBinContent(1);
 
    H->Scale(1 / Integral);
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-   {
-      double XMin = H->GetXaxis()->GetBinLowEdge(i);
-      double XMax = H->GetXaxis()->GetBinUpEdge(i);
-
-      H->SetBinContent(i, H->GetBinContent(i) / (XMax - XMin));
-      H->SetBinError(i, H->GetBinError(i) / (XMax - XMin));
-   }
 
    H->SetStats(0);
    H->SetMarkerStyle(20);
@@ -391,15 +415,6 @@ TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color)
    if(HSys == nullptr)
       return nullptr;
 
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-   {
-      double XMin = H->GetXaxis()->GetBinLowEdge(i);
-      double XMax = H->GetXaxis()->GetBinUpEdge(i);
-
-      HSys->SetBinContent(i, HSys->GetBinContent(i) / (XMax - XMin));
-      HSys->SetBinError(i, HSys->GetBinError(i) / (XMax - XMin));
-   }
-   
    TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
    for(int i = 1; i <= H->GetNbinsX(); i++)
       HResult->SetBinError(i, HSys->GetBinContent(i));
