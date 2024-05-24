@@ -14,45 +14,26 @@ using namespace std;
 
 #include "CommandLine.h"
 #include "SetStyle.h"
+#include "utilities.h"
+#include "usageMessage.h"
 
 int main(int argc, char *argv[]);
-void SetPad(TPad *P);
-void SetWorld(TH2D *H);
-void SetAxis(TGaxis *A);
-TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color);
-TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color);
-void HistogramSelfSubtract(TH1D *H);
-//TH1D *SubtractHistogram(TH1D *H, TH1D *HRef);
-void PrintHistogram(TFile *F, string Name);
-void PrintHistogram(TH1D *H);
 
-
-void PrintUsage()
+TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color)
 {
-    cout << "Usage: program [options]" << endl;
-    cout << "Options:" << endl;
-    cout << "  --help                Print this help message" << endl;
-    cout << "  --OutputBase=BASE     Set the output base name (default: Plot)" << endl;
-    cout << "  --DataFiles=FILES     Set the data files (default: pp.root, test.root)" << endl;
-    cout << "  --SkipSystematics     Skip systematics calculation (default: false)" << endl;
-    cout << "  --SystematicFiles=FILES Set the systematic files" << endl;
-    cout << "  --CurveLabels=LABELS  Set the curve labels (default: pp, PbPb 0-30%)" << endl;
-    cout << "  --ToPlot=PLOT         Set the plot name (default: DeltaPhi)" << endl;
-    cout << "  --Tags=TAGS           Set the tags (default: Result1_2, Result2_4, Result4_10)" << endl;
-    cout << "  --SecondTags=TAGS     Set the second tags" << endl;
-    cout << "  --Labels=LABELS       Set the labels" << endl;
-    cout << "  --ExtraInfo=INFO      Set the extra information" << endl;
-    cout << "  --XMin=MIN            Set the X axis minimum (default: 0)" << endl;
-    cout << "  --XMax=MAX            Set the X axis maximum (default: PI)" << endl;
-    cout << "  --YMin=MIN            Set the Y axis minimum (default: -5)" << endl;
-    cout << "  --YMax=MAX            Set the Y axis maximum (default: 5)" << endl;
-    cout << "  --RMin=MIN            Set the R axis minimum (default: -5)" << endl;
-    cout << "  --RMax=MAX            Set the R axis maximum (default: 5)" << endl;
-    cout << "  --XAxisLabel=LABEL    Set the X axis label (default: |#Delta#phi_{trk,Z}|)" << endl;
-    cout << "  --YAxisLabel=LABEL    Set the Y axis label (default: <#DeltaN_{ch}>/event)" << endl;
-    cout << "  --RAxisLabel=LABEL    Set the R axis label (default: Difference to pp)" << endl;
-    cout << "  --LegendLeft=VALUE    Set the legend left position (default: 0.08)" << endl;
-    cout << "  --LegendBottom=VALUE  Set the legend bottom position (default: 0.60)" << endl;
+   static int ID = 0;
+   ID = ID + 1;
+   TH1D *HSys = (TH1D *)(F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str())));
+   HSys = (TH1D*)HSys->Clone(Form("HSysValue%d",ID));
+   if(HSys == nullptr)
+      return nullptr;
+
+   TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
+   for(int i = 1; i <= H->GetNbinsX(); i++)
+      HResult->SetBinError(i, HSys->GetBinContent(i));
+   HResult->SetFillColorAlpha(Color, 0.25);
+
+   return HResult;
 }
 
 int main(int argc, char *argv[])
@@ -348,136 +329,5 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void SetPad(TPad *P)
-{
-   if(P == nullptr)
-      return;
-   P->SetLeftMargin(0);
-   P->SetTopMargin(0);
-   P->SetRightMargin(0);
-   P->SetBottomMargin(0);
-   P->SetTickx(false);
-   P->SetTicky(false);
-   P->Draw();
-}
 
-void SetWorld(TH2D *H)
-{
-   if(H == nullptr)
-      return;
-   H->SetStats(0);
-   H->GetXaxis()->SetTickLength(0);
-   H->GetYaxis()->SetTickLength(0);
-}
 
-void SetAxis(TGaxis *A)
-{
-   if(A == nullptr)
-      return;
-   A->SetLabelFont(42);
-   A->SetLabelSize(0.035);
-   A->SetMaxDigits(6);
-   A->SetMoreLogLabels();
-   A->Draw();
-}
-
-TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color)
-{
-   TH1D *H  = (TH1D *)F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str()));
-   if(H == nullptr)
-      return nullptr;
-
-   static int ID = 0;
-   ID = ID + 1;
-   H = (TH1D *)H->Clone(Form("H%d", ID));
-
-   double Integral = 1;//HN->GetBinContent(1);
-
-   H->Scale(1 / Integral);
-
-   H->SetStats(0);
-   H->SetMarkerStyle(20);
-   H->SetLineWidth(2);
-   H->SetMarkerSize(2);
-   
-   H->SetMarkerColor(Color);
-   H->SetLineColor(Color);
-   
-   return H;
-}
-
-TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color)
-{
-   static int ID = 0;
-   ID = ID + 1;
-   TH1D *HSys = (TH1D *)(F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str())));
-   HSys = (TH1D*)HSys->Clone(Form("HSysValue%d",ID));
-   if(HSys == nullptr)
-      return nullptr;
-
-   TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-      HResult->SetBinError(i, HSys->GetBinContent(i));
-   HResult->SetFillColorAlpha(Color, 0.25);
-
-   return HResult;
-}
-
-void HistogramSelfSubtract(TH1D *H)
-{
-   if(H == nullptr)
-      return;
-
-   double SumX = 0;
-   double SumXY = 0;
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-   {
-      double XMin = H->GetXaxis()->GetBinLowEdge(i);
-      double XMax = H->GetXaxis()->GetBinUpEdge(i);
-      double Y = H->GetBinContent(i);
-
-      SumX = SumX + (XMax - XMin);
-      SumXY = SumXY + (XMax - XMin) * Y;
-   }
-
-   double Mean = SumXY / SumX;
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-      H->SetBinContent(i, H->GetBinContent(i) - Mean);
-}
-
-TH1D *SubtractHistogram(TH1D *H, TH1D *HRef)
-{
-   int N = H->GetNbinsX();
-
-   static int ID = 0;
-   ID = ID + 1;
-   TH1D *HDiff = (TH1D *)H->Clone(Form("HDiff%d", ID));
-
-   for(int i = 1; i <= N; i++)
-   {
-      HDiff->SetBinContent(i, H->GetBinContent(i) - HRef->GetBinContent(i));
-      HDiff->SetBinError(i, H->GetBinError(i));
-   }
-
-   return HDiff;
-}
-
-void PrintHistogram(TFile *F, string Name)
-{
-   if(F == nullptr)
-      return;
-   TH1D *H = (TH1D *)F->Get(Name.c_str());
-   if(H == nullptr)
-      return;
-
-   cout << F->GetName() << " " << Name << endl;
-   PrintHistogram(H);
-}
-
-void PrintHistogram(TH1D *H)
-{
-   if(H == nullptr)
-      return;
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-      cout << i << " " << H->GetBinContent(i) << endl;
-}
