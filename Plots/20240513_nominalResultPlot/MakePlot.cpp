@@ -14,20 +14,35 @@ using namespace std;
 
 #include "CommandLine.h"
 #include "SetStyle.h"
+#include "utilities.h"
+#include "usageMessage.h"
 
 int main(int argc, char *argv[]);
-void SetPad(TPad *P);
-void SetWorld(TH2D *H);
-void SetAxis(TGaxis *A);
-TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color);
-TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color);
-void HistogramSelfSubtract(TH1D *H);
-//TH1D *SubtractHistogram(TH1D *H, TH1D *HRef);
-void PrintHistogram(TFile *F, string Name);
-void PrintHistogram(TH1D *H);
+
+TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color)
+{
+   static int ID = 0;
+   ID = ID + 1;
+   TH1D *HSys = (TH1D *)(F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str())));
+   HSys = (TH1D*)HSys->Clone(Form("HSysValue%d",ID));
+   if(HSys == nullptr)
+      return nullptr;
+
+   TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
+   for(int i = 1; i <= H->GetNbinsX(); i++)
+      HResult->SetBinError(i, HSys->GetBinContent(i));
+   HResult->SetFillColorAlpha(Color, 0.25);
+
+   return HResult;
+}
 
 int main(int argc, char *argv[])
 {
+    if (argc > 1 && string(argv[1]) == "--help")
+    {
+        PrintUsage();
+        return 0;
+    }
    vector<int> Colors = GetCVDColors6();
 
    CommandLine CL(argc, argv);
@@ -39,19 +54,17 @@ int main(int argc, char *argv[])
    vector<string> SystematicFiles = (SkipSystematics == false) ? CL.GetStringVector("SystematicFiles") : vector<string>();
    vector<string> CurveLabels     = CL.GetStringVector("CurveLabels", vector<string>{"pp", "PbPb 0-30%"});
    string ToPlot                  = CL.Get("ToPlot", "DeltaPhi");
+   
    vector<string> Tags            = CL.GetStringVector("Tags", vector<string> {
-         "Result", "Result", "Result"
+         "Result1_2", "Result2_4", "Result4_10"
    });
    vector<string> SecondTags      = CL.GetStringVector("SecondTags", vector<string>());
    vector<string> Labels          = CL.GetStringVector("Labels",
    vector<string>
    {
       "1 < p_{T}^{trk} < 2 GeV",
-      "2 < p_{T}^{trk} < 5 GeV",
-      "5 < p_{T}^{trk} < 10 GeV",
-      // "30-90%, 1 < p_{T}^{trk} < 2 GeV",
-      // "30-90%, 2 < p_{T}^{trk} < 5 GeV",
-      // "30-90%, 5 < p_{T}^{trk} < 10 GeV"
+      "2 < p_{T}^{trk} < 4 GeV",
+      "4 < p_{T}^{trk} < 10 GeV",
    });
 
    vector<string> ExtraInfo       = CL.GetStringVector("ExtraInfo",
@@ -64,8 +77,8 @@ int main(int argc, char *argv[])
    if(SystematicFiles.size() == 0)
       SkipSystematics = true;
 
-   string PbPbLumi = "1.X nb^{-1}";
-   string PPLumi = "3XX pb^{-1}";
+   string PbPbLumi = "1.67 nb^{-1}";
+   string PPLumi = "301 pb^{-1}";
 
    int NFile = DataFiles.size();
    int NColumn = Tags.size();
@@ -73,7 +86,7 @@ int main(int argc, char *argv[])
    double XMin = CL.GetDouble("XMin", 0);
    double XMax = CL.GetDouble("XMax", M_PI);
    double YMin = CL.GetDouble("YMin", -5);
-   double YMax = CL.GetDouble("YMax", 10);
+   double YMax = CL.GetDouble("YMax", 5);
    double RMin = CL.GetDouble("RMin", -5);
    double RMax = CL.GetDouble("RMax", 5);
 
@@ -105,7 +118,7 @@ int main(int argc, char *argv[])
    double XRPadHeight   = RPadHeight/ CanvasHeight;
 
    double LegendLeft    = CL.GetDouble("LegendLeft", 0.08);
-   double LegendBottom  = CL.GetDouble("LegendBottom", 0.40);
+   double LegendBottom  = CL.GetDouble("LegendBottom", 0.60);
 
    // Open input files
    vector<TFile *> File(NFile);
@@ -316,153 +329,5 @@ int main(int argc, char *argv[])
    return 0;
 }
 
-void SetPad(TPad *P)
-{
-   if(P == nullptr)
-      return;
-   P->SetLeftMargin(0);
-   P->SetTopMargin(0);
-   P->SetRightMargin(0);
-   P->SetBottomMargin(0);
-   P->SetTickx(false);
-   P->SetTicky(false);
-   P->Draw();
-}
 
-void SetWorld(TH2D *H)
-{
-   if(H == nullptr)
-      return;
-   H->SetStats(0);
-   H->GetXaxis()->SetTickLength(0);
-   H->GetYaxis()->SetTickLength(0);
-}
 
-void SetAxis(TGaxis *A)
-{
-   if(A == nullptr)
-      return;
-   A->SetLabelFont(42);
-   A->SetLabelSize(0.035);
-   A->SetMaxDigits(6);
-   A->SetMoreLogLabels();
-   A->Draw();
-}
-
-TH1D *GetHistogram(TFile *F, string ToPlot, string Tag, int Color)
-{
-   TH1D *H  = (TH1D *)F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str()));
-   if(H == nullptr)
-      return nullptr;
-
-   static int ID = 0;
-   ID = ID + 1;
-   H = (TH1D *)H->Clone(Form("H%d", ID));
-
-   double Integral = 1;//HN->GetBinContent(1);
-
-   H->Scale(1 / Integral);
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-   {
-      double XMin = H->GetXaxis()->GetBinLowEdge(i);
-      double XMax = H->GetXaxis()->GetBinUpEdge(i);
-
-      H->SetBinContent(i, H->GetBinContent(i) / (XMax - XMin));
-      H->SetBinError(i, H->GetBinError(i) / (XMax - XMin));
-   }
-
-   H->SetStats(0);
-   H->SetMarkerStyle(20);
-   H->SetLineWidth(2);
-   H->SetMarkerSize(2);
-   
-   H->SetMarkerColor(Color);
-   H->SetLineColor(Color);
-   
-   return H;
-}
-
-TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color)
-{
-   static int ID = 0;
-   ID = ID + 1;
-   TH1D *HSys = (TH1D *)(F->Get(Form("%s_%s", ToPlot.c_str(), Tag.c_str())));
-   HSys = (TH1D*)HSys->Clone(Form("HSysValue%d",ID));
-   if(HSys == nullptr)
-      return nullptr;
-
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-   {
-      double XMin = H->GetXaxis()->GetBinLowEdge(i);
-      double XMax = H->GetXaxis()->GetBinUpEdge(i);
-
-      HSys->SetBinContent(i, HSys->GetBinContent(i) / (XMax - XMin));
-      HSys->SetBinError(i, HSys->GetBinError(i) / (XMax - XMin));
-   }
-   
-   TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-      HResult->SetBinError(i, HSys->GetBinContent(i));
-   HResult->SetFillColorAlpha(Color, 0.25);
-
-   return HResult;
-}
-
-void HistogramSelfSubtract(TH1D *H)
-{
-   if(H == nullptr)
-      return;
-
-   double SumX = 0;
-   double SumXY = 0;
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-   {
-      double XMin = H->GetXaxis()->GetBinLowEdge(i);
-      double XMax = H->GetXaxis()->GetBinUpEdge(i);
-      double Y = H->GetBinContent(i);
-
-      SumX = SumX + (XMax - XMin);
-      SumXY = SumXY + (XMax - XMin) * Y;
-   }
-
-   double Mean = SumXY / SumX;
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-      H->SetBinContent(i, H->GetBinContent(i) - Mean);
-}
-
-TH1D *SubtractHistogram(TH1D *H, TH1D *HRef)
-{
-   int N = H->GetNbinsX();
-
-   static int ID = 0;
-   ID = ID + 1;
-   TH1D *HDiff = (TH1D *)H->Clone(Form("HDiff%d", ID));
-
-   for(int i = 1; i <= N; i++)
-   {
-      HDiff->SetBinContent(i, H->GetBinContent(i) - HRef->GetBinContent(i));
-      HDiff->SetBinError(i, H->GetBinError(i));
-   }
-
-   return HDiff;
-}
-
-void PrintHistogram(TFile *F, string Name)
-{
-   if(F == nullptr)
-      return;
-   TH1D *H = (TH1D *)F->Get(Name.c_str());
-   if(H == nullptr)
-      return;
-
-   cout << F->GetName() << " " << Name << endl;
-   PrintHistogram(H);
-}
-
-void PrintHistogram(TH1D *H)
-{
-   if(H == nullptr)
-      return;
-   for(int i = 1; i <= H->GetNbinsX(); i++)
-      cout << i << " " << H->GetBinContent(i) << endl;
-}
