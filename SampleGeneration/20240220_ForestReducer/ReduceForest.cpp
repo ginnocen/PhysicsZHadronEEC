@@ -614,8 +614,8 @@ int main(int argc, char *argv[])
          if(DoTrackResidual == true && DoGenLevel == false)
             TrackResidualCorrection = TrackResidual.GetCorrectionFactor(TrackPT, TrackEta, TrackPhi, MZHadron.hiBin);
          MZHadron.trackWeight->push_back(TrackCorrection * TrackResidualCorrection);
-         // MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
-         MZHadron.trackResidualWeight->push_back(1);
+         MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
+         /// MZHadron.trackResidualWeight->push_back(1);
       }
 
       MZHadron.FillEntry();
