@@ -50,10 +50,13 @@ int main(int argc, char *argv[])
    bool CheckBackgroundHiBin    = CL.GetBool("CheckBackgroundHiBin", false);
    double HiBinMin              = CL.GetDouble("HiBinMin", 20);
    double HiBinMax              = CL.GetDouble("HiBinMax", 60);
+   int AlternateHiBin           = CL.GetInt("AlternateHiBin", 0);
    string SignalHFShiftFileName = CL.Get("SignalHFShiftFile", "NONE");
    string HFShiftFileName       = CL.Get("HFShiftFile", "NONE");
    vector<int> SubEvent         = CL.GetIntegerVector("SubEvent", vector<int>{-1});
    int OverSample               = SelfMixingMode ? 1 : CL.GetInt("OverSample", 100);
+   bool DoDiHadron              = CL.GetBool("DoDiHadron", true);
+   int ExtraZIndex              = CL.GetInt("ExtraZ", -1);
 
    if(SubEvent.size() == 0)   SubEvent = vector<int>{-1, -1};
    if(SubEvent.size() == 1)   SubEvent.push_back(SubEvent[0]);
@@ -77,6 +80,8 @@ int main(int argc, char *argv[])
    TH1D HMatchedHF("HMatchedHF", ";log(SumHF);", 100, 0, 13.5);
    TH1D HSubEvent0HF("HSubEvent0HF", ";log(SumHF);", 100, 0, 13.5);
    TH1D HSubEvent1HF("HSubEvent1HF", ";log(SumHF);", 100, 0, 13.5);
+   TH1D HSignalHFLinear("HSignalHFLinear", ";SumHF;", 1000, 0, 180000);
+   TH1D HMatchedHFLinear("HMatchedHFLinear", ";SumHF;", 1000, 0, 180000);
 
    // Z distributions
    TH1D HZY("HZY", ";y_{Z}", 100, -3, 3);
@@ -84,18 +89,27 @@ int main(int argc, char *argv[])
    TH1D HZMass("HZMass", ";m_{Z}", 100, 40, 140);
    
    // Z-hadron correlations
-   TH1D HZHEta("HZHEta", ";y_{Z} - #eta_{h}", 100, 0, 3.5);
-   TH1D HZHPhi("HZHPhi", ";#Delta#phi_{Z,h}", 100, 0, M_PI);
-   TH1D HZHPT("HZHPT", ";p_{T,H}", 100, 0, 100);
-   TH1D HZHPTP1("HZHPTP1", ";p_{T,H}", 100, 0, 100);
-   TH1D HZHPTP2("HZHPTP2", ";p_{T,H}", 100, 0, 100);
-   TH1D HZHPTP3("HZHPTP3", ";p_{T,H}", 100, 0, 100);
-   TH1D HZHPTP4("HZHPTP4", ";p_{T,H}", 100, 0, 100);
+   TH1D HCZHEta("HCZHEta", ";y_{Z} - #eta_{h}", 120, 0, 3.5);
+   TH1D HCZHPhi("HCZHPhi", ";#Delta#phi_{Z,h}", 120, 0, M_PI);
+   TH1D HCZHPT("HCZHPT", ";p_{T,H}", 120, 0, 120);
+   TH1D HPZHEta("HPZHEta", ";y_{Z} - #eta_{h}", 120, 0, 3.5);
+   TH1D HPZHPhi("HPZHPhi", ";#Delta#phi_{Z,h}", 120, 0, M_PI);
+   TH1D HPZHPT("HPZHPT", ";p_{T,H}", 120, 0, 120);
+   TH1D HZHEta("HZHEta", ";y_{Z} - #eta_{h}", 120, -4, 4);
+   TH1D HZHEtaZSide("HZHEtaZSide", ";y_{Z} - #eta_{h}", 120, -4, 4);
+   TH1D HZHEtaJetSide("HZHEtaJetSide", ";y_{Z} - #eta_{h}", 120, -4, 4);
+   TH1D HZHPhi("HZHPhi", ";#Delta#phi_{Z,h}", 120, 0, M_PI);
+   TH1D HZHPT("HZHPT", ";p_{T,H}", 120, 0, 120);
+   TH1D HZHPTP1("HZHPTP1", ";p_{T,H}", 120, 0, 120);
+   TH1D HZHPTP2("HZHPTP2", ";p_{T,H}", 120, 0, 120);
+   TH1D HZHPTP3("HZHPTP3", ";p_{T,H}", 120, 0, 120);
+   TH1D HZHPTP4("HZHPTP4", ";p_{T,H}", 120, 0, 120);
+   TH1D HZHXi("HZHXi", ";Xi;", 120, 0, 5);
    
    // Track-track correlations
-   TH2D HEtaPhi("HEtaPhi", ";#Delta#eta;#Delta#phi", 100, -3, 3, 100, -M_PI, M_PI);
-   TH1D HEta("HEta", ";#Delta#eta", 100, -3, 3);
-   TH1D HPhi("HPhi", ";#Delta#phi", 100, -M_PI, M_PI);
+   TH2D HEtaPhi("HEtaPhi", ";#Delta#eta;#Delta#phi", 100, 0, 4, 100, 0, M_PI);
+   TH1D HEta("HEta", ";#Delta#eta", 100, 0, 4);
+   TH1D HPhi("HPhi", ";#Delta#phi", 100, 0, M_PI);
    TH1D HPT1("HPT1", ";p_{T}", 100, 0, 50);
    TH1D HPT1P1("HPT1P1", ";p_{T}", 100, 0, 50);
    TH1D HPT1P2("HPT1P2", ";p_{T}", 100, 0, 50);
@@ -140,15 +154,29 @@ int main(int argc, char *argv[])
       // Check if signal event is within our target centrality range
       if(IsPP == false)
       {
-         if(CheckSignalHiBin == true && MZHadron.hiBin < HiBinMin)       continue;
-         if(CheckSignalHiBin == true && MZHadron.hiBin >= HiBinMax)      continue;
+         if(AlternateHiBin == 0)
+         {
+            if(CheckSignalHiBin == true && MZHadron.hiBin < HiBinMin)       continue;
+            if(CheckSignalHiBin == true && MZHadron.hiBin >= HiBinMax)      continue;
+         }
+         if(AlternateHiBin == 1)
+         {
+            if(CheckSignalHiBin == true && MZHadron.hiBinUp < HiBinMin)       continue;
+            if(CheckSignalHiBin == true && MZHadron.hiBinUp >= HiBinMax)      continue;
+         }
+         if(AlternateHiBin == -1)
+         {
+            if(CheckSignalHiBin == true && MZHadron.hiBinDown < HiBinMin)       continue;
+            if(CheckSignalHiBin == true && MZHadron.hiBinDown >= HiBinMax)      continue;
+         }
       }
 
       // Event weights
       if(IsReco == false) MZHadron.VZWeight = 1;
       // double EventWeight = MZHadron.EventWeight * MZHadron.VZWeight * MZHadron.ZWeight;
       double EventWeight = MZHadron.EventWeight * MZHadron.ZWeight;
-      // double EventWeight = 1;
+      if(ExtraZIndex >= 0)
+         EventWeight = EventWeight * MZHadron.ExtraZWeight[ExtraZIndex];
          
       // HFShift weight
       double HFShiftWeight = 1;
@@ -233,9 +261,9 @@ int main(int argc, char *argv[])
          //    continue;
 
          bool GoodBackgroundZ = false;
-         if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) > MinZPT)
+         if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) >= MinZPT)
             GoodBackgroundZ = true;
-         if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) > MinZPT)
+         if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) >= MinZPT)
             GoodBackgroundZ = true;
          if(CheckBackgroundZ == true && GoodBackgroundZ == false)
             continue;
@@ -258,6 +286,8 @@ int main(int argc, char *argv[])
          //    * HFShiftWeight;
          double EventWeight = MZHadronBackground.EventWeight * MZHadronBackground.ZWeight;
          EventWeight = EventWeight * HFShiftWeight;
+         if(ExtraZIndex >= 0)
+            EventWeight = EventWeight * MZHadronBackground.ExtraZWeight[ExtraZIndex];
 
          BackgroundEvent.push_back(Event(iE, EventWeight));
       }
@@ -353,6 +383,8 @@ int main(int argc, char *argv[])
       HMatchedHF.Fill(log(MZHadronBackground.SignalHF), EventWeight);
       HSubEvent0HF.Fill(log(MZHadron.SubEvent0HF), EventWeight);
       HSubEvent1HF.Fill(log(MZHadron.SubEventAllHF - MZHadron.SubEvent0HF), EventWeight);
+      HSignalHFLinear.Fill(MZHadron.SignalHF, EventWeight);
+      HMatchedHFLinear.Fill(MZHadronBackground.SignalHF, EventWeight);
 
       // Then we loop over tracks and start making plots
       int N1 = (MZHadron.trackPt != nullptr) ? MZHadron.trackPt->size() : 0;
@@ -382,6 +414,7 @@ int main(int argc, char *argv[])
          PT1.push_back(MZHadron.trackPt->at(iP));
          Eta1.push_back(MZHadron.trackEta->at(iP));
          Phi1.push_back(MZHadron.trackPhi->at(iP));
+         // TrackWeight1.push_back(MZHadron.trackWeight->at(iP) / MZHadron.trackResidualWeight->at(iP));
          TrackWeight1.push_back(MZHadron.trackWeight->at(iP));
       }
 
@@ -409,6 +442,7 @@ int main(int argc, char *argv[])
             PT2.push_back(MZHadronBackground.trackPt->at(iP));
             Eta2.push_back(MZHadronBackground.trackEta->at(iP));
             Phi2.push_back(MZHadronBackground.trackPhi->at(iP));
+            // TrackWeight2.push_back(MZHadronBackground.trackWeight->at(iP) / MZHadronBackground.trackResidualWeight->at(iP));
             TrackWeight2.push_back(MZHadronBackground.trackWeight->at(iP));
          }
       }
@@ -421,63 +455,106 @@ int main(int argc, char *argv[])
       // Z-hadron correlation plots.  We always need a good Z otherwise this does not make sense.
       if(CheckZ == true)
       {
+         double ZPT = IsReco ? MZHadron.zPt->at(0) : MZHadron.genZPt->at(0);
+         double ZPhi = IsReco ? MZHadron.zPhi->at(0) : MZHadron.genZPhi->at(0);
+         double ZY = IsReco ? MZHadron.zY->at(0) : MZHadron.genZY->at(0);
          for(int iP = 0; iP < N2; iP++)
          {
             double TrackWeight = TrackWeight2[iP] * EventWeight;
-            double DEta = (IsReco ? MZHadron.zY->at(0) : MZHadron.genZY->at(0)) - Eta2[iP];
-            double DPhi = GetDeltaPhi((IsReco ? MZHadron.zPhi->at(0) : MZHadron.genZPhi->at(0)), Phi2[iP]);
+            double DEta = ZY - Eta2[iP];
+            double DPhi = GetDeltaPhi(ZPhi, Phi2[iP]);
+            double Xi = -log(fabs(PT2[iP] / ZPT * cos(ZPhi - Phi2[iP])));
 
-            HZHEta.Fill(+DEta, 0.5 * TrackWeight);
-            HZHEta.Fill(-DEta, 0.5 * TrackWeight);
-            HZHPhi.Fill(+DPhi, 0.5 * TrackWeight);
-            HZHPhi.Fill(-DPhi, 0.5 * TrackWeight);
+            if(ZY > -1 && ZY < 1)
+            {
+               bool Proceed = true;
+               if(CheckBackgroundZ == true)
+               {
+                  double BackgroundZY = IsReco ? MZHadronBackground.zY->at(0) : MZHadronBackground.genZY->at(0);
+                  if(BackgroundZY < -1)   Proceed = false;
+                  if(BackgroundZY > +1)   Proceed = false;
+               }
+               if(Proceed == true)
+               {
+                  HCZHEta.Fill(fabs(DEta), TrackWeight);
+                  HCZHPhi.Fill(fabs(DPhi), TrackWeight);
+                  HCZHPT.Fill(PT2[iP], TrackWeight);
+               }
+            }
+            else
+            {
+               bool Proceed = true;
+               if(CheckBackgroundZ == true)
+               {
+                  double BackgroundZY = IsReco ? MZHadronBackground.zY->at(0) : MZHadronBackground.genZY->at(0);
+                  if(BackgroundZY < 1 && BackgroundZY > -1)
+                     Proceed = false;
+               }
+               if(Proceed == true)
+               {
+                  HPZHEta.Fill(fabs(DEta), TrackWeight);
+                  HPZHPhi.Fill(fabs(DPhi), TrackWeight);
+                  HPZHPT.Fill(PT2[iP], TrackWeight);
+               }
+            }
+
+            HZHEta.Fill(fabs(DEta), TrackWeight);
+            if(DPhi < M_PI / 2 && DPhi > -M_PI / 2)
+               HZHEtaZSide.Fill(fabs(DEta), TrackWeight);
+            else
+               HZHEtaJetSide.Fill(fabs(DEta), TrackWeight);
+            HZHPhi.Fill(fabs(DPhi), TrackWeight);
             HZHPT.Fill(PT2[iP], TrackWeight);
             if(iParts == 0)   HZHPTP1.Fill(PT2[iP], TrackWeight);
             if(iParts == 1)   HZHPTP2.Fill(PT2[iP], TrackWeight);
             if(iParts == 2)   HZHPTP3.Fill(PT2[iP], TrackWeight);
             if(iParts == 3)   HZHPTP4.Fill(PT2[iP], TrackWeight);
+            if(fabs(DPhi) > 7 * M_PI / 8)
+               HZHXi.Fill(Xi, TrackWeight);
          }
       }
 
       // Track-pair correlation plots.  Here we do not necessary need a good Z
-      /*
-      for(int iP1 = 0; iP1 < N1; iP1++)
+      if(DoDiHadron == true)
       {
-         SumWeight1 = SumWeight1 + TrackWeight1[iP1];
-
-         for(int iP2 = 0; iP2 < N2; iP2++)
+         for(int iP1 = 0; iP1 < N1; iP1++)
          {
-            if(SelfMixingMode == true && iP1 == iP2)
-               continue;
+            SumWeight1 = SumWeight1 + TrackWeight1[iP1];
 
-            double Weight = TrackWeight1[iP1] * TrackWeight2[iP2] * EventWeight;
+            for(int iP2 = 0; iP2 < N2; iP2++)
+            {
+               if(SelfMixingMode == true && iP1 == iP2)
+                  continue;
 
-            double DeltaEta = Eta1[iP1] - Eta2[iP2];
-            double DeltaPhi = GetDeltaPhi(Phi1[iP1], Phi2[iP2]);
-            double DeltaR = sqrt(DeltaEta * DeltaEta + DeltaPhi * DeltaPhi);
+               double Weight = TrackWeight1[iP1] * TrackWeight2[iP2] * EventWeight;
 
-            HEtaPhi.Fill(+DeltaEta, +DeltaPhi, 0.25 * Weight);
-            HEtaPhi.Fill(-DeltaEta, +DeltaPhi, 0.25 * Weight);
-            HEtaPhi.Fill(+DeltaEta, -DeltaPhi, 0.25 * Weight);
-            HEtaPhi.Fill(-DeltaEta, -DeltaPhi, 0.25 * Weight);
-            HEta.Fill(+DeltaEta, 0.5 * Weight);
-            HEta.Fill(-DeltaEta, 0.5 * Weight);
-            HPhi.Fill(+DeltaPhi, 0.5 * Weight);
-            HPhi.Fill(-DeltaPhi, 0.5 * Weight);
-            HPT1.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            HPT2.Fill(min(PT1[iP1], PT2[iP2]), Weight);
-            HDeltaR.Fill(DeltaR, Weight);
-            HDeltaREEC.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
-            HDeltaRLog.Fill(DeltaR, Weight);
-            HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
-            
-            if(iParts == 0)   HPT1P1.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            if(iParts == 1)   HPT1P2.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            if(iParts == 2)   HPT1P3.Fill(max(PT1[iP1], PT2[iP2]), Weight);
-            if(iParts == 3)   HPT1P4.Fill(max(PT1[iP1], PT2[iP2]), Weight);
+               double DeltaEta = Eta1[iP1] - Eta2[iP2];
+               double DeltaPhi = GetDeltaPhi(Phi1[iP1], Phi2[iP2]);
+               double DeltaR = sqrt(DeltaEta * DeltaEta + DeltaPhi * DeltaPhi);
+
+               if(DeltaEta < 0)   DeltaEta = -DeltaEta;
+               if(DeltaPhi < 0)   DeltaPhi = -DeltaPhi;
+
+               double MaxPT = (PT1[iP1] > PT2[iP2]) ? PT1[iP1] : PT2[iP2];
+               double MinPT = (PT1[iP1] < PT2[iP2]) ? PT1[iP1] : PT2[iP2];
+
+               // HEtaPhi.Fill(DeltaEta, DeltaPhi, Weight);
+               HEta.Fill(DeltaEta, Weight);
+               HPhi.Fill(DeltaPhi, Weight);
+               HPT1.Fill(MaxPT, Weight);
+               HPT2.Fill(MinPT, Weight);
+               HDeltaR.Fill(DeltaR, Weight);
+               HDeltaREEC.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
+               // HDeltaRLog.Fill(DeltaR, Weight);
+               // HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
+
+               // if(iParts == 0)   HPT1P1.Fill(MaxPT, Weight);
+               // if(iParts == 1)   HPT1P2.Fill(MaxPT, Weight);
+               // if(iParts == 2)   HPT1P3.Fill(MaxPT, Weight);
+               // if(iParts == 3)   HPT1P4.Fill(MaxPT, Weight);
+            }
          }
       }
-      */
 
       // cout << EventWeight << " " << N1 << endl;
       // if(N1 > 0)
@@ -488,6 +565,15 @@ int main(int argc, char *argv[])
          if(iParts == 1)   HCount.Fill(3.0, EventWeight);
          if(iParts == 2)   HCount.Fill(4.0, EventWeight);
          if(iParts == 3)   HCount.Fill(5.0, EventWeight);
+         
+         if(CheckBackgroundZ == true)
+         {
+            double BackgroundZY = IsReco ? MZHadronBackground.zY->at(0) : MZHadronBackground.genZY->at(0);
+            if(BackgroundZY < 1 && BackgroundZY > -1)
+               HCount.Fill(6.0, EventWeight);
+            else
+               HCount.Fill(7.0, EventWeight);
+         }
       }
    }
    Bar.Update(MatchCount);
@@ -506,16 +592,27 @@ int main(int argc, char *argv[])
    HMatchedHF.Write();
    HSubEvent0HF.Write();
    HSubEvent1HF.Write();
+   HSignalHFLinear.Write();
+   HMatchedHFLinear.Write();
    HZY.Write();
    HZPT.Write();
    HZMass.Write();
+   HCZHEta.Write();
+   HCZHPhi.Write();
+   HCZHPT.Write();
+   HPZHEta.Write();
+   HPZHPhi.Write();
+   HPZHPT.Write();
    HZHEta.Write();
+   HZHEtaZSide.Write();
+   HZHEtaJetSide.Write();
    HZHPhi.Write();
    HZHPT.Write();
    HZHPTP1.Write();
    HZHPTP2.Write();
    HZHPTP3.Write();
    HZHPTP4.Write();
+   HZHXi.Write();
    HEtaPhi.Write();
    HEta.Write();
    HPhi.Write();
