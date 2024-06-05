@@ -2,6 +2,8 @@
 #include <TH1D.h>
 #include <TCanvas.h>
 #include <TLegend.h>
+#include <TF1.h>
+#include <TLine.h>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -23,7 +25,16 @@ std::vector<std::string> generateSystematicFiles(const std::string& nominalFile,
     return systematicFiles;
 }
 
-void maxDeviation(const char* nominalFile, const std::vector<std::string>& histNames, std::vector<std::string> systematics = {"HiBinDown","HiBinUp"}, const std::string outputname = "sys") {
+void replaceWithConstantFit(TH1D *h)
+{
+   TF1 *f = new TF1("f","[0]");
+   h->Fit("f","LL");
+   for (int i=1;i<=h->GetNbinsX();i++) {
+      h->SetBinContent(i,f->GetParameter(0));
+   }
+}
+
+void maxDeviation(const char* nominalFile, const std::vector<std::string>& histNames, std::vector<std::string> systematics = {"HiBinDown","HiBinUp"}, const std::string outputname = "sys", bool doSmoothFit=0) {
     std::vector<std::string> systematicNames;
     std::vector<std::string> variationFiles = generateSystematicFiles(nominalFile, systematics, systematicNames);
     static int index=0;
@@ -45,7 +56,7 @@ void maxDeviation(const char* nominalFile, const std::vector<std::string>& histN
         TCanvas* c = new TCanvas(Form("c%d",index), "Systematic Checks", 1000, 1000);
         TLegend* legend = new TLegend(0.5, 0.7, 0.9, 0.9);
 
-        TH1D* histMaxDeviation = (TH1D*)histNominal->Clone();
+        TH1D* histMaxDeviation = (TH1D*)histNominal->Clone(Form("hMax%d",index));
         histMaxDeviation->Reset();
         histMaxDeviation->SetLineColor(kBlack);
         histMaxDeviation->SetTitle("Max Absolute Deviation");
@@ -109,8 +120,11 @@ void maxDeviation(const char* nominalFile, const std::vector<std::string>& histN
         legend->SetBorderSize(0);
         legend->Draw();
 
-        std::string canvasName = "SystematicChecks_MaxDeviation_" + histName + ".png";
+        std::string canvasName = "SystematicChecks_MaxDeviation_" + histName+ ".pdf";
         c->SaveAs(canvasName.c_str());
+	if (doSmoothFit) {
+	   replaceWithConstantFit(histMaxDeviation);
+	}
 	histMaxDeviation->Add(histNominal);
 
         std::string outputFileName = outputname +"_"+ std::string(nominalFile).substr(0, std::string(nominalFile).find_last_of('.')) + ".root";
@@ -120,17 +134,18 @@ void maxDeviation(const char* nominalFile, const std::vector<std::string>& histN
             fileNominal->Close();
             return;
         }
-
+        
         histMaxDeviation->Write(histName.c_str(), TObject::kOverwrite);
         outputFile->Close();
     }
 
 }
 
-void compareHistograms(const char* nominalFile, const std::vector<std::string>& histNames, std::vector<std::string> systematics = {"HiBinDown","HiBinUp"}, const std::string outputname = "sys") {
+void compareHistograms(const char* nominalFile, const std::vector<std::string>& histNames, std::vector<std::string> systematics = {"HiBinDown","HiBinUp"}, const std::string outputname = "sys", double trackingUncertainty=0.024) {
     std::vector<std::string> systematicNames;
     std::vector<std::string> variationFiles = generateSystematicFiles(nominalFile, systematics, systematicNames);
 
+    static int index=0;
     // Load the nominal file
     TFile* fileNominal = TFile::Open(nominalFile);
     if (!fileNominal || fileNominal->IsZombie()) {
@@ -148,16 +163,16 @@ void compareHistograms(const char* nominalFile, const std::vector<std::string>& 
         }
 
         // Create a canvas to draw the histograms
-        TCanvas* c = new TCanvas("c", "Systematic Checks", 1000, 1000);
-
+        TCanvas* c = new TCanvas(Form("c%d",index), "Systematic Checks", 1000, 1000);
         // Create a legend
         TLegend* legend = new TLegend(0.5, 0.7, 0.9, 0.9);
 
         // Create a histogram for the total contribution
-        TH1D* histTotal = (TH1D*)histNominal->Clone();
+        TH1D* histTotal = (TH1D*)histNominal->Clone(Form("hTotalSys%d",index));
         histTotal->Reset();
         histTotal->SetLineColor(kBlack);
         histTotal->SetTitle("Total Systematic Contribution");
+        index++;
 
         // Loop over variation files
         int colorIndex = 2; // Starting color index for variations
@@ -187,7 +202,8 @@ void compareHistograms(const char* nominalFile, const std::vector<std::string>& 
                 histDiff->SetBinContent(bin, std::abs(histDiff->GetBinContent(bin)));
             }
             histDiff->SetLineColor(colorIndex);
-            histDiff->SetTitle(Form("Difference between %s and Nominal", variationFile.c_str()));
+            histDiff->SetTitle(histName.c_str());
+	    if (histDiff->Integral(1,histDiff->GetNbinsX())==0) continue;
 
             // Draw the histogram
             if (colorIndex == 2) {
@@ -212,13 +228,14 @@ void compareHistograms(const char* nominalFile, const std::vector<std::string>& 
 
             // Increment the color index
             colorIndex++;
+	    if (colorIndex==5) colorIndex++;
         }
 
         // Add Tracking systematic (4% of nominal)
         TH1D* histTracking = (TH1D*)histNominal->Clone();
         histTracking->Reset();
         for (int bin = 1; bin <= histNominal->GetNbinsX(); ++bin) {
-            histTracking->SetBinContent(bin, fabs(0.04 * histNominal->GetBinContent(bin)));
+            histTracking->SetBinContent(bin, fabs(trackingUncertainty * histNominal->GetBinContent(bin)));
         }
         histTracking->SetLineColor(kMagenta);
         histTracking->SetTitle("Tracking Systematic");
@@ -247,7 +264,7 @@ void compareHistograms(const char* nominalFile, const std::vector<std::string>& 
         legend->Draw();
 
         // Save the canvas as an image
-        std::string canvasName = "SystematicChecks_" + histName + ".png";
+        std::string canvasName = "SystematicChecks_" + histName + nominalFile + ".pdf";
         c->SaveAs(canvasName.c_str());
 
         // Create a new ROOT file to save the total histogram
@@ -270,7 +287,7 @@ void compareHistograms(const char* nominalFile, const std::vector<std::string>& 
     fileNominal->Close();
 }
 
-void systematics(const char* nominalFile = "PbPb0_30-result.root") {
+void systematics(const char* nominalFile = "PbPb0_30-result.root", double trackingUncertainty=0.02) {
     // Define the nominal file and histogram names
     
     std::vector<std::string> histNames = {"DeltaEta_Result1_2", "DeltaPhi_Result1_2", "DeltaEta_Result2_4", "DeltaPhi_Result2_4", "DeltaEta_Result4_10", "DeltaPhi_Result4_10"};
@@ -285,11 +302,11 @@ void systematics(const char* nominalFile = "PbPb0_30-result.root") {
     }
     
     std::vector<std::string> systematicsHiBin={"HiBinUp","HiBinDown"};
-    maxDeviation(nominalFile, histNames, systematicsMuon,"Muon");
-    maxDeviation(nominalFile, histNames, systematicsHiBin,"HiBin");
+    maxDeviation(nominalFile, histNames, systematicsMuon,"Muon",0);
+    maxDeviation(nominalFile, histNames, systematicsHiBin,"HiBin",0);
 
-    std::vector<std::string> systematics={"HiBin","Muon","MuTagged"};
-    compareHistograms(nominalFile, histNames, systematics);
+    std::vector<std::string> systematics={"PU","HiBin","Muon","MuTagged"};
+    compareHistograms(nominalFile, histNames, systematics, "sys", trackingUncertainty);
 
 
 }

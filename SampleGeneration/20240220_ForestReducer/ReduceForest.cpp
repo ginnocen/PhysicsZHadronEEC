@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 
             //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
             int HLT_HIL3Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
-            if(HLT_HIL3Mu12 == 0)
+            if(IsBackground == false && HLT_HIL3Mu12 == 0)
                continue;
 
             MZHadron.NCollWeight = 1;
@@ -614,8 +614,8 @@ int main(int argc, char *argv[])
          if(DoTrackResidual == true && DoGenLevel == false)
             TrackResidualCorrection = TrackResidual.GetCorrectionFactor(TrackPT, TrackEta, TrackPhi, MZHadron.hiBin);
          MZHadron.trackWeight->push_back(TrackCorrection * TrackResidualCorrection);
-         // MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
-         MZHadron.trackResidualWeight->push_back(1);
+         MZHadron.trackResidualWeight->push_back(TrackResidualCorrection);
+         /// MZHadron.trackResidualWeight->push_back(1);
       }
 
       MZHadron.FillEntry();
