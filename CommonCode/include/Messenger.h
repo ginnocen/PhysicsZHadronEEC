@@ -1,3 +1,6 @@
+#ifndef MESSENGER_H_ASDFASDF
+#define MESSENGER_H_ASDFASDF
+
 #include <iostream>
 #include <vector>
 
@@ -598,3 +601,4 @@ public:
    bool FillEntry();
 };
 
+#endif
