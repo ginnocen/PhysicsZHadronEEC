@@ -1,7 +1,7 @@
 
 
 # default: TestRun TestRunPlot Deploy
-default: TestRunRecoPlot Deploy
+default: TestRunKayaPlot Deploy
 
 Execute: FillCorrelation.cpp
 	g++ FillCorrelation.cpp -o Execute \
@@ -11,6 +11,39 @@ Execute: FillCorrelation.cpp
 TestRun: Execute
 	bash RunReco.sh
 
+TestRunKayaPlot: ExecutePlot
+	./ExecutePlot --Input PPDataxPPData_Kaya.root,PPMCxPPMC_Kaya.root,PbPbDataxPbPbData_Centrality030_Kaya.root,PbPbDataxMinBiasData_Centrality030_Kaya.root \
+		--Coefficients 0,0,1,-1 --Histograms HZHXi,HZHPhi --Output ZHPlotsKayaReproduction.pdf \
+		--Rebin 12,12,12,12
+	./ExecutePlot --Input PPDataxPPData_Kaya.root,PPMCxPPMC_Kaya.root,PbPbDataxPbPbData_Centrality030_Kaya.root,PbPbDataxMinBiasData_Centrality030_Kaya.root \
+		--Coefficients 0,0,1,-1 --Histograms HZHPT --Output ZHPlotsKayaReproductionPT.pdf \
+		--Rebin 1,1,1,1
+
+TestRunShiftPlot: ExecutePlot
+	./ExecutePlot --Input  \
+		--Coefficients 0,0,1,-1 --Histograms HZHEta,HZHPhi,HZHPT --Output ZHPlotsPPSelfSubtraction.pdf \
+		--SelfMixing 1,0,1,0 --Rebin 12,12,12,12
+
+TestRunSelfSubtraction: ExecutePlot
+	./ExecutePlot --Input PPMCxPPMC_Reco.root,PPMCxPPMC_Reco_Different.root,PPDataxPPData_Reco.root,PPDataxPPData_Reco_Different.root \
+		--Coefficients 0,0,1,-1 --Histograms HZHEta,HZHPhi,HZHPT --Output ZHPlotsPPSelfSubtraction.pdf \
+		--SelfMixing 1,0,1,0 --Rebin 12,12,12,12
+	# ./ExecutePlot --Input PbPbMCxPbPbMC_Reco.root,PbPbMCxPbPbMC_Reco_Different1.root,PbPbMCxPbPbMC_Reco_Different2.root,PbPbDataxPbPbData_Reco.root,PbPbDataxPbPbData_Reco_Different1.root,PbPbDataxPbPbData_Reco_Different2.root \
+	# 	--Coefficients 0,0,0,1,-0.5,-0.5 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsPbPbSelfSubtraction.pdf \
+	# 	--SelfMixing 1,0,0,1,0,0
+	# ./ExecutePlot --Input PbPbMCxPbPbMC_Centrality030_Reco.root,PbPbMCxPbPbMC_Centrality030_Reco_Different.root,PbPbDataxPbPbData_Centrality030_Reco.root,PbPbDataxPbPbData_Centrality030_Reco_Different.root \
+	# 	--Coefficients 0,0,1,-1 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsPbPbSelfSubtractionCentrality030.pdf \
+	# 	--SelfMixing 1,0,0,1,0,0
+	./ExecutePlot --Input PPDataxPPData_Reco.root,PPDataxPPData_Reco_Different.root,PbPbDataxPbPbData_Centrality030_Reco.root,PbPbDataxPbPbData_Centrality030_Reco_Different.root \
+		--Coefficients 0,0,1,-1 --Histograms HZHEta,HZHPhi,HZHPT,HCZHEta,HCZHPhi,HCZHPT,HPZHEta,HPZHPhi,HPZHPT --Output ZHPlotsSelfSubtractionCentrality030.pdf \
+		--SelfMixing 1,0,0,1,0,0 --Rebin 12,12,12,12,12,12
+	./ExecutePlot --Input PPDataxPPData_Reco.root,PPDataxPPData_Reco_Different.root,PbPbDataxPbPbData_Centrality3050_Reco.root,PbPbDataxPbPbData_Centrality3050_Reco_Different.root \
+		--Coefficients 0,0,1,-1 --Histograms HZHEta,HZHPhi,HZHPT,HCZHEta,HCZHPhi,HCZHPT,HPZHEta,HPZHPhi,HPZHPT --Output ZHPlotsSelfSubtractionCentrality3050.pdf \
+		--SelfMixing 1,0,0,1,0,0 --Rebin 12,12,12,12,12,12
+	./ExecutePlot --Input PPDataxPPData_Reco.root,PPDataxPPData_Reco_Different.root,PbPbDataxPbPbData_Centrality5090_Reco.root,PbPbDataxPbPbData_Centrality5090_Reco_Different.root \
+		--Coefficients 0,0,1,-1 --Histograms HZHEta,HZHPhi,HZHPT,HCZHEta,HCZHPhi,HCZHPT,HPZHEta,HPZHPhi,HPZHPT --Output ZHPlotsSelfSubtractionCentrality5090.pdf \
+		--SelfMixing 1,0,0,1,0,0 --Rebin 12,12,12,12,12,12
+
 TestRunPlot: ExecutePlot
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Reco.root,DYLLxHydjet_Reco.root,PPMCxPPMC.root \
 		--Coefficients 0,0,1,-1,0 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsReco.pdf \
@@ -19,14 +52,38 @@ TestRunPlot: ExecutePlot
 
 TestRunRecoPlot: ExecutePlot
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality1030_Reco.root,DYLLxHydjet_Centrality1030_Reco.root \
-		--Coefficients 0,0,1,-1 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsCentrality1030Reco.pdf \
+		--Coefficients 0,0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+		--Output ZHPlotsCentrality1030Reco.pdf \
 		--SelfMixing 1,1,1,0
-	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality1030_Reco.root,DYLLxHydjet_Centrality1030_Reco.root \
-		--Coefficients 0,0,1,-1.004 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsCentrality1030RecoAdjusted.pdf \
-		--SelfMixing 1,1,1,0
+	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality1030_Reco.root,DYLLxHydjet_Centrality1030_Reco.root \
+	# 	--Coefficients 0,0,1,-1.004 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+	# 	--Output ZHPlotsCentrality1030RecoAdjusted.pdf \
+	# 	--SelfMixing 1,1,1,0
+	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality1030_Reco.root,DYLLxHydjet_Centrality1030_Reco_ExtraShift2.root \
+	# 	--Coefficients 0,0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+	# 	--Output ZHPlotsCentrality1030RecoShifted.pdf \
+	# 	--SelfMixing 1,1,1,0
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality010_Reco.root,DYLLxHydjet_Centrality010_Reco.root \
-		--Coefficients 0,0,1,-1 --Histograms HSignalHF,HMatchedHF,HSubEvent0HF,HSubEvent1HF,HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsCentrality010Reco.pdf \
+		--Coefficients 0,0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+		--Output ZHPlotsCentrality010Reco.pdf \
 		--SelfMixing 1,1,1,0
+	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality010_Reco.root,DYLLxHydjet_Centrality010_Reco.root \
+	# 	--Coefficients 0,0,1,-1.002 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+	# 	--Output ZHPlotsCentrality010RecoAdjusted.pdf \
+	# 	--SelfMixing 1,1,1,0
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality030_Reco.root,DYLLxHydjet_Centrality030_Reco.root \
+		--Coefficients 0,0,1,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+		--Output ZHPlotsCentrality030Reco.pdf \
+		--SelfMixing 1,1,1,0
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL_Centrality030_Reco.root,DYLLxHydjet_Centrality030_Reco.root,HydjetxHydjet_Centrality030_Reco.root,HydjetxHydjet_Centrality030_Reco_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HDeltaR,HDeltaREEC --Output FullPlotsCentrality030Reco.pdf --SelfMixing 1,1,0,1,0
+	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality030_Reco.root,DYLLxHydjet_Centrality030_Reco1.root,DYLLxHydjet_Centrality030_Reco2.root \
+	# 	--Coefficients 0,0,1,-0.5,-0.5 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+	# 	--Output ZHPlotsCentrality030Reco.pdf \
+	# 	--SelfMixing 1,1,1,0,0
+	# ./ExecutePlot --Input DYLLS0xDYLLS0.root,PPMCxPPMC_Reco.root,DYLLxDYLL_Centrality030_Reco.root,DYLLxHydjet_Centrality030_Reco1.root,DYLLxHydjet_Centrality030_Reco2.root \
+	# 	--Coefficients 0,0,1,-0.51,-0.51 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT \
+	# 	--Output ZHPlotsCentrality030RecoAdjusted.pdf \
+	# 	--SelfMixing 1,1,1,0,0
 
 TestRunGenPlot: ExecutePlot
 	# ./ExecutePlot --Input ppMCxppMC.root,DYLLxDYLL.root,DYLLxHydjet_Nominal.root,HydjetxHydjet.root,HydjetxHydjet_Different.root --Coefficients -1,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass --Output FullPlots.pdf --SelfMixing 1,1,0,1,0

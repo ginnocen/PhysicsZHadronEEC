@@ -25,12 +25,14 @@ int main(int argc, char *argv[])
    vector<string> InputFileNames = CL.GetStringVector("Input");
    vector<double> Coefficients = CL.GetDoubleVector("Coefficients");
    vector<string> Histograms = CL.GetStringVector("Histograms");
-   vector<bool> SelfMixing = CL.GetBoolVector("SelfMixing");
+   vector<bool> SelfMixing = CL.GetBoolVector("SelfMixing", vector<bool>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+   vector<int> Rebin = CL.GetIntVector("Rebin", vector<int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
    string OutputFileName = CL.Get("Output");
 
    int N = InputFileNames.size();
 
    Coefficients.insert(Coefficients.end(), 1, N);
+   Rebin.insert(Rebin.end(), 1, N);
 
    vector<TFile *> InputFiles(N);
    for(int i = 0; i < N; i++)
@@ -61,6 +63,7 @@ int main(int argc, char *argv[])
       for(int i = 0; i < N; i++)
       {
          H1[i] = (TH1D *)InputFiles[i]->Get(H.c_str());
+         H1[i]->Rebin(Rebin[i]);
          TH1D *HCount = (TH1D *)InputFiles[i]->Get("HCount");
          H1[i]->Scale(MixingScale[i] / HCount->GetBinContent(1));
          DivideByBinWidth(H1[i]);
@@ -74,7 +77,8 @@ int main(int argc, char *argv[])
       for(int i = 0; i < N; i++)
       {
          H1[i]->SetTitle(Form("Sum of all entries = %.2f", Integral(H1[i])));
-         PdfFile.AddPlot(H1[i]);
+         H1[i]->SetStats(0);
+         PdfFile.AddPlot(H1[i], "hist error", false, false, true, false);
          H1[i]->SetTitle("");
          cout << InputFileNames[i] << " " << Integral(H1[i]) << endl;
          // PdfFile.AddPlot(H2[i], "colz");
@@ -120,6 +124,7 @@ int main(int argc, char *argv[])
       for(int i = 1; i < N; i++)
          HDiff->Add(H1[i], Coefficients[i]);
       Legend.AddEntry(HDiff, Form("Combined (%.3f)", Integral(HDiff)), "l");
+      HDiff->SetStats(0);
       HDiff->Draw("hist same");
 
       Legend.Draw();
