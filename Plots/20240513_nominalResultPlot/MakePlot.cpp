@@ -73,12 +73,14 @@ int main(int argc, char *argv[])
 
    vector<string> DataFiles       = CL.GetStringVector("DataFiles", vector<string>{"pp.root","test.root"});
    bool SkipSystematics           = CL.GetBool("SkipSystematics", false);
-   bool SkipMixFile                = CL.GetBool("SkipMixFile", true);
+   bool SkipMixFile               = CL.GetBool("SkipMixFile", true);
+   int Rebin                      = CL.GetInt("Rebin", 1);
+   
    vector<string> SystematicFiles = (SkipSystematics == false) ? CL.GetStringVector("SystematicFiles") : vector<string>();
    vector<string> MixFiles = (SkipMixFile == false) ? CL.GetStringVector("mixFiles") : vector<string>();
    vector<string> CurveLabels     = CL.GetStringVector("CurveLabels", vector<string>{"pp", "PbPb 0-30%"});
    string ToPlot                  = CL.Get("ToPlot", "DeltaPhi");
-   
+   vector<bool> lines = CL.GetBoolVector("lines", vector<bool>{0,0,1,1,1,1});
    vector<string> Tags            = CL.GetStringVector("Tags", vector<string> {
          "Result1_2", "Result2_4", "Result4_10"
    });
@@ -141,7 +143,7 @@ int main(int argc, char *argv[])
    double XRPadHeight   = RPadHeight/ CanvasHeight;
 
    double LegendLeft    = CL.GetDouble("LegendLeft", 0.08);
-   double LegendBottom  = CL.GetDouble("LegendBottom", 0.60);
+   double LegendBottom  = CL.GetDouble("LegendBottom", 0.50);
 
    // Open input files
    vector<TFile *> File(NFile);
@@ -278,7 +280,7 @@ int main(int argc, char *argv[])
    // Setup   
 
    // Setup legend
-   TLegend Legend(LegendLeft, LegendBottom, LegendLeft + 0.40, LegendBottom + NFile * 0.1);
+   TLegend Legend(LegendLeft, LegendBottom, LegendLeft + 0.40, LegendBottom + NFile * 0.09);
    Legend.SetTextFont(42);
    Legend.SetTextSize(0.035 * CanvasHeight / PadHeight);
    Legend.SetBorderSize(0);
@@ -290,8 +292,16 @@ int main(int argc, char *argv[])
       HWorld[iC]->Draw("axis");
       cout <<iC<<endl;
       for(int iF = 0; iF < NFile; iF++) {
-         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr) HDataSys[iC][iF]->Draw("same e2");
-	 HData[iC][iF]->Draw("same");
+         if (Rebin!=1) {
+            HData[iC][iF]->Rebin(Rebin);
+            HData[iC][iF]->Scale(1./Rebin);
+            HDataSys[iC][iF]->Rebin(Rebin);
+            HDataSys[iC][iF]->Scale(1./Rebin);
+         }
+
+         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr && lines[iF]==0) HDataSys[iC][iF]->Draw("same e2");
+	 if (lines[iF]==0) HData[iC][iF]->Draw("same"); else HData[iC][iF]->Draw("hist c same");
+         cout <<iF<<" "<<(lines[iF]==0)<<endl;
       }
 
       Latex.SetTextAngle(0);
