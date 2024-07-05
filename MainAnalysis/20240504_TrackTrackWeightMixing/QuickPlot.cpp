@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
    vector<bool> SelfMixing = CL.GetBoolVector("SelfMixing", vector<bool>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
    vector<int> Rebin = CL.GetIntVector("Rebin", vector<int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
    string OutputFileName = CL.Get("Output");
+   bool IncludeCombined = CL.GetBool("IncludeCombined", true);
 
    int N = InputFileNames.size();
 
@@ -121,8 +122,16 @@ int main(int argc, char *argv[])
          H1[i]->SetLineWidth(2);
          H1[i]->SetLineColor(Colors[i]);
          H1[i]->Draw("hist same");
-         Legend.AddEntry(H1[i], Form("%s (%.3f) [%.0g]", InputFileNames[i].c_str(), Integral(H1[i]), Coefficients[i]), "l");
-         Legend2.AddEntry(H1[i], Form("%s [%.0g]", Labels[i].c_str(), Coefficients[i]), "l");
+         if(IncludeCombined == true)
+         {
+            Legend.AddEntry(H1[i], Form("%s (%.3f) [%.0g]", InputFileNames[i].c_str(), Integral(H1[i]), Coefficients[i]), "l");
+            Legend2.AddEntry(H1[i], Form("%s [%.0g]", Labels[i].c_str(), Coefficients[i]), "l");
+         }
+         else
+         {
+            Legend.AddEntry(H1[i], Form("%s (%.3f)", InputFileNames[i].c_str(), Integral(H1[i])), "l");
+            Legend2.AddEntry(H1[i], Form("%s", Labels[i].c_str()), "l");
+         }
       }
 
       TH1D *HDiff = (TH1D *)H1[0]->Clone("HDiff");
@@ -132,7 +141,8 @@ int main(int argc, char *argv[])
       HDiff->Scale(Coefficients[0]);
       for(int i = 1; i < N; i++)
          HDiff->Add(H1[i], Coefficients[i]);
-      Legend.AddEntry(HDiff, Form("Combined (%.3f)", Integral(HDiff)), "l");
+      if(IncludeCombined == true)
+         Legend.AddEntry(HDiff, Form("Combined (%.3f)", Integral(HDiff)), "l");
       HDiff->SetStats(0);
       HDiff->Draw("hist same");
 
@@ -151,7 +161,8 @@ int main(int argc, char *argv[])
       HWorld2.Draw();
       for(int i = 0; i < N; i++)
          H1[i]->Draw("hist same");
-      HDiff->Draw("hist same");
+      if(IncludeCombined == true)
+         HDiff->Draw("hist same");
       Legend.Draw();
 
       PdfFile.AddCanvas(Canvas);
@@ -159,7 +170,8 @@ int main(int argc, char *argv[])
       HWorld2.Draw();
       for(int i = 0; i < N; i++)
          H1[i]->Draw("hist same");
-      HDiff->Draw("hist same");
+      if(IncludeCombined == true)
+         HDiff->Draw("hist same");
       Legend2.Draw();
 
       PdfFile.AddCanvas(Canvas);
