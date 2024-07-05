@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
    CommandLine CL(argc, argv);
 
    vector<string> InputFileNames = CL.GetStringVector("Input");
+   vector<string> Labels = CL.GetStringVector("Labels", InputFileNames);
    vector<double> Coefficients = CL.GetDoubleVector("Coefficients");
    vector<string> Histograms = CL.GetStringVector("Histograms");
    vector<bool> SelfMixing = CL.GetBoolVector("SelfMixing", vector<bool>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
@@ -33,6 +34,7 @@ int main(int argc, char *argv[])
 
    Coefficients.insert(Coefficients.end(), 1, N);
    Rebin.insert(Rebin.end(), 1, N);
+   Labels.insert(Labels.end(), N, "");
 
    vector<TFile *> InputFiles(N);
    for(int i = 0; i < N; i++)
@@ -107,6 +109,12 @@ int main(int argc, char *argv[])
       Legend.SetFillStyle(0);
       Legend.SetTextFont(42);
       Legend.SetTextSize(0.035);
+      
+      TLegend Legend2(0.2, 0.85, 0.5, 0.60);
+      Legend2.SetBorderSize(0);
+      Legend2.SetFillStyle(0);
+      Legend2.SetTextFont(42);
+      Legend2.SetTextSize(0.035);
 
       for(int i = 0; i < N; i++)
       {
@@ -114,6 +122,7 @@ int main(int argc, char *argv[])
          H1[i]->SetLineColor(Colors[i]);
          H1[i]->Draw("hist same");
          Legend.AddEntry(H1[i], Form("%s (%.3f) [%.0g]", InputFileNames[i].c_str(), Integral(H1[i]), Coefficients[i]), "l");
+         Legend2.AddEntry(H1[i], Form("%s [%.0g]", Labels[i].c_str(), Coefficients[i]), "l");
       }
 
       TH1D *HDiff = (TH1D *)H1[0]->Clone("HDiff");
@@ -136,7 +145,7 @@ int main(int argc, char *argv[])
       if(WorldMin <= 0)
          WorldMin = WorldMax * 0.00001;
 
-      TH2D HWorld2("HWorld2", ";;", 100, XMin, XMax, 100, WorldMin / 5, WorldMax * 50);
+      TH2D HWorld2("HWorld2", ";;", 100, XMin, XMax, 100, WorldMin / 5, WorldMax * 500);
       HWorld2.GetXaxis()->SetTitle(H1[0]->GetXaxis()->GetTitle());
       HWorld2.SetStats(0);
       HWorld2.Draw();
@@ -144,6 +153,14 @@ int main(int argc, char *argv[])
          H1[i]->Draw("hist same");
       HDiff->Draw("hist same");
       Legend.Draw();
+
+      PdfFile.AddCanvas(Canvas);
+
+      HWorld2.Draw();
+      for(int i = 0; i < N; i++)
+         H1[i]->Draw("hist same");
+      HDiff->Draw("hist same");
+      Legend2.Draw();
 
       PdfFile.AddCanvas(Canvas);
 
