@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
    double MinPT                 = CL.GetDouble("MinPT", 3);
    double MaxPT                 = CL.GetDouble("MaxPT", -1);
    double MinZPT                = CL.GetDouble("MinZPT", 20);
+   double MaxAbsEta             = CL.GetDouble("MaxAbsEta", -1);
    bool IsPP                    = CL.GetBool("IsPP", false);
    bool IsReco                  = CL.GetBool("IsReco", true);
    bool CheckZ                  = CL.GetBool("CheckZ", true);
@@ -409,6 +410,7 @@ int main(int argc, char *argv[])
          if(MZHadron.trackMuTagged->at(iP) == true)                         continue;
          if(MZHadron.trackPt->at(iP) < MinPT)                               continue;
          if(MaxPT > 0 && MZHadron.trackPt->at(iP) > MaxPT)                  continue;
+         if(MaxAbsEta > 0 && fabs(MZHadron.trackEta->at(iP)) > MaxAbsEta)   continue;
          if(SubEvent[0] >= 0 && MZHadron.subevent->at(iP) != SubEvent[0])   continue;
 
          PT1.push_back(MZHadron.trackPt->at(iP));
@@ -437,6 +439,7 @@ int main(int argc, char *argv[])
             if(MZHadronBackground.trackMuTagged->at(iP) == true)                         continue;
             if(MZHadronBackground.trackPt->at(iP) < MinPT)                               continue;
             if(MaxPT > 0 && MZHadronBackground.trackPt->at(iP) > MaxPT)                  continue;
+            if(MaxAbsEta > 0 && fabs(MZHadronBackground.trackEta->at(iP)) > MaxAbsEta)   continue;
             if(SubEvent[1] >= 0 && MZHadronBackground.subevent->at(iP) != SubEvent[1])   continue;
 
             PT2.push_back(MZHadronBackground.trackPt->at(iP));
@@ -535,14 +538,14 @@ int main(int argc, char *argv[])
                if(DeltaEta < 0)   DeltaEta = -DeltaEta;
                if(DeltaPhi < 0)   DeltaPhi = -DeltaPhi;
 
-               double MaxPT = (PT1[iP1] > PT2[iP2]) ? PT1[iP1] : PT2[iP2];
-               double MinPT = (PT1[iP1] < PT2[iP2]) ? PT1[iP1] : PT2[iP2];
+               double PairMaxPT = (PT1[iP1] > PT2[iP2]) ? PT1[iP1] : PT2[iP2];
+               double PairMinPT = (PT1[iP1] < PT2[iP2]) ? PT1[iP1] : PT2[iP2];
 
                // HEtaPhi.Fill(DeltaEta, DeltaPhi, Weight);
                HEta.Fill(DeltaEta, Weight);
                HPhi.Fill(DeltaPhi, Weight);
-               HPT1.Fill(MaxPT, Weight);
-               HPT2.Fill(MinPT, Weight);
+               HPT1.Fill(PairMaxPT, Weight);
+               HPT2.Fill(PairMinPT, Weight);
                HDeltaR.Fill(DeltaR, Weight);
                HDeltaREEC.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
                // HDeltaRLog.Fill(DeltaR, Weight);
