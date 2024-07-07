@@ -501,11 +501,18 @@ int main(int argc, char *argv[])
                }
             }
 
-            HZHEta.Fill(fabs(DEta), TrackWeight);
+            HZHEta.Fill(+DEta, TrackWeight / 2);
+            HZHEta.Fill(-DEta, TrackWeight / 2);
             if(DPhi < M_PI / 2 && DPhi > -M_PI / 2)
-               HZHEtaZSide.Fill(fabs(DEta), TrackWeight);
+            {
+               HZHEtaZSide.Fill(+DEta, TrackWeight / 2);
+               HZHEtaZSide.Fill(-DEta, TrackWeight / 2);
+            }
             else
-               HZHEtaJetSide.Fill(fabs(DEta), TrackWeight);
+            {
+               HZHEtaJetSide.Fill(+DEta, TrackWeight / 2);
+               HZHEtaJetSide.Fill(-DEta, TrackWeight / 2);
+            }
             HZHPhi.Fill(fabs(DPhi), TrackWeight);
             HZHPT.Fill(PT2[iP], TrackWeight);
             if(iParts == 0)   HZHPTP1.Fill(PT2[iP], TrackWeight);

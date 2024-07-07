@@ -65,6 +65,7 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
     if (par.isMuTagged && (*b->trackMuTagged)[j]) return false; 
     if ((*b->trackPt)[j]>par.MaxTrackPT) return false;  
     if ((*b->trackPt)[j]<par.MinTrackPT) return false;
+    if ((!par.includeHole)&&(*b->trackWeight)[j]<0) return false;
     return true;
 }
 
@@ -75,9 +76,9 @@ bool matching(ZHadronMessenger *a, ZHadronMessenger *b, double shift) {
 //   double shift = 1018.0541;
 //   double shift = //1268.69;
 //    if (a->hiHF<97.13&&b->hiHF<97.13) return 1;
-//    if (a->SignalHF<shift*1.05&&b->SignalHF<shift*1.05) return 1;
-//    if ((b->SignalHF/(a->SignalHF-shift))<1.02&&b->SignalHF/(a->SignalHF-shift)>0.97) return 1;
-    if (int((a->SignalHF-shift)/180)==int((b->SignalHF)/180)) return 1;
+    if (a->SignalHF<shift*1.04&&b->SignalHF<shift*1.04) return 1;
+    if ((b->SignalHF/(a->SignalHF-shift))<1.04&&b->SignalHF/(a->SignalHF-shift)>0.96) return 1;
+//    if (int((a->SignalHF-shift)/180)==int((b->SignalHF)/180)) return 1;
 //    if (fabs(b->SignalHF-a->SignalHF+shift)<300) return 1;
     return 0;
 }
@@ -99,6 +100,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
     unsigned long mix_i = iStart;
     unsigned long mixstart_i = mix_i;
     int deltaI = (iEnd-iStart)/100+1;              
+
     for (unsigned long i = iStart; i < iEnd; i++) {
        MZSignal->GetEntry(i);
        if (i % deltaI == 0) {
@@ -132,23 +134,22 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 break;
              }
 	     MMix->GetEntry(mix_i);
-             nZ += (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight) * 
-	           ((par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]));
+             nZ += ((par.mix&&par.isSelfMixing) ? (MMix->ZWeight*MMix->EventWeight)*(MZSignal->ZWeight*MZSignal->EventWeight) : (MZSignal->ZWeight*MZSignal->EventWeight))*(
+	           (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight]*MZSignal->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]));
 	     
              for (unsigned long j = 0; j < (par.mix ? MMix->trackPhi->size() : MZSignal->trackPhi->size()); j++) {
                 if (!trackSelection((par.mix ? MMix : MZSignal), par, j)) continue;
                 float trackDphi  = par.mix ? DeltaPhi((*MMix->trackPhi)[j], zPhi) : DeltaPhi((*MZSignal->trackPhi)[j], zPhi);
                 float trackDphi2 = par.mix ? DeltaPhi(zPhi, (*MMix->trackPhi)[j]) : DeltaPhi(zPhi, (*MZSignal->trackPhi)[j]);
                 float trackDeta  = par.mix ? fabs((*MMix->trackEta)[j] - zY) : fabs((*MZSignal->trackEta)[j] - zY);
-                //float weight = par.mix ? (MMix->NCollWeight) * (*MMix->trackWeight)[j] * (MMix->ZWeight) : (MZSignal->NCollWeight) * (*MZSignal->trackWeight)[j] * (MZSignal->ZWeight);
-                float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight) : (MZSignal->ZWeight);
-		weight*= (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]);
-		//weight*=(par.mix ? (*MMix->trackWeight)[j]*(*MMix->trackResidualWeight)[j] : (*MZSignal->trackWeight)[j]*(*MZSignal->trackResidualWeight)[j]);
+                float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight*MMix->EventWeight)*(MZSignal->ZWeight*MZSignal->EventWeight) : (MZSignal->ZWeight*MZSignal->EventWeight);
+		weight*= (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight]*MZSignal->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]);
                 weight*=(par.mix ? (*MMix->trackWeight)[j] : (*MZSignal->trackWeight)[j]);
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
                 h->Fill( trackDeta, trackDphi2, weight);
                 h->Fill(-trackDeta, trackDphi2, weight);
+		//cout <<j<<"/"<<(par.mix ? MMix->trackPhi->size() : MZSignal->trackPhi->size())<<weight<<" "<<trackDeta<<" "<<trackDphi<<" "<<endl;
 		
 		if (!par.mix && (*MZSignal->subevent)[j]==0) {
 		   //cout <<"Event:"<<i<<" "<<trackDeta<<" "<<trackDphi2<<" "<<(*MZSignal->trackPt)[j]<<weight<<endl;
@@ -158,11 +159,11 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                    hSub0->Fill(-trackDeta, trackDphi2, weight);
 		}
              }
-             if (nt!=0) nt->Fill((*MZSignal->zPt)[0],MZSignal->trackPhi->size(),MZSignal->hiBin,MZSignal->SignalHF,MMix->trackPhi->size(),MMix->hiBin,MMix->SignalHF,nMix);
+             //if (nt!=0) nt->Fill((*MZSignal->zPt)[0],MZSignal->trackPhi->size(),MZSignal->hiBin,MZSignal->SignalHF,MMix->trackPhi->size(),MMix->hiBin,MMix->SignalHF,nMix);
+	    // cout <<"good, good"<<endl;
 	  }
        }
     }
-    cout << "done" << nZ << endl;
     return nZ;
 }
 
@@ -257,6 +258,7 @@ int main(int argc, char *argv[])
    par.MinZY         = CL.GetDouble("MinZY", 0);           // Minimum Z particle rapidity threshold for event selection.
    par.MaxZY         = CL.GetDouble("MaxZY", 200);         // Maximum Z particle rapidity threshold for event selection.
    par.ExtraZWeight  = CL.GetInt   ("ExtraZWeight",-1);    // Do Muon systematics, -1 means no extraweight.
+   par.includeHole   = CL.GetBool  ("includeHole",true);   // Include hole particle or not
    par.mix = 0;
    par.isPP = IsPP;
    

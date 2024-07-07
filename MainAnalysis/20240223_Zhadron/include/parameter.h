@@ -30,6 +30,8 @@ public:
     bool isHiBinUp;        // Flag to do systematics with HiBinUp
     bool isHiBinDown;      // Flag to do systematics with HiBinDown
     bool isPP;             // Flag to check if this is a PP analysis
+    int ExtraZWeight;
+    bool includeHole;      // Flag to see if we include hole particles (negative trackweight particle)
 
    void printParameters() const {
        cout << "Input file: " << input << endl;
