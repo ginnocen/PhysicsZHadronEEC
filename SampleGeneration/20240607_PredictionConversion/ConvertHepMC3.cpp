@@ -21,7 +21,6 @@ int main(int argc, char *argv[])
    TTree OutputTree("Tree", "");
    ZHadronMessenger MZHadron;
    MZHadron.SetBranch(&OutputTree);
-   MZHadron.EventWeight = 1;
 
    ifstream in(InputFileName);
 
@@ -48,26 +47,32 @@ int main(int argc, char *argv[])
          continue;
       if(list[0][0] == '#')
          continue;
-      if(list[0] == "end")
+      if(list[0].size() > 1)
+         continue;
+      if(list[0] == "E")
       {
-         FillAuxiliaryVariables(MZHadron);
-         MZHadron.FillEntry();
+         if(MZHadron.trackPt->size() > 0)
+         {
+            FillAuxiliaryVariables(MZHadron);
+            MZHadron.FillEntry();
+         }
          MZHadron.Clear();
-         MZHadron.EventWeight = 1;
          continue;
       }
-      if(list.size() == 6)
+      if(list[0] == "W")
+         MZHadron.EventWeight = stof(list[1]);
+      if(list[0] == "P")
       {
-         double px  = stof(list[0]);
-         double py  = stof(list[1]);
-         double pz  = stof(list[2]);
-         double m   = stof(list[3]);
-         int ID     = stoi(list[4]);
-         int Status = stoi(list[5]);
+         int ID     = stoi(list[3]);
+         double px  = stof(list[4]);
+         double py  = stof(list[5]);
+         double pz  = stof(list[6]);
+         double e   = stof(list[7]);
+         double m   = stof(list[8]);
+         int Status = stoi(list[9]);
 
          double p   = sqrt(px * px + py * py + pz * pz);
          double eta = 0.5 * log((p + pz) / (p - pz));
-         double e   = sqrt(p * p + 0.14 * 0.14);
          double y   = 0.5 * log((e + pz) / (e - pz));
 
          double phi = 0;
@@ -78,7 +83,7 @@ int main(int argc, char *argv[])
          if(phi > M_PI)               phi = phi - 2 * M_PI;
 
          double Weight = 0;
-         if(Status == 0)
+         if(Status == 1)
             Weight = 1;
          if(Status == NegativeID)
             Weight = -1;
