@@ -49,6 +49,8 @@ int main(int argc, char *argv[])
    bool DoZReweight             = CL.GetBool("DoZReweight", false);
    bool CheckSignalHiBin        = CL.GetBool("CheckSignalHiBin", true);
    bool CheckBackgroundHiBin    = CL.GetBool("CheckBackgroundHiBin", false);
+   bool DoNegativeWeightFactor  = CL.GetBool("DoNegativeWeightFactor", false);
+   double NegativeWeightFactor  = CL.GetDouble("NegativeWeightFactor", 1);
    double HiBinMin              = CL.GetDouble("HiBinMin", 20);
    double HiBinMax              = CL.GetDouble("HiBinMax", 60);
    int AlternateHiBin           = CL.GetInt("AlternateHiBin", 0);
@@ -413,11 +415,15 @@ int main(int argc, char *argv[])
          if(MaxAbsEta > 0 && fabs(MZHadron.trackEta->at(iP)) > MaxAbsEta)   continue;
          if(SubEvent[0] >= 0 && MZHadron.subevent->at(iP) != SubEvent[0])   continue;
 
+         double W = MZHadron.trackWeight->at(iP);
+         if(DoNegativeWeightFactor == true && W < 0)
+            W = W * NegativeWeightFactor;
+
          PT1.push_back(MZHadron.trackPt->at(iP));
          Eta1.push_back(MZHadron.trackEta->at(iP));
          Phi1.push_back(MZHadron.trackPhi->at(iP));
          // TrackWeight1.push_back(MZHadron.trackWeight->at(iP) / MZHadron.trackResidualWeight->at(iP));
-         TrackWeight1.push_back(MZHadron.trackWeight->at(iP));
+         TrackWeight1.push_back(W);
       }
 
       vector<float> PT2;            PT2.reserve(N2);
@@ -442,11 +448,15 @@ int main(int argc, char *argv[])
             if(MaxAbsEta > 0 && fabs(MZHadronBackground.trackEta->at(iP)) > MaxAbsEta)   continue;
             if(SubEvent[1] >= 0 && MZHadronBackground.subevent->at(iP) != SubEvent[1])   continue;
 
+            double W = MZHadronBackground.trackWeight->at(iP);
+            if(DoNegativeWeightFactor == true && W < 0)
+               W = W * NegativeWeightFactor;
+
             PT2.push_back(MZHadronBackground.trackPt->at(iP));
             Eta2.push_back(MZHadronBackground.trackEta->at(iP));
             Phi2.push_back(MZHadronBackground.trackPhi->at(iP));
             // TrackWeight2.push_back(MZHadronBackground.trackWeight->at(iP) / MZHadronBackground.trackResidualWeight->at(iP));
-            TrackWeight2.push_back(MZHadronBackground.trackWeight->at(iP));
+            TrackWeight2.push_back(W);
          }
       }
 
