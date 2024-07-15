@@ -1,4 +1,3 @@
-#include <TFile.h>
 #include <TCanvas.h>
 #include <TTree.h>
 #include <TH1D.h>
@@ -7,6 +6,8 @@
 #include <TCut.h>
 #include <TLegend.h>
 #include <TNtuple.h>
+#include <TFile.h>
+
 #include <iostream>
 
 using namespace std;
@@ -144,7 +145,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 float trackDeta  = par.mix ? fabs((*MMix->trackEta)[j] - zY) : fabs((*MZSignal->trackEta)[j] - zY);
                 float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight*MMix->EventWeight)*(MZSignal->ZWeight*MZSignal->EventWeight) : (MZSignal->ZWeight*MZSignal->EventWeight);
 		weight*= (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight]*MZSignal->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]);
-                weight*=(par.mix ? (*MMix->trackWeight)[j] : (*MZSignal->trackWeight)[j]);
+                weight*= (par.mix ? ((*MMix->trackWeight)[j]*(1-0.33*par.isJewel*((*MMix->trackWeight)[j]<0))) : ((*MZSignal->trackWeight)[j]*(1-0.33*par.isJewel*((*MZSignal->trackWeight)[j]<0))) );
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
                 h->Fill( trackDeta, trackDphi2, weight);
@@ -234,6 +235,7 @@ int main(int argc, char *argv[])
    int   MaxHiBin    = CL.GetInt   ("MaxHiBin", 200);      // Maximum hiBin value for event selection.
    bool  IsData      = CL.GetBool  ("IsData", false);      // Determines whether the analysis is being run on actual data.
    bool  IsPP        = CL.GetBool  ("IsPP", false);        // Flag to indicate if the analysis is for Proton-Proton collisions.
+   bool  IsJewel     = CL.GetBool  ("IsJewel", false);     // Flag to indicate if the analysis is for Jewel since the hole for Jewel is not hadronized
    cout <<MinTrackPT<<" "<<MaxTrackPT<<endl;
    if (IsPP) {
       MinHiBin=-2;
@@ -261,6 +263,7 @@ int main(int argc, char *argv[])
    par.includeHole   = CL.GetBool  ("includeHole",true);   // Include hole particle or not
    par.mix = 0;
    par.isPP = IsPP;
+   par.isJewel = IsJewel;
    
    if (checkError(par)) return -1;
           
