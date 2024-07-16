@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
    string InputFileName  = CL.Get("Input");
    string OutputFileName = CL.Get("Output");
    int NegativeID        = CL.GetInteger("NegativeID", -999999);
+   bool ChargedOnly      = CL.GetBool("ChargedOnly", true);
+   bool ZeroOutNegative  = CL.GetBool("ZeroOutNegative", false);
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
@@ -53,10 +55,11 @@ int main(int argc, char *argv[])
       {
          if(MZHadron.trackPt->size() > 0)
          {
-            FillAuxiliaryVariables(MZHadron);
+            FillAuxiliaryVariables(MZHadron, ChargedOnly);
             MZHadron.FillEntry();
          }
          MZHadron.Clear();
+         MZHadron.EventWeight = stof(list[list.size()-1]);
          continue;
       }
       if(list[0] == "P")
@@ -85,6 +88,8 @@ int main(int argc, char *argv[])
             Weight = 1;
          if(Status == NegativeID)
             Weight = -1;
+         if(ZeroOutNegative == true && Weight < 0)
+            Weight = 0;
 
          MZHadron.trackPt->push_back(sqrt(px * px + py * py));
          MZHadron.trackPDFId->push_back(ID);
@@ -101,7 +106,7 @@ int main(int argc, char *argv[])
    }
    if(MZHadron.trackPt->size() > 0)
    {
-      FillAuxiliaryVariables(MZHadron);
+      FillAuxiliaryVariables(MZHadron, ChargedOnly);
       MZHadron.FillEntry();
    }
 

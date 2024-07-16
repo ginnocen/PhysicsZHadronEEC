@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
    vector<string> MixFiles = (SkipMixFile == false) ? CL.GetStringVector("mixFiles") : vector<string>();
    vector<string> CurveLabels     = CL.GetStringVector("CurveLabels", vector<string>{"pp", "PbPb 0-30%"});
    string ToPlot                  = CL.Get("ToPlot", "DeltaPhi");
-   vector<bool> lines = CL.GetBoolVector("lines", vector<bool>{0,0,1,1,1,1,1});
+   vector<int>    lines           = CL.GetIntVector("lines", vector<int>{0,0,1,1,1,1,1});
    vector<string> Tags            = CL.GetStringVector("Tags", vector<string> {
          "Result1_2", "Result2_4", "Result4_10"
    });
@@ -107,7 +107,9 @@ int main(int argc, char *argv[]) {
    string PPLumi = "301 pb^{-1}";
 
    int NFile = DataFiles.size();
+   int NPair = DataFiles.size()/2.;
    int NColumn = Tags.size();
+   cout <<"NFile: "<<NFile<<" NPair"<<NPair<<endl;
 
    double XMin = CL.GetDouble("XMin", 0);
    double XMax = CL.GetDouble("XMax", M_PI);
@@ -122,7 +124,7 @@ int main(int argc, char *argv[]) {
 
    string XAxisLabel = CL.Get("XAxisLabel", "|#Delta#phi_{trk,Z}|");
    string YAxisLabel = CL.Get("YAxisLabel", "d<#DeltaN_{ch}>/d#Delta#phi_{trk,Z}");
-   string RAxisLabel = CL.Get("RAxisLabel", "Difference to pp");
+   string RAxisLabel = CL.Get("RAxisLabel", "PbPb - pp");
 
    double MarginLeft    = 100;
    double MarginRight   = 50;
@@ -193,6 +195,7 @@ int main(int argc, char *argv[]) {
    // ========================================================================================================
    vector<TH2D *> HWorld(NColumn);
    vector<TH2D *> HRWorld(NColumn);
+   cout <<"XMin: "<<XMin<<" "<<"XMax: "<<XMax<<endl;
    for(int iC = 0; iC < NColumn; iC++) {
       HWorld[iC] = new TH2D(Form("HWorld%d", iC), "", 100, XMin, XMax, 100, YMin, YMax);
       HRWorld[iC] = new TH2D(Form("HRWorld%d", iC), "", 100, XMin, XMax, 100, RMin, RMax);
@@ -297,17 +300,13 @@ int main(int argc, char *argv[]) {
    // Setup   
 
    // Setup legend
-   TLegend Legend(LegendLeft, LegendBottom, LegendLeft + 0.40, LegendBottom + NFile * 0.09);
+   TLegend Legend(LegendLeft, LegendBottom, LegendLeft + 0.40, LegendBottom + NPair * 0.08);
    Legend.SetTextFont(42);
    Legend.SetTextSize(0.035 * CanvasHeight / PadHeight);
    Legend.SetBorderSize(0);
    Legend.SetFillStyle(0);
-
-   // Draw things
+   
    for(int iC = 0; iC < NColumn; iC++) {
-      Pad[iC]->cd();
-      HWorld[iC]->Draw("axis");
-      cout <<iC<<endl;
       for(int iF = 0; iF < NFile; iF++) {
          if (Rebin!=1) {
             HData[iC][iF]->Rebin(Rebin);
@@ -315,8 +314,20 @@ int main(int argc, char *argv[]) {
             HDataSys[iC][iF]->Rebin(Rebin);
             HDataSys[iC][iF]->Scale(1./Rebin);
          }
+      }	   
+   }   
 
-         if(SkipSystematics == false && HDataSys[iC][iF] != nullptr && lines[iF]==0) HDataSys[iC][iF]->Draw("same e2");
+   // Draw things
+   for(int iC = 0; iC < NColumn; iC++) {
+      Pad[iC]->cd();
+      HWorld[iC]->Draw("axis");
+      cout <<iC<<endl;
+      for(int iF = 0; iF < NPair; iF++) {
+         if (lines[iF]!=0) {
+	    HDataSys[iC][iF]->SetLineStyle(lines[iF]);
+	    HData[iC][iF]->SetLineStyle(lines[iF]);
+	 }
+	 if(SkipSystematics == false && HDataSys[iC][iF] != nullptr && lines[iF]==0) HDataSys[iC][iF]->Draw("same e2");
 	 if (lines[iF]==0) HData[iC][iF]->Draw("same"); else HData[iC][iF]->Draw("hist c same");
          cout <<iF<<" "<<(lines[iF]==0)<<endl;
       }
@@ -335,8 +346,15 @@ int main(int argc, char *argv[]) {
          }
       }
       if(iC == NColumn - 1) {  // adding legend!
-         for(int iF = 0; iF < NFile; iF++) Legend.AddEntry(HData[iC][iF], CurveLabels[iF].c_str(), "pl");
-         Legend.Draw();
+         for(int iF = 0; iF < NPair; iF++) {
+	    if (lines[iF]==0) {
+	       Legend.AddEntry(HData[iC][iF], CurveLabels[iF].c_str(), "pl");
+            } else {
+	       Legend.AddEntry(HData[iC][iF], CurveLabels[iF].c_str(), "l");
+            }
+	    cout <<iF<<" "<<CurveLabels[iF].c_str()<<" "<<DataFiles[iF].c_str()<<" "<<DataFiles[iF+NPair].c_str()<<endl;
+	 }
+	 Legend.Draw();
       }
 
       // Draw difference
@@ -344,10 +362,10 @@ int main(int argc, char *argv[]) {
          RPad[iC]->cd();
          HRWorld[iC]->Draw("axis");
       
-         for(int iF = 0; iF < NFile; iF++) {
+         for(int iF = 0; iF < NPair; iF++) {
             if(SkipSystematics == false && HDataSys[iC][iF] != nullptr) {
                TH1D *hDiffSys = (TH1D*) HDataSys[iC][iF]->Clone(Form("hDiffSys_%d_%d",iC,iF));
-   	       hDiffSys->Add(HDataSys[iC][0], -1);
+   	       hDiffSys->Add(HDataSys[iC][iF+NPair], -1);
 	       if (lines[iF]==0) hDiffSys->Draw("same e2"); else {
 	          //hDiffSys->SetMarkerSize(0);
 	          //hDiffSys->Draw("e2 hist c same");
@@ -355,7 +373,7 @@ int main(int argc, char *argv[]) {
 	    }   
 	    
             TH1D *hDiff = (TH1D*) HData[iC][iF]->Clone(Form("hDiff_%d_%d",iC,iF));
-	    hDiff->Add(HData[iC][0], -1);
+	    hDiff->Add(HData[iC][iF+NPair], -1);
 	    if (lines[iF]==0) hDiff->Draw("same"); else { 
  	       hDiff->SetMarkerSize(0);
 	       hDiff->Draw("hist c same");

@@ -6,12 +6,13 @@ using namespace std;
 
 #include "Messenger.h"
 
-void FillAuxiliaryVariables(ZHadronMessenger &M);
+void FillAuxiliaryVariables(ZHadronMessenger &M, bool ChargedOnly = true);
 double GetGenHFSum(ZHadronMessenger &M);
 void SetCharge(ZHadronMessenger &M);
 void ZeroNeutrals(ZHadronMessenger &M);
+void ZeroUnstables(ZHadronMessenger &M);
 
-void FillAuxiliaryVariables(ZHadronMessenger &M)
+void FillAuxiliaryVariables(ZHadronMessenger &M, bool ChargedOnly)
 {
    int N = M.trackPt->size();
 
@@ -103,7 +104,8 @@ void FillAuxiliaryVariables(ZHadronMessenger &M)
    }
 
    // Finally zero out neutrals...what to do with hole neutrals?
-   ZeroNeutrals(M);
+   if(ChargedOnly == true)
+      ZeroNeutrals(M);
 }
 
 double GetGenHFSum(ZHadronMessenger &M)
@@ -159,10 +161,14 @@ void SetCharge(ZHadronMessenger &M)
       Charge[2214] = 1;
       Charge[2224] = 2;
       Charge[3214] = 0;
+      Charge[3112] = -1;
       Charge[3222] = 1;
       Charge[3212] = 0;
       Charge[3122] = 0;
+      Charge[3312] = -1;
+      Charge[3322] = 0;
       Charge[3224] = 1;
+      Charge[3334] = -1;
       Charge[313] = 0;
    }
 
@@ -193,6 +199,18 @@ void ZeroNeutrals(ZHadronMessenger &M)
          (*M.trackWeight)[i] = 0;
    }
 }
+
+void ZeroUnstables(ZHadronMessenger &M)
+{
+   int N = M.trackPt->size();
+   for(int i = 0; i < N; i++)
+   {
+      if((*M.trackCharge)[i] > 100)
+         (*M.trackWeight)[i] = 0;
+   }
+}
+
+
 
 
 

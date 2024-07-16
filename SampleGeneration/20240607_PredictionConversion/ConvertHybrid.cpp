@@ -12,6 +12,9 @@ int main(int argc, char *argv[])
 
    string InputFileName  = CL.Get("Input");
    string OutputFileName = CL.Get("Output");
+   bool ZeroOutNegative  = CL.GetBool("ZeroOutNegative", false);
+   bool ZeroOutWake      = CL.GetBool("ZeroOutWake", false);
+   bool ChargedOnly      = CL.GetBool("ChargedOnly", true);
    int NegativeID        = CL.GetInteger("NegativeID", 2);
 
    TFile InputFile(InputFileName.c_str());
@@ -84,6 +87,10 @@ int main(int argc, char *argv[])
             Weight = 1;
          if(Status == NegativeID)
             Weight = -1;
+         if(ZeroOutWake == true && Status != 0)
+            Weight = 0;
+         if(ZeroOutNegative == true && Weight < 0)
+            Weight = 0;
   
          MZHadron.trackPt->push_back(sqrt(PX * PX + PY * PY));
          MZHadron.trackPDFId->push_back(ID);
@@ -95,35 +102,38 @@ int main(int argc, char *argv[])
          MZHadron.trackWeight->push_back(Weight);
          MZHadron.trackResidualWeight->push_back(1);
          MZHadron.trackCharge->push_back(999);
-         MZHadron.subevent->push_back(0);
-
-         // Add in the stored Z as the first entry
-         double Zpz = Zpt * sinh(Zeta);
-         double Zp  = Zpt * cosh(Zeta);
-         double Ze  = sqrt(Zp * Zp + Zmass * Zmass);
-         double Zy  = 0.5 * log((Ze + Zpz) / (Ze - Zpz));
-
-         MZHadron.genZMass->push_back(Zmass);
-         MZHadron.genZPt->push_back  (Zpt);
-         MZHadron.genZPhi->push_back (Zphi);
-         MZHadron.genZEta->push_back (Zeta);
-         MZHadron.genZY->push_back   (Zy);
-
-         MZHadron.genMuPt1->push_back(-1);
-         MZHadron.genMuPt2->push_back(-1);
-         MZHadron.genMuEta1->push_back(-1);
-         MZHadron.genMuEta2->push_back(-1);
-         MZHadron.genMuPhi1->push_back(-1);
-         MZHadron.genMuPhi2->push_back(-1);
-
-         MZHadron.genMuDeta->push_back(-1);
-         MZHadron.genMuDphi->push_back(-1);
-         MZHadron.genMuDR->push_back(-1);
-         MZHadron.genMuDphiS->push_back(-1);
-
+         if(Status == 0)
+            MZHadron.subevent->push_back(0);
+         else
+            MZHadron.subevent->push_back(1);
       }
 
-      FillAuxiliaryVariables(MZHadron);
+      // Add in the stored Z as the first entry
+      double Zpz = Zpt * sinh(Zeta);
+      double Zp  = Zpt * cosh(Zeta);
+      double Ze  = sqrt(Zp * Zp + Zmass * Zmass);
+      double Zy  = 0.5 * log((Ze + Zpz) / (Ze - Zpz));
+
+      MZHadron.genZMass->push_back(Zmass);
+      MZHadron.genZPt->push_back  (Zpt);
+      MZHadron.genZPhi->push_back (Zphi);
+      MZHadron.genZEta->push_back (Zeta);
+      MZHadron.genZY->push_back   (Zy);
+
+      MZHadron.genMuPt1->push_back(-1);
+      MZHadron.genMuPt2->push_back(-1);
+      MZHadron.genMuEta1->push_back(-1);
+      MZHadron.genMuEta2->push_back(-1);
+      MZHadron.genMuPhi1->push_back(-1);
+      MZHadron.genMuPhi2->push_back(-1);
+
+      MZHadron.genMuDeta->push_back(-1);
+      MZHadron.genMuDphi->push_back(-1);
+      MZHadron.genMuDR->push_back(-1);
+      MZHadron.genMuDphiS->push_back(-1);
+
+      FillAuxiliaryVariables(MZHadron, ChargedOnly);
+      ZeroUnstables(MZHadron);
       MZHadron.FillEntry();
    }
 

@@ -1,11 +1,11 @@
 
-default: Prepare TestRunCentrality
+default: Prepare Execute ExecuteDiff
 
 Prepare:
 	ln -sf $(ProjectBase)/BasicDistribution/20230605_DeltaPhiReproduction Root
 	ln -sf $(ProjectBase)/Systematics/20230616_SystematicsHarvesting/Sys/v17 Sys
 
-TestRun: Execute
+TestRun: Execute ExecuteDiff
 	./Execute --OutputBase Test --SkipSystematics true
 
 TestRunCentrality: Execute
@@ -22,6 +22,9 @@ TestRunCentrality: Execute
 
 Execute: MakePlot.cpp
 	g++ MakePlot.cpp -o Execute `root-config --cflags --libs` -I$(ProjectBase)/CommonCode/include/
+
+ExecuteDiff: MakePlotDiff.cpp
+	g++ MakePlotDiff.cpp -o ExecuteDiff `root-config --cflags --libs` -I$(ProjectBase)/CommonCode/include/
 
 RunSystematics: Execute
 	bash MakeSystematicPlots.sh
