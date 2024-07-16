@@ -64,11 +64,18 @@ int main(int argc, char *argv[])
    if(SubEvent.size() == 0)   SubEvent = vector<int>{-1, -1};
    if(SubEvent.size() == 1)   SubEvent.push_back(SubEvent[0]);
 
-   double BinMin = 0.001;
+   double BinMin = 0.03;
    double BinMax = 4;
-   double Bins[101] = {0};
-   for(int iB = 0; iB <= 100; iB++)
-      Bins[iB] = BinMin * exp((log(BinMax) - log(BinMin)) / 100 * iB);
+   int NBin = 50;
+   double Bins[51] = {0};
+   Bins[0] = 0.001;
+   Bins[1] = 0.003;
+   Bins[2] = 0.006;
+   Bins[3] = 0.01;
+   Bins[4] = 0.015;
+   Bins[5] = 0.02;
+   for(int iB = 6; iB <= NBin; iB++)
+      Bins[iB] = BinMin * exp((log(BinMax) - log(BinMin)) / (NBin - 6) * (iB - 6));
 
    cout << endl;
    cout << "Creating output file " << OutputFileName << endl;
@@ -121,8 +128,8 @@ int main(int argc, char *argv[])
    TH1D HPT2("HPT2", ";p_{T}", 100, 0, 50);
    TH1D HDeltaR("HDeltaR", ";#DeltaR;", 100, 0, 4);
    TH1D HDeltaREEC("HDeltaREEC", ";#DeltaR;", 100, 0, 4);
-   TH1D HDeltaRLog("HDeltaRLog", ";#DeltaR;", 100, Bins);
-   TH1D HDeltaREECLog("HDeltaREECLog", ";#DeltaR;", 100, Bins);
+   TH1D HDeltaRLog("HDeltaRLog", ";#DeltaR;", NBin, Bins);
+   TH1D HDeltaREECLog("HDeltaREECLog", ";#DeltaR;", NBin, Bins);
 
    TFile SignalFile(SignalFileName.c_str());
    TFile BackgroundFile(BackgroundFileName.c_str());
@@ -565,8 +572,8 @@ int main(int argc, char *argv[])
                HPT2.Fill(PairMinPT, Weight);
                HDeltaR.Fill(DeltaR, Weight);
                HDeltaREEC.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
-               // HDeltaRLog.Fill(DeltaR, Weight);
-               // HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
+               HDeltaRLog.Fill(DeltaR, Weight);
+               HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
 
                // if(iParts == 0)   HPT1P1.Fill(MaxPT, Weight);
                // if(iParts == 1)   HPT1P2.Fill(MaxPT, Weight);

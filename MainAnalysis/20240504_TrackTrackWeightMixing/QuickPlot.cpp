@@ -16,7 +16,7 @@ double Integral(TH1D *H);
 
 int main(int argc, char *argv[])
 {
-   vector<int> Colors = GetCVDColors6();
+   vector<int> Colors = GetCVDColors8();
 
    SetThesisStyle();
 
@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
    vector<int> Rebin = CL.GetIntVector("Rebin", vector<int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
    string OutputFileName = CL.Get("Output");
    bool IncludeCombined = CL.GetBool("IncludeCombined", true);
+   bool IncludeScaleUncertainty = CL.GetBool("IncludeScaleUncertainty", false);
 
    int N = InputFileNames.size();
 
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
       PdfFile.AddTextPage(H);
 
       vector<TH1D *> H1(N);
+      vector<double> N1(N);
       for(int i = 0; i < N; i++)
       {
          H1[i] = (TH1D *)InputFiles[i]->Get(H.c_str());
@@ -70,6 +72,7 @@ int main(int argc, char *argv[])
          TH1D *HCount = (TH1D *)InputFiles[i]->Get("HCount");
          H1[i]->Scale(MixingScale[i] / HCount->GetBinContent(1));
          DivideByBinWidth(H1[i]);
+         N1[i] = HCount->GetBinContent(1);
 
          cout << "Histogram " << H << ", index " << i << ", integral = " << HCount->GetBinContent(1) << endl;
 
@@ -91,11 +94,15 @@ int main(int argc, char *argv[])
       double WorldMin = 9999999;
       for(int i = 0; i < N; i++)
       {
-         WorldMax = max(WorldMax, H1[i]->GetMaximum());
-         WorldMin = min(WorldMin, H1[i]->GetMinimum());
+         if(H1[i]->GetMaximum() == H1[i]->GetMaximum())
+            WorldMax = max(WorldMax, H1[i]->GetMaximum());
+         if(H1[i]->GetMinimum() == H1[i]->GetMinimum())
+            WorldMin = min(WorldMin, H1[i]->GetMinimum());
       }
       
       TCanvas Canvas;
+      if(H.find("Log") != string::npos)
+         Canvas.SetLogx();
 
       double XMin = H1[0]->GetXaxis()->GetBinLowEdge(1);
       double XMax = H1[0]->GetXaxis()->GetBinUpEdge(H1[0]->GetNbinsX());
@@ -136,15 +143,42 @@ int main(int argc, char *argv[])
 
       TH1D *HDiff = (TH1D *)H1[0]->Clone("HDiff");
       HDiff->SetLineWidth(1);
-      HDiff->SetLineColor(Colors[N]);
+      // HDiff->SetLineColor(Colors[N]);
+      HDiff->SetLineColor(kBlack);
       // HDiff->SetLineStyle(kDashed);
       HDiff->Scale(Coefficients[0]);
       for(int i = 1; i < N; i++)
          HDiff->Add(H1[i], Coefficients[i]);
       if(IncludeCombined == true)
+      {
          Legend.AddEntry(HDiff, Form("Combined (%.3f)", Integral(HDiff)), "l");
+         Legend2.AddEntry(HDiff, "Combined", "l");
+      }
+      
+      TH1D *HDiffUp = (TH1D *)HDiff->Clone("HDiffUp");
+      TH1D *HDiffDown = (TH1D *)HDiff->Clone("HDiffDown");
+      HDiffUp->SetLineColor(kRed);
+      HDiffDown->SetLineColor(kRed);
+      for(int iB = 1; iB <= HDiff->GetNbinsX(); iB++)
+      {
+         double E2 = 0;
+         for(int i = 0; i < N; i++)
+            E2 = E2 + H1[i]->GetBinContent(iB) * H1[i]->GetBinContent(iB) / N1[i] * Coefficients[i] * Coefficients[i];
+         HDiffUp->SetBinContent(iB, HDiff->GetBinContent(iB) + sqrt(E2));
+         HDiffDown->SetBinContent(iB, HDiff->GetBinContent(iB) - sqrt(E2));
+         HDiff->SetBinError(iB, sqrt(E2));
+      }
+
       HDiff->SetStats(0);
+      if(IncludeScaleUncertainty == true)
+      {
+         cout << "!" << endl;
+         HDiffUp->Draw("hist same");
+         HDiffDown->Draw("hist same");
+      }
       HDiff->Draw("hist same");
+      HDiffUp->Draw("hist same");
+      HDiffDown->Draw("hist same");
 
       Legend.Draw();
 
@@ -152,10 +186,12 @@ int main(int argc, char *argv[])
 
       Canvas.SetLogy();
 
+      // WorldMax = max(WorldMax, HDiff->GetMaximum());
+      // WorldMin = min(WorldMin, HDiff->GetMinimum());
       if(WorldMin <= 0)
          WorldMin = WorldMax * 0.00001;
 
-      TH2D HWorld2("HWorld2", ";;", 100, XMin, XMax, 100, WorldMin / 5, WorldMax * 500);
+      TH2D HWorld2("HWorld2", ";;", 100, XMin, XMax, 100, WorldMin / 5, WorldMax * 5000);
       HWorld2.GetXaxis()->SetTitle(H1[0]->GetXaxis()->GetTitle());
       HWorld2.SetStats(0);
       HWorld2.Draw();
@@ -167,12 +203,28 @@ int main(int argc, char *argv[])
 
       PdfFile.AddCanvas(Canvas);
 
+      PdfFile.AddPlot(HDiff);
+      PdfFile.AddPlot(HDiffUp);
+      PdfFile.AddPlot(HDiffDown);
+
       HWorld2.Draw();
       for(int i = 0; i < N; i++)
          H1[i]->Draw("hist same");
       if(IncludeCombined == true)
+      {
+         if(IncludeScaleUncertainty == true)
+         {
+            HDiffUp->Draw("hist same");
+            HDiffDown->Draw("hist same");
+         }
          HDiff->Draw("hist same");
+         HDiffUp->Draw("hist same");
+         HDiffDown->Draw("hist same");
+      }
       Legend2.Draw();
+
+      Canvas.SaveAs(Form("%s_%s.pdf", OutputFileName.c_str(), H.c_str()));
+      Canvas.SaveAs(Form("%s_%s.C", OutputFileName.c_str(), H.c_str()));
 
       PdfFile.AddCanvas(Canvas);
 
