@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
    string InputFileName  = CL.Get("Input");
    string OutputFileName = CL.Get("Output");
    int NegativeID        = CL.GetInteger("NegativeID", -999999);
+   double ZShift         = CL.GetDouble("ZShift", 0);
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
          if(MZHadron.trackPt->size() > 0)
          {
             FillAuxiliaryVariables(MZHadron);
+            DoZPTShift(MZHadron, ZShift);
             MZHadron.FillEntry();
          }
          MZHadron.Clear();
@@ -104,6 +106,7 @@ int main(int argc, char *argv[])
    if(MZHadron.trackPt->size() > 0)
    {
       FillAuxiliaryVariables(MZHadron);
+      DoZPTShift(MZHadron, ZShift);
       MZHadron.FillEntry();
    }
 

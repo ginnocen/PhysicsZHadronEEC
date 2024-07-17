@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
    bool ZeroOutWake      = CL.GetBool("ZeroOutWake", false);
    bool ChargedOnly      = CL.GetBool("ChargedOnly", true);
    int NegativeID        = CL.GetInteger("NegativeID", 2);
+   double ZShift         = CL.GetDouble("ZShift", 0);
 
    TFile InputFile(InputFileName.c_str());
 
@@ -133,6 +134,7 @@ int main(int argc, char *argv[])
       MZHadron.genMuDphiS->push_back(-1);
 
       FillAuxiliaryVariables(MZHadron, ChargedOnly);
+      DoZPTShift(MZHadron, ZShift);
       ZeroUnstables(MZHadron);
       MZHadron.FillEntry();
    }
