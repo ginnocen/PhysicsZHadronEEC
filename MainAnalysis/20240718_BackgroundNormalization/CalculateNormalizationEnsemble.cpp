@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 using namespace std;
 
 #include "TFile.h"
@@ -87,9 +88,9 @@ int main(int argc, char *argv[])
    double NZ = HDY->Integral(0, HDY->GetNbinsX() + 1);
 
    cout << "NZ = " << NZ << endl;
-   cout << "SxB (diff) = " << AnswerSBDiff << " " << AnswerSBDiff / NZ / NZ << endl;
-   cout << "BxB (same) = " << AnswerBBSame << " " << AnswerBBSame / NZ << endl;
-   cout << "BxB (diff) = " << AnswerBBDiff << " " << AnswerBBDiff / NZ / NZ << endl;
+   cout << "SxB (diff) = " << AnswerSBDiff << " " << setprecision(10) << AnswerSBDiff / NZ / NZ << endl;
+   cout << "BxB (same) = " << AnswerBBSame << " " << setprecision(10) << AnswerBBSame / NZ << endl;
+   cout << "BxB (diff) = " << AnswerBBDiff << " " << setprecision(10) << AnswerBBDiff / NZ / NZ << endl;
 
    HFFile.Close();
    DataFile.Close();
