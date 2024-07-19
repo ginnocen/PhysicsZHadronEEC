@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
    vector<string> Labels = CL.GetStringVector("Labels", InputFileNames);
    vector<double> Coefficients = CL.GetDoubleVector("Coefficients");
    vector<string> Histograms = CL.GetStringVector("Histograms");
+   vector<double> NormalizationOverride = CL.GetDoubleVector("Normalization", vector<double>{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1});
    vector<bool> SelfMixing = CL.GetBoolVector("SelfMixing", vector<bool>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
    vector<int> Rebin = CL.GetIntVector("Rebin", vector<int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
    string OutputFileName = CL.Get("Output");
@@ -71,6 +72,14 @@ int main(int argc, char *argv[])
          H1[i]->Rebin(Rebin[i]);
          TH1D *HCount = (TH1D *)InputFiles[i]->Get("HCount");
          H1[i]->Scale(MixingScale[i] / HCount->GetBinContent(1));
+         if(NormalizationOverride[i] > 0)
+         {
+            cout << "Normalization override!" << endl;
+            cout << "Before: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
+            cout << "Target: " << NormalizationOverride[i] << endl;
+            H1[i]->Scale(NormalizationOverride[i] / H1[i]->Integral(0, H1[i]->GetNbinsX() + 1));
+            cout << "After: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
+         }
          DivideByBinWidth(H1[i]);
          N1[i] = HCount->GetBinContent(1);
 
@@ -166,7 +175,7 @@ int main(int argc, char *argv[])
             E2 = E2 + H1[i]->GetBinContent(iB) * H1[i]->GetBinContent(iB) / N1[i] * Coefficients[i] * Coefficients[i];
          HDiffUp->SetBinContent(iB, HDiff->GetBinContent(iB) + sqrt(E2));
          HDiffDown->SetBinContent(iB, HDiff->GetBinContent(iB) - sqrt(E2));
-         HDiff->SetBinError(iB, sqrt(E2));
+         // HDiff->SetBinError(iB, sqrt(E2));
       }
 
       HDiff->SetStats(0);
@@ -177,8 +186,8 @@ int main(int argc, char *argv[])
          HDiffDown->Draw("hist same");
       }
       HDiff->Draw("hist same");
-      HDiffUp->Draw("hist same");
-      HDiffDown->Draw("hist same");
+      // HDiffUp->Draw("hist same");
+      // HDiffDown->Draw("hist same");
 
       Legend.Draw();
 
@@ -191,7 +200,7 @@ int main(int argc, char *argv[])
       if(WorldMin <= 0)
          WorldMin = WorldMax * 0.00001;
 
-      TH2D HWorld2("HWorld2", ";;", 100, XMin, XMax, 100, WorldMin / 5, WorldMax * 5000);
+      TH2D HWorld2("HWorld2", ";;", 100, XMin, XMax, 100, WorldMin / 50, WorldMax * 5000);
       HWorld2.GetXaxis()->SetTitle(H1[0]->GetXaxis()->GetTitle());
       HWorld2.SetStats(0);
       HWorld2.Draw();
@@ -218,8 +227,8 @@ int main(int argc, char *argv[])
             HDiffDown->Draw("hist same");
          }
          HDiff->Draw("hist same");
-         HDiffUp->Draw("hist same");
-         HDiffDown->Draw("hist same");
+         // HDiffUp->Draw("hist same");
+         // HDiffDown->Draw("hist same");
       }
       Legend2.Draw();
 
