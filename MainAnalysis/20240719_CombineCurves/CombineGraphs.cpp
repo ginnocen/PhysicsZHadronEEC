@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
    string NormalizationState     = CL.Get("NormalizationState", "");
    vector<string> Normalization  = CL.GetStringVector("NormalizationKey", vector<string>{"", "", "", ""});
    vector<int> Rebin             = CL.GetIntVector("Rebin", vector<int>{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+   double FinalScale             = CL.GetDouble("FinalScale", 1.00);   // factor to scale final thing
    string OutputFileName         = CL.Get("Output");
 
    int N = InputFileNames.size();
@@ -57,19 +58,22 @@ int main(int argc, char *argv[])
          if(NormalizationState != "" && Normalization[i] != "" && Normalization[i] != "None")
          {
             double Override = DHFile[NormalizationState][Normalization[i]].GetDouble();
-            if(Override == 0)
-               Override = 1;
-
-            cout << "Normalization override!" << endl;
-            cout << "Before: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
-            cout << "Target: " << Override << endl;
-            H1[i]->Scale(Override / H1[i]->Integral(0, H1[i]->GetNbinsX() + 1));
-            cout << "After: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
+            
+            if(Override > 0)
+            {
+               // cout << "Normalization override!" << endl;
+               // cout << "Before: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
+               // cout << "Target: " << Override << endl;
+            
+               H1[i]->Scale(Override / H1[i]->Integral(0, H1[i]->GetNbinsX() + 1));
+            
+               // cout << "After: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
+            }
          }
          DivideByBinWidth(H1[i]);
          N1[i] = HCount->GetBinContent(1);
 
-         cout << "Histogram " << H << ", index " << i << ", integral = " << HCount->GetBinContent(1) << endl;
+         // cout << "Histogram " << H << ", index " << i << ", integral = " << HCount->GetBinContent(1) << endl;
       }
 
       OutputFile.cd();
@@ -78,6 +82,7 @@ int main(int argc, char *argv[])
       HDiff->Scale(Coefficients[0]);
       for(int i = 1; i < N; i++)
          HDiff->Add(H1[i], Coefficients[i]);
+      HDiff->Scale(FinalScale);
 
       HDiff->Write();
    }
