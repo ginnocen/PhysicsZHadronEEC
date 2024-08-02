@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
    int OverSample               = SelfMixingMode ? 1 : CL.GetInt("OverSample", 100);
    bool DoDiHadron              = CL.GetBool("DoDiHadron", true);
    int ExtraZIndex              = CL.GetInt("ExtraZ", -1);
+   int IgnorePU                 = IsPP ? CL.GetInteger("IgnorePU", 0) : 0;
 
    if(SubEvent.size() == 0)   SubEvent = vector<int>{-1, -1};
    if(SubEvent.size() == 1)   SubEvent.push_back(SubEvent[0]);
@@ -76,6 +77,13 @@ int main(int argc, char *argv[])
    Bins[5] = 0.02;
    for(int iB = 6; iB <= NBin; iB++)
       Bins[iB] = BinMin * exp((log(BinMax) - log(BinMin)) / (NBin - 6) * (iB - 6));
+
+   int NBinFine = 1000;
+   double BinsFine[1001] = {0};
+   BinMin = 0.005;
+   BinMax = 4;
+   for(int iB = 0; iB <= NBinFine; iB++)
+      BinsFine[iB] = BinMin * exp((log(BinMax) - log(BinMin)) / NBinFine * iB);
 
    cout << endl;
    cout << "Creating output file " << OutputFileName << endl;
@@ -128,8 +136,10 @@ int main(int argc, char *argv[])
    TH1D HPT2("HPT2", ";p_{T}", 100, 0, 50);
    TH1D HDeltaR("HDeltaR", ";#DeltaR;", 100, 0, 4);
    TH1D HDeltaREEC("HDeltaREEC", ";#DeltaR;", 100, 0, 4);
+   TH1D HDeltaREECFine("HDeltaREECFine", ";#DeltaR;", 1000, 0, 4);
    TH1D HDeltaRLog("HDeltaRLog", ";#DeltaR;", NBin, Bins);
    TH1D HDeltaREECLog("HDeltaREECLog", ";#DeltaR;", NBin, Bins);
+   TH1D HDeltaREECLogFine("HDeltaREECLog", ";#DeltaR;", NBinFine, BinsFine);
 
    TFile SignalFile(SignalFileName.c_str());
    TFile BackgroundFile(BackgroundFileName.c_str());
@@ -202,7 +212,9 @@ int main(int argc, char *argv[])
       // cout << "Z: " << iE << " " << MZHadron.genZY->at(0) << " " << MZHadron.genZPt->at(0) << " " << MZHadron.genZMass->at(0) << endl;
       
       // Do event selection if it's reco
-      if(IsPP == true && IsReco == true && MZHadron.NVertex != 1)
+      if(IsPP == true && IsReco == true && IgnorePU == 0 && MZHadron.NVertex != 1)
+         continue;
+      if(IsPP == true && IsReco == true && IgnorePU == -1 && MZHadron.NPU != 0)
          continue;
       if(CheckZ == true)
       {
@@ -576,12 +588,14 @@ int main(int argc, char *argv[])
                HPT2.Fill(PairMinPT, Weight);
                HDeltaR.Fill(DeltaR, Weight);
                HDeltaREEC.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
+               HDeltaREECFine.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
                HDeltaRLog.Fill(DeltaR, Weight);
                HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
+               HDeltaREECLogFine.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
 
                // cout << iP1 << " " << iP2 << " " << TrackWeight1[iP1] << " " << TrackWeight2[iP2] << endl;
-               // if(Weight != 0)
-               //    cout << PT1[iP1] << " " << PT2[iP2] << " " << Weight << " " << DeltaR << endl;
+               // if(Weight != 0 && DeltaR >= 2.68 && DeltaR < 2.72)
+               //    cerr << PT1[iP1] << " " << PT2[iP2] << " " << Matches[iM].Signal.Index << " " << Weight << " " << DeltaR << endl;
 
                // if(iParts == 0)   HPT1P1.Fill(MaxPT, Weight);
                // if(iParts == 1)   HPT1P2.Fill(MaxPT, Weight);
@@ -659,8 +673,10 @@ int main(int argc, char *argv[])
    HPT2.Write();
    HDeltaR.Write();
    HDeltaREEC.Write();
+   HDeltaREECFine.Write();
    HDeltaRLog.Write();
    HDeltaREECLog.Write();
+   HDeltaREECLogFine.Write();
 
    OutputFile.Close();
 
