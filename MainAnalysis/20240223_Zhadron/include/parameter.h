@@ -30,6 +30,7 @@ public:
     bool isHiBinUp;        // Flag to do systematics with HiBinUp
     bool isHiBinDown;      // Flag to do systematics with HiBinDown
     bool isPP;             // Flag to check if this is a PP analysis
+    bool isJewel;             // Flag to check if this is a Jewel analysis
     int ExtraZWeight;
     bool includeHole;      // Flag to see if we include hole particles (negative trackweight particle)
 
@@ -45,6 +46,8 @@ public:
        cout << "MaxTrackPT: " << MaxTrackPT << " GeV/c" << endl;
        cout << "isSelfMixing: " << (isSelfMixing ? "true" : "false") << endl;
        cout << "isGenZ: " << (isGenZ ? "true" : "false") << endl;
+       cout << "isJewel: " << (isJewel ? "true" : "false") << endl;
+       cout << "isPP: " << (isPP ? "true" : "false") << endl;
        cout << "Scale factor: " << scaleFactor << endl;
        cout << "SumHF shift: " << shift << endl;
        cout << "MinHiBin: " << MinHiBin << endl;

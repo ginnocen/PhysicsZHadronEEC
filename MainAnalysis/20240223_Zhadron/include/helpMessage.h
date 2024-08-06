@@ -27,6 +27,7 @@ int printHelpMessage(int argc, char *argv[]) {
               << "  --IsGenZ               Flag to use generated level Z information.\n"
               << "  --IsData               Flag to specify if the input is real data.\n"
               << "  --IsPP                 Flag for Proton-Proton collision data.\n"
+              << "  --IsJewel              Flag for Jewel analysis.\n"
               << "  --IsMuTagged           Flag for doing Z decay muon matching.\n"
               << "  --IsPUReject           Flag to reject PU sample for systematics.\n"
               << "  --Fraction <value>     Fraction of event to be processed.\n"

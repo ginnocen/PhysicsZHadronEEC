@@ -27,6 +27,12 @@ void smartWrite(TObject* h) {
       h->Write();
    } 
 }
+void smartWrite(TNtuple* h) {
+   if (h!=0) {
+      cout <<"write "<<h->GetName()<<endl;
+      h->Write();
+   } 
+}
 
 
 class HistogramRangeChecker {
