@@ -111,7 +111,7 @@ float get3D(ZHadronMessenger *MZSignal, TH3D *h, const Parameters& par) {
              float weight = (MZSignal->ZWeight*MZSignal->EventWeight);
 	     weight*= MZSignal->ExtraZWeight[par.ExtraZWeight];
              weight*= (*MZSignal->trackWeight)[j]/(*MZSignal->trackResidualWeight)[j];
-             //h->Fill( trackPt, trackEta, trackPhi, weight);
+             h->Fill( trackPt, trackEta, trackPhi, weight);
           }
        }
     }
@@ -133,13 +133,13 @@ public:
   void analyze(Parameters& par) {
     // First histogram with mix=false
     par.mix = false;
-    h = new TH3D("h3D", "Histogram Title; p_{T} (GeV/c); #eta; #phi", 50,0,100,50,-2.4,2.4,50, 0,2*M_PI);
+    h = new TH3D("h3D", "Histogram Title; p_{T} (GeV/c); #eta; #phi", 50,0,200,50,-2.4,2.4,50, 0,2*M_PI);
     float n = get3D(MZHadron, h, par);
   }
   
   void writeHistograms(TFile* outf) {
     outf->cd();
-    //smartWrite(h);
+    smartWrite(h);
   }
 
   TFile *inf, *mixFile, *mixFileClone, *outf;
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
    par.input         = CL.Get      ("Input",   "mergedSample/HISingleMuon-v5.root");            // Input file
    par.mixFile       = CL.Get      ("MixFile", "mergedSample/HISingleMuon-v5.root");            // Input Mix file
    par.output        = CL.Get      ("Output",  "output.root");                             	// Output file
-   par.isSelfMixing  = CL.GetBool  ("IsSelfMixing", false); // Determine if the analysis is self-mixing
+   par.isSelfMixing  = CL.GetBool  ("IsSelfMixing", true); // Determine if the analysis is self-mixing
    par.isGenZ        = CL.GetBool  ("IsGenZ", false);      // Determine if the analysis is using Gen level Z     
    par.isPUReject    = CL.GetBool  ("IsPUReject", true);  // Flag to reject PU sample for systemaitcs.
    par.isMuTagged    = CL.GetBool  ("IsMuTagged", true);   // Default is true
