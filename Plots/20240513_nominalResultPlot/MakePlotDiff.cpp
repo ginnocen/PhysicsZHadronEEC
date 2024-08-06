@@ -11,11 +11,48 @@ using namespace std;
 #include "TLatex.h"
 #include "TGraph.h"
 #include "TLegend.h"
+#include "TMath.h"
 
 #include "CommandLine.h"
 #include "SetStyle.h"
 #include "utilities.h"
 #include "usageMessage.h"
+
+
+double Chi2ToSigma(double chi2, int ndof) {
+    // Calculate the p-value from the chi-square value
+    double pValue = TMath::Prob(chi2, ndof);
+    
+    // Convert the p-value to the number of sigma
+    double sigma = TMath::Sqrt(2) * TMath::ErfcInverse(pValue);
+    
+    return sigma;
+}
+
+
+void FilterTH1D(TH1D* hist, double xMin, double xMax) {
+    if (!hist) {
+        std::cerr << "Invalid histogram pointer!" << std::endl;
+        return;
+    }
+
+    int nBins = hist->GetNbinsX();
+    for (int i = 1; i <= nBins; ++i) {
+        double binCenter = hist->GetBinCenter(i);
+        if (binCenter < xMin || binCenter > xMax) {
+            hist->SetBinContent(i, 0);
+            hist->SetBinError(i, 0); // Optionally set the bin error to zero as well
+        }
+    }
+}
+
+
+// Function to replace all occurrences of a character in a string
+std::string replaceHashWithSpace(const std::string &input) {
+    std::string output = input;
+    std::replace(output.begin(), output.end(), '#', ' ');
+    return output;
+}
 
 void NormalizeHistogram(TH1D *h, TH1D *h2) {
     if (!h || !h2) {
@@ -52,7 +89,9 @@ TH1D *BuildSystematics(TFile *F, TH1D *H, string ToPlot, string Tag, int Color) 
    TH1D *HResult = (TH1D *)H->Clone(Form("HSys%d", ID));
    for(int i = 1; i <= H->GetNbinsX(); i++)
       HResult->SetBinError(i, HSys->GetBinContent(i));
-   HResult->SetFillColorAlpha(Color, 0.25);
+   HResult->SetFillColorAlpha(Color, 0.10);
+   HResult->SetLineColorAlpha(Color, 0.10);
+   HResult->SetMarkerColorAlpha(Color, 0.10);
 
    return HResult;
 }
@@ -67,7 +106,6 @@ int main(int argc, char *argv[]) {
        PrintUsage();
        return 0;
    }
-   vector<int> Colors = GetCVDColors6();
 
    CommandLine CL(argc, argv);
 
@@ -79,6 +117,7 @@ int main(int argc, char *argv[]) {
    bool SkipMixFile               = CL.GetBool("SkipMixFile", true);
    bool PlotDiff                  = CL.GetBool("PlotDiff", true);
    int Rebin                      = CL.GetInt("Rebin", 1);
+   bool PlotZeroLine		  = CL.GetBool("PlotZeroLine", true);
    
    
    vector<string> SystematicFiles = (SkipSystematics == false) ? CL.GetStringVector("SystematicFiles") : vector<string>();
@@ -86,6 +125,7 @@ int main(int argc, char *argv[]) {
    vector<string> CurveLabels     = CL.GetStringVector("CurveLabels", vector<string>{"pp", "PbPb 0-30%"});
    string ToPlot                  = CL.Get("ToPlot", "DeltaPhi");
    vector<int>    lines           = CL.GetIntVector("lines", vector<int>{0,0,1,1,1,1,1});
+   vector<int>    reflected       = CL.GetIntVector("reflected", vector<int>{1,0,0,0,0,0,0});
    vector<string> Tags            = CL.GetStringVector("Tags", vector<string> {
          "Result1_2", "Result2_4", "Result4_10"
    });
@@ -95,7 +135,11 @@ int main(int argc, char *argv[]) {
       "2 < p_{T}^{trk} < 4 GeV",
       "4 < p_{T}^{trk} < 10 GeV",
    });
+   
+   
+   vector<int> Colors             = CL.GetIntVector("Colors", GetCVDColors6());   //vector<int>{1179,1180,1181,1182,15,1183,97,0,1184,1185,1186,1187,1188}
 
+   
    vector<string> ExtraInfo       = CL.GetStringVector("ExtraInfo", vector<string> {
       "p_{T}^{Z} > 40 GeV",
       ""
@@ -111,12 +155,14 @@ int main(int argc, char *argv[]) {
    int NColumn = Tags.size();
    cout <<"NFile: "<<NFile<<" NPair"<<NPair<<endl;
 
-   double XMin = CL.GetDouble("XMin", 0);
-   double XMax = CL.GetDouble("XMax", M_PI);
-   double YMin = CL.GetDouble("YMin", -5);
-   double YMax = CL.GetDouble("YMax", 5);
-   double RMin = CL.GetDouble("RMin", -5);
-   double RMax = CL.GetDouble("RMax", 5);
+   double XMin      = CL.GetDouble("XMin", 0);
+   double XMax      = CL.GetDouble("XMax", M_PI);
+   double SolidXMin = CL.GetDouble("SolidXMin", XMin);
+   double SolidXMax = CL.GetDouble("SolidXMax", XMax);
+   double YMin 	    = CL.GetDouble("YMin", -5);
+   double YMax      = CL.GetDouble("YMax", 5);
+   double RMin      = CL.GetDouble("RMin", -5);
+   double RMax      = CL.GetDouble("RMax", 5);
 
    int XAxisSpacing = 510;
    int YAxisSpacing = 510;
@@ -128,11 +174,13 @@ int main(int argc, char *argv[]) {
 
    double MarginLeft    = 100;
    double MarginRight   = 50;
-   double MarginTop     = 50;
-   double MarginBottom  = 100;
-   double PadWidth      = 500;
-   double PadHeight     = 500;
-   double RPadHeight    = 200;
+   double MarginTop     = CL.GetDouble("MarginTop",50);
+   double MarginBottom  = CL.GetDouble("MarginBottom",100);
+   double PadWidth      = 400;
+   double PadHeight     = 400;
+   double RPadHeight    = 170;
+   
+   if (MarginBottom==0) XAxisLabel="";
    
    if (!PlotDiff) {
       RPadHeight = 0;
@@ -149,8 +197,8 @@ int main(int argc, char *argv[]) {
    double XPadHeight    = PadHeight / CanvasHeight;
    double XRPadHeight   = RPadHeight/ CanvasHeight;
 
-   double LegendLeft    = CL.GetDouble("LegendLeft", 0.08);
-   double LegendBottom  = CL.GetDouble("LegendBottom", 0.50);
+   double LegendLeft    = CL.GetDouble("LegendLeft", 0.03);
+   double LegendBottom  = CL.GetDouble("LegendBottom", 0.52);
 
    // ========================================================================================================
    // Open input files
@@ -203,6 +251,10 @@ int main(int argc, char *argv[]) {
       SetWorld(HWorld[iC]);
       if (PlotDiff) SetWorld(HRWorld[iC]);
    }
+   
+   TLine *l = new TLine (XMin,0, XMax,0);
+   l->SetLineStyle(1);
+   l->SetLineColor(kGray);
 
    // ========================================================================================================
    // Setup axes
@@ -234,15 +286,16 @@ int main(int argc, char *argv[]) {
    // ========================================================================================================
    TLatex Latex;
    Latex.SetTextFont(42);
-   Latex.SetTextSize(0.035);
+   Latex.SetTextSize(0.045);
    Latex.SetNDC();
-
+      
    for(int iC = 0; iC < NColumn; iC++) {
       Latex.SetTextAngle(0);
       Latex.SetTextAlign(22);
       Latex.DrawLatex(XMarginLeft + XPadWidth * (iC + 0.5), XMarginBottom * 0.4, XAxisLabel.c_str());
    }
    Latex.SetTextAngle(90);
+   Latex.SetTextSize(0.045);
    Latex.DrawLatex(XMarginLeft * 0.35, XMarginBottom + XRPadHeight + XPadHeight * 0.5, YAxisLabel.c_str());
    if (PlotDiff) Latex.DrawLatex(XMarginLeft * 0.35, XMarginBottom + XRPadHeight * 0.5, RAxisLabel.c_str());
 
@@ -252,18 +305,27 @@ int main(int argc, char *argv[]) {
    Latex.DrawLatex(XMarginLeft, XMarginBottom + XRPadHeight + XPadHeight + 0.01,
       "#font[62]{CMS} #font[52]{Preliminary}");
    Latex.SetTextAlign(31);
+   Latex.SetTextSize(0.045);
    Latex.DrawLatex(XMarginLeft + XPadWidth * NColumn, XMarginBottom + XRPadHeight + XPadHeight + 0.01,
       Form("PbPb (pp) 5.02 TeV %s (%s)", PbPbLumi.c_str(), PPLumi.c_str()));
 
    // Retrieve histograms
    vector<vector<TH1D *>> HData(NColumn);
+   vector<vector<TH1D *>> HClone(NColumn);
+   vector<vector<TH1D *>> HDiffClone(NColumn);
    for(int iC = 0; iC < NColumn; iC++) {
       HData[iC].resize(NFile);
+      HClone[iC].resize(NFile);
 
       for(int iF = 0; iF < NFile; iF++) {
          string Tag = Tags[iC];
          if(SecondTags.size() == NColumn && iF == 1) Tag = SecondTags[iC];
          HData[iC][iF] = GetHistogram(File[iF], ToPlot, Tag, Colors[iF]);
+	 HData[iC][iF]->SetMarkerStyle(24);
+	 HData[iC][iF]->SetMarkerSize(1.5);
+         if (lines[iF]==0) HData[iC][iF]->SetLineColorAlpha(Colors[iF], 0.4); else HData[iC][iF]->SetLineColorAlpha(Colors[iF], 0.8);
+         if (lines[iF]==0) HData[iC][iF]->SetMarkerColorAlpha(Colors[iF], 0.4);
+         if (lines[iF]>0) HData[iC][iF]->SetLineWidth(2.5);
       }
    }
    
@@ -277,6 +339,8 @@ int main(int argc, char *argv[]) {
             if(SecondTags.size() == NColumn && iF == 1)
                Tag = SecondTags[iC];
             HDataSys[iC][iF] = BuildSystematics(SysFile[iF], HData[iC][iF], ToPlot, Tag, Colors[iF]);
+	    HDataSys[iC][iF]->SetMarkerStyle(24);
+	    cout <<"Colors["<<iF<<"]: "<<Colors[iF]<<endl;
          }   
       }
    }
@@ -300,11 +364,20 @@ int main(int argc, char *argv[]) {
    // Setup   
 
    // Setup legend
-   TLegend Legend(LegendLeft, LegendBottom, LegendLeft + 0.40, LegendBottom + NPair * 0.08);
+   TLegend Legend(LegendLeft, LegendBottom, LegendLeft + 0.4, LegendBottom + NPair * 0.063);
    Legend.SetTextFont(42);
-   Legend.SetTextSize(0.035 * CanvasHeight / PadHeight);
+//   Legend.SetTextSize(0.03 * CanvasHeight / PadHeight);
+   Legend.SetTextSize(0.06);
    Legend.SetBorderSize(0);
    Legend.SetFillStyle(0);
+
+   TLegend LegendReflected(LegendLeft, LegendBottom, LegendLeft + 0.4, LegendBottom + NPair * 0.063);
+   LegendReflected.SetTextFont(42);
+//   LegendReflected.SetTextSize(0.03 * CanvasHeight / PadHeight);
+   LegendReflected.SetTextSize(0.06);
+   LegendReflected.SetBorderSize(0);
+   LegendReflected.SetFillStyle(0);
+
    
    for(int iC = 0; iC < NColumn; iC++) {
       for(int iF = 0; iF < NFile; iF++) {
@@ -321,36 +394,54 @@ int main(int argc, char *argv[]) {
    for(int iC = 0; iC < NColumn; iC++) {
       Pad[iC]->cd();
       HWorld[iC]->Draw("axis");
+      if (PlotZeroLine) l->Draw();
       cout <<iC<<endl;
-      for(int iF = 0; iF < NPair; iF++) {
-         if (lines[iF]!=0) {
+      for(int iF = NPair-1; iF >=0; iF--) {
+         if (lines[iF]>0) {
 	    HDataSys[iC][iF]->SetLineStyle(lines[iF]);
 	    HData[iC][iF]->SetLineStyle(lines[iF]);
 	 }
 	 if(SkipSystematics == false && HDataSys[iC][iF] != nullptr && lines[iF]==0) HDataSys[iC][iF]->Draw("same e2");
-	 if (lines[iF]==0) HData[iC][iF]->Draw("same"); else HData[iC][iF]->Draw("hist c same");
-         cout <<iF<<" "<<(lines[iF]==0)<<endl;
+	 if (lines[iF]<=0) { 
+	    HClone[iC][iF] = (TH1D*) HData[iC][iF]->Clone(Form("%s_clone",HData[iC][iF]->GetName()));
+	    HClone[iC][iF+NPair] = (TH1D*) HData[iC][iF+NPair]->Clone(Form("%s_clone",HData[iC][iF+NPair]->GetName()));
+            HClone[iC][iF]->Draw("same");
+	    HData[iC][iF]->SetAxisRange(SolidXMin,SolidXMax,"x");
+	    HData[iC][iF]->SetMarkerStyle(20);
+	    HData[iC][iF]->SetMarkerColorAlpha(Colors[iF],1);
+	    HData[iC][iF]->Draw("same"); 
+	 } else if (lines[iF]>0) { 
+	 HData[iC][iF]->Draw("hist l same");
+         }
       }
 
       Latex.SetTextAngle(0);
       Latex.SetTextAlign(33);
-      Latex.SetTextSize(0.035 * CanvasHeight / PadHeight);
+      Latex.SetTextSize(0.065);
       Latex.DrawLatex(0.97, 0.97, Labels[iC].c_str());
 
       if(iC == 0) {   // adding extra info!
          for(int i = 0; i < (int)ExtraInfo.size(); i++) {
             Latex.SetTextAngle(0);
             Latex.SetTextAlign(11);
-            Latex.SetTextSize(0.035 * CanvasHeight / PadHeight);
+            Latex.SetTextSize(0.065);
             Latex.DrawLatex(0.08, 0.85 - i * 0.075, ExtraInfo[i].c_str());
          }
       }
+      if(iC == NColumn - 2) {  // adding legend!
+         for(int iF = 0; iF < NPair; iF++) {
+	    if (lines[iF]<=0) {
+	       LegendReflected.AddEntry(HClone[iC][iF], Form ("%s Reflected",replaceHashWithSpace(CurveLabels[iF]).c_str()), "pl");
+            }
+	 }
+	 LegendReflected.Draw();
+      }
       if(iC == NColumn - 1) {  // adding legend!
          for(int iF = 0; iF < NPair; iF++) {
-	    if (lines[iF]==0) {
-	       Legend.AddEntry(HData[iC][iF], CurveLabels[iF].c_str(), "pl");
-            } else {
-	       Legend.AddEntry(HData[iC][iF], CurveLabels[iF].c_str(), "l");
+	    if (lines[iF]<=0) {
+	       Legend.AddEntry(HData[iC][iF], replaceHashWithSpace(CurveLabels[iF]).c_str(), "pl");
+            } else if (lines[iF]>0) {
+	       Legend.AddEntry(HData[iC][iF], replaceHashWithSpace(CurveLabels[iF]).c_str(), "l");
             }
 	    cout <<iF<<" "<<CurveLabels[iF].c_str()<<" "<<DataFiles[iF].c_str()<<" "<<DataFiles[iF+NPair].c_str()<<endl;
 	 }
@@ -360,13 +451,26 @@ int main(int argc, char *argv[]) {
       // Draw difference
       if (PlotDiff) {
          RPad[iC]->cd();
+         if (PlotZeroLine) l->Draw();
+
          HRWorld[iC]->Draw("axis");
-      
-         for(int iF = 0; iF < NPair; iF++) {
+         TLine *l = new TLine (XMin,0, XMax,0);
+         l->SetLineStyle(1);
+         l->SetLineColor(kGray);
+         l->Draw();
+         for(int iF = NPair-1; iF >=0; iF--) {
+            TH1D *h1 = (TH1D*) HData[iC][iF]->Clone("h1"); 
+            TH1D *h2 = (TH1D*) HData[iC][0]->Clone("h2"); 
+	    //FilterTH1D(h1, SolidXMin, SolidXMax);
+	    //FilterTH1D(h2, SolidXMin, SolidXMax);
+//	    int ndof = (h1->GetNbinsX())/2. - 1; // Adjust this based on your degrees of freedom calculation
+//	    double chi2 = h1->Chi2Test(h2, "WW");
+ //           std::cout <<iC<<" "<<CurveLabels[iF]<<" Chi-Square Test Probability: " << chi2 <<" Sigma: " << Chi2ToSigma(chi2 * ndof, ndof)<< std::endl;
             if(SkipSystematics == false && HDataSys[iC][iF] != nullptr) {
                TH1D *hDiffSys = (TH1D*) HDataSys[iC][iF]->Clone(Form("hDiffSys_%d_%d",iC,iF));
    	       hDiffSys->Add(HDataSys[iC][iF+NPair], -1);
-	       if (lines[iF]==0) hDiffSys->Draw("same e2"); else {
+	       hDiffSys->SetMarkerSize(0);
+	       if (lines[iF]<=0) hDiffSys->Draw("same e2"); else {
 	          //hDiffSys->SetMarkerSize(0);
 	          //hDiffSys->Draw("e2 hist c same");
 	       }
@@ -374,13 +478,19 @@ int main(int argc, char *argv[]) {
 	    
             TH1D *hDiff = (TH1D*) HData[iC][iF]->Clone(Form("hDiff_%d_%d",iC,iF));
 	    hDiff->Add(HData[iC][iF+NPair], -1);
-	    if (lines[iF]==0) hDiff->Draw("same"); else { 
+	    if (lines[iF]==0) {
+               TH1D *hDiffClone = (TH1D*) HClone[iC][iF]->Clone(Form("hDiffClone_%d_%d",iC,iF));
+   	       hDiffClone->Add(HClone[iC][iF+NPair], -1);
+	       hDiffClone->Draw("same");
+	       hDiff->Draw("same"); 
+         	    } else { 
  	       hDiff->SetMarkerSize(0);
-	       hDiff->Draw("hist c same");
+	       hDiff->Draw("hist l same");
             }
          }
       }	 
    }
+
 
    // Finally we have the plots
    Canvas.SaveAs((OutputBase + ".pdf").c_str());

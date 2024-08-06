@@ -199,6 +199,8 @@ int main(int argc, char *argv[])
       }
       EventWeight = EventWeight * HFShiftWeight;
 
+      // cout << "Z: " << iE << " " << MZHadron.genZY->at(0) << " " << MZHadron.genZPt->at(0) << " " << MZHadron.genZMass->at(0) << endl;
+      
       // Do event selection if it's reco
       if(IsPP == true && IsReco == true && MZHadron.NVertex != 1)
          continue;
@@ -231,6 +233,8 @@ int main(int argc, char *argv[])
       }
 
       SignalEvent.push_back(Event(iE, EventWeight));
+
+      // cout << "Selected Z: " << iE << " " << MZHadron.genZY->at(0) << " " << MZHadron.genZPt->at(0) << " " << MZHadron.genZMass->at(0) << endl;
    }
    BarS.Update(EntryCount);
    BarS.Print();
@@ -550,7 +554,7 @@ int main(int argc, char *argv[])
 
             for(int iP2 = 0; iP2 < N2; iP2++)
             {
-               if(SelfMixingMode == true && iP1 == iP2)
+               if(SelfMixingMode == true && iP1 >= iP2)   // if self mixing only loop over half
                   continue;
 
                double Weight = TrackWeight1[iP1] * TrackWeight2[iP2] * EventWeight;
@@ -574,6 +578,10 @@ int main(int argc, char *argv[])
                HDeltaREEC.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
                HDeltaRLog.Fill(DeltaR, Weight);
                HDeltaREECLog.Fill(DeltaR, Weight * PT1[iP1] * PT2[iP2]);
+
+               // cout << iP1 << " " << iP2 << " " << TrackWeight1[iP1] << " " << TrackWeight2[iP2] << endl;
+               // if(Weight != 0)
+               //    cout << PT1[iP1] << " " << PT2[iP2] << " " << Weight << " " << DeltaR << endl;
 
                // if(iParts == 0)   HPT1P1.Fill(MaxPT, Weight);
                // if(iParts == 1)   HPT1P2.Fill(MaxPT, Weight);
