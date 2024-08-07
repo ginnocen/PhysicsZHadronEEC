@@ -15,3 +15,8 @@
 ./finalAnalysis.sh output/DY4 		50-90     --Input mergedSample/DY-v6.root     --MixFile mergedSample/hydjet-v6.root     --IsPP false --IsGenZ false --nMix 1 --IsSelfMixing false --Shift 740 --MaxHiBin 180 --MinHiBin 100
 ./finalAnalysis.sh output/DY4_680   	50-90     --Input mergedSample/DY-v6.root     --MixFile mergedSample/hydjet-v6.root     --IsPP false --IsGenZ false --nMix 1 --IsSelfMixing false --Shift 680 --MaxHiBin 180 --MinHiBin 100
 ./finalAnalysis.sh output/DY4_800   	50-90     --Input mergedSample/DY-v6.root     --MixFile mergedSample/hydjet-v6.root     --IsPP false --IsGenZ false --nMix 1 --IsSelfMixing false --Shift 800 --MaxHiBin 180 --MinHiBin 100
+
+
+./finalAnalysis.sh output/DY4 		0-90     --Input mergedSample/DY-v6.root     --MixFile mergedSample/hydjet-v6.root     --IsPP false --IsGenZ false --nMix 1 --IsSelfMixing false --Shift 740 --MaxHiBin 180 --MinHiBin 0
+./finalAnalysis.sh output/DY4_680   	0-90     --Input mergedSample/DY-v6.root     --MixFile mergedSample/hydjet-v6.root     --IsPP false --IsGenZ false --nMix 1 --IsSelfMixing false --Shift 680 --MaxHiBin 180 --MinHiBin 0
+./finalAnalysis.sh output/DY4_800   	0-90     --Input mergedSample/DY-v6.root     --MixFile mergedSample/hydjet-v6.root     --IsPP false --IsGenZ false --nMix 1 --IsSelfMixing false --Shift 800 --MaxHiBin 180 --MinHiBin 0
