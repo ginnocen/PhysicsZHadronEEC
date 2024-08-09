@@ -61,10 +61,13 @@ int main(int argc, char *argv[])
             
             if(Override > 0)
             {
-               // cout << "Normalization override!" << endl;
+               cout << "Normalization override!" << endl;
+               // cout << OutputFileName << endl;
+               // cout << InputFileNames[i] << " " << H << endl;
                // cout << "Before: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
                // cout << "Target: " << Override << endl;
-            
+           
+               cout << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << " => " << Override << endl;
                H1[i]->Scale(Override / H1[i]->Integral(0, H1[i]->GetNbinsX() + 1));
             
                // cout << "After: " << H1[i]->Integral(0, H1[i]->GetNbinsX() + 1) << endl;
