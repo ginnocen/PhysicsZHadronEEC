@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
    double MinPT                 = CL.GetDouble("MinPT", 3);
    double MaxPT                 = CL.GetDouble("MaxPT", -1);
    double MinZPT                = CL.GetDouble("MinZPT", 20);
+   double MaxZPT                = CL.GetDouble("MaxZPT", 20);
    double MaxAbsEta             = CL.GetDouble("MaxAbsEta", -1);
    bool IsPP                    = CL.GetBool("IsPP", false);
    bool IsReco                  = CL.GetBool("IsReco", true);
@@ -61,6 +62,9 @@ int main(int argc, char *argv[])
    bool DoDiHadron              = CL.GetBool("DoDiHadron", true);
    int ExtraZIndex              = CL.GetInt("ExtraZ", -1);
    int IgnorePU                 = IsPP ? CL.GetInteger("IgnorePU", 0) : 0;
+   bool PairCorrection          = CL.GetBool("PairCorrection", false);
+   bool NoTrackResidual         = CL.GetBool("NoTrackResidual", false);
+   bool TrackZPTCut             = CL.GetBool("TrackZPTCut", false);
 
    if(SubEvent.size() == 0)   SubEvent = vector<int>{-1, -1};
    if(SubEvent.size() == 1)   SubEvent.push_back(SubEvent[0]);
@@ -139,7 +143,7 @@ int main(int argc, char *argv[])
    TH1D HDeltaREECFine("HDeltaREECFine", ";#DeltaR;", 1000, 0, 4);
    TH1D HDeltaRLog("HDeltaRLog", ";#DeltaR;", NBin, Bins);
    TH1D HDeltaREECLog("HDeltaREECLog", ";#DeltaR;", NBin, Bins);
-   TH1D HDeltaREECLogFine("HDeltaREECLog", ";#DeltaR;", NBinFine, BinsFine);
+   TH1D HDeltaREECLogFine("HDeltaREECLogFine", ";#DeltaR;", NBinFine, BinsFine);
 
    TFile SignalFile(SignalFileName.c_str());
    TFile BackgroundFile(BackgroundFileName.c_str());
@@ -212,16 +216,27 @@ int main(int argc, char *argv[])
       // cout << "Z: " << iE << " " << MZHadron.genZY->at(0) << " " << MZHadron.genZPt->at(0) << " " << MZHadron.genZMass->at(0) << endl;
       
       // Do event selection if it's reco
+      // IgnorePU:  0 = check NVertex
+      //            1 = do not check anything
+      //           -1 = check NPU instead
       if(IsPP == true && IsReco == true && IgnorePU == 0 && MZHadron.NVertex != 1)
          continue;
       if(IsPP == true && IsReco == true && IgnorePU == -1 && MZHadron.NPU != 0)
          continue;
+      // if(IsPP == true && IsReco == true && IgnorePU == 0)
+      // {
+      //    if(MZHadron.GoodRecoZ == true && MZHadron.zPt->at(0) > 69 && MZHadron.zPt->at(0) < 69.02
+      //          && MZHadron.trackPt != nullptr && MZHadron.trackPt->size() > 2
+      //          && MZHadron.trackPt->at(1) > 153.7 && MZHadron.trackPt->at(1) < 153.9)
+      //       continue;
+      // }
       if(CheckZ == true)
       {
          if(IsReco == true)
          {
             if(MZHadron.GoodRecoZ == false)   continue;
             if(MZHadron.zPt->at(0) < MinZPT)  continue;
+            if(MZHadron.zPt->at(0) > MaxZPT)  continue;
 
             if(DoZReweight == true)
                EventWeight = EventWeight * GetInterSampleZWeight(MZHadron.zPt->at(0));
@@ -234,6 +249,7 @@ int main(int argc, char *argv[])
          {
             if(MZHadron.GoodGenZ == false)       continue;
             if(MZHadron.genZPt->at(0) < MinZPT)  continue;
+            if(MZHadron.genZPt->at(0) > MaxZPT)  continue;
             
             if(DoZReweight == true)
                EventWeight = EventWeight * GetInterSampleZWeight(MZHadron.genZPt->at(0));
@@ -287,9 +303,9 @@ int main(int argc, char *argv[])
          //    continue;
 
          bool GoodBackgroundZ = false;
-         if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) >= MinZPT)
+         if(IsReco == true && MZHadronBackground.GoodRecoZ == true && MZHadronBackground.zPt->at(0) >= MinZPT && MZHadronBackground.zPt->at(0) <= MaxZPT)
             GoodBackgroundZ = true;
-         if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) >= MinZPT)
+         if(IsReco == false && MZHadronBackground.GoodGenZ == true && MZHadronBackground.genZPt->at(0) >= MinZPT && MZHadronBackground.genZPt->at(0) <= MaxZPT)
             GoodBackgroundZ = true;
          if(CheckBackgroundZ == true && GoodBackgroundZ == false)
             continue;
@@ -381,7 +397,7 @@ int main(int argc, char *argv[])
    
    for(int iM = 0; iM < MatchCount; iM++)
    {
-      if(MatchCount < 20000 || (iM % (MatchCount / 10000) == 0))
+      if(MatchCount < 2000 || (iM % (MatchCount / 1000) == 0))
       {
          Bar.Update(iM);
          Bar.Print();
@@ -441,11 +457,20 @@ int main(int argc, char *argv[])
          double W = MZHadron.trackWeight->at(iP);
          if(DoNegativeWeightFactor == true && W < 0)
             W = W * NegativeWeightFactor;
+         if(NoTrackResidual == true)
+            W = W / MZHadron.trackResidualWeight->at(iP);
+
+         if(TrackZPTCut == true)
+         {
+            if(CheckZ == true && IsReco == true && MZHadron.zPt->at(0) < MZHadron.trackPt->at(iP))
+               continue;
+            if(CheckZ == true && IsReco == false && MZHadron.genZPt->at(0) < MZHadron.trackPt->at(iP))
+               continue;
+         }
 
          PT1.push_back(MZHadron.trackPt->at(iP));
          Eta1.push_back(MZHadron.trackEta->at(iP));
          Phi1.push_back(MZHadron.trackPhi->at(iP));
-         // TrackWeight1.push_back(MZHadron.trackWeight->at(iP) / MZHadron.trackResidualWeight->at(iP));
          TrackWeight1.push_back(W);
       }
 
@@ -474,11 +499,20 @@ int main(int argc, char *argv[])
             double W = MZHadronBackground.trackWeight->at(iP);
             if(DoNegativeWeightFactor == true && W < 0)
                W = W * NegativeWeightFactor;
+            if(NoTrackResidual == true)
+               W = W / MZHadronBackground.trackResidualWeight->at(iP);
+
+            if(TrackZPTCut == true)
+            {
+               if(CheckZ == true && IsReco == true && MZHadron.zPt->at(0) < MZHadronBackground.trackPt->at(iP))
+                  continue;
+               if(CheckZ == true && IsReco == false && MZHadron.genZPt->at(0) < MZHadronBackground.trackPt->at(iP))
+                  continue;
+            }
 
             PT2.push_back(MZHadronBackground.trackPt->at(iP));
             Eta2.push_back(MZHadronBackground.trackEta->at(iP));
             Phi2.push_back(MZHadronBackground.trackPhi->at(iP));
-            // TrackWeight2.push_back(MZHadronBackground.trackWeight->at(iP) / MZHadronBackground.trackResidualWeight->at(iP));
             TrackWeight2.push_back(W);
          }
       }
@@ -580,6 +614,12 @@ int main(int argc, char *argv[])
 
                double PairMaxPT = (PT1[iP1] > PT2[iP2]) ? PT1[iP1] : PT2[iP2];
                double PairMinPT = (PT1[iP1] < PT2[iP2]) ? PT1[iP1] : PT2[iP2];
+
+               if(PairCorrection == true)   // this is derived with MC
+               {
+                  double Value = 0.989662 + 0.137719 * exp(-0.608352 * DeltaR);
+                  Weight = Weight / Value;
+               }
 
                // HEtaPhi.Fill(DeltaEta, DeltaPhi, Weight);
                HEta.Fill(DeltaEta, Weight);

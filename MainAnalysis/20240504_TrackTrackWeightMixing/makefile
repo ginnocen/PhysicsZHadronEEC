@@ -1,12 +1,27 @@
 
 
 # default: TestRun TestRunPlot Deploy
-default: TestRunKayaPlot Deploy
+default: TestRunOverride TestRunOverrideCorrected Deploy
+
+TestRunOverride: ExecutePlot
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataNominal030.pdf --SelfMixing 1,1,0,1 --Labels "pp","PbPb","PbPb x MinBias","MinBias x MinBias","MinBias x MinBias (diff.)" --IncludeScaleUncertainty false --Normalization -1,-1,268429.4162,275795.9805,252966.4178
+	# ./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataNominal030.pdf --SelfMixing 1,1,0,1 --Labels "pp","PbPb","PbPb x MinBias","MinBias x MinBias","MinBias x MinBias (diff.)" --IncludeScaleUncertainty false --Normalization -1,-1,269320,278728,254647
+
+TestRunOverrideCorrected: ExecutePlot
+	# ./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030Corrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030Corrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030Corrected_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataCorrected030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","PbPb","PbPb x MinBias","MinBias x MinBias","MinBias x MinBias (diff.)" --Normalization -1,-1,269427,278921,254904
+	# ./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030OverCorrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030OverCorrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030OverCorrected_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataOverCorrected030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","PbPb","PbPb x MinBias","MinBias x MinBias","MinBias x MinBias (diff.)" --Normalization -1,-1,269677,279357,255345
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030Corrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030Corrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030Corrected_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataCorrected030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","PbPb","PbPb x MinBias","MinBias x MinBias","MinBias x MinBias (diff.)" --Normalization -1,-1,268599,276130,253339
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030OverCorrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030OverCorrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030OverCorrected_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataOverCorrected030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","PbPb","PbPb x MinBias","MinBias x MinBias","MinBias x MinBias (diff.)" --Normalization -1,-1,268832,276532,253748
 
 Execute: FillCorrelation.cpp
 	g++ FillCorrelation.cpp -o Execute \
 		`root-config --cflags --libs` \
 		$(ProjectBase)/CommonCode/library/*.o -I$(ProjectBase)/CommonCode/include
+
+ExecutePlot: QuickPlot.cpp
+	g++ QuickPlot.cpp -o ExecutePlot -g \
+		`root-config --cflags --libs` \
+		$(ProjectBase)/CommonCode/library/*.o -I$(ProjectBase)/CommonCode/include -std=c++17
 
 TestRun: Execute
 	bash RunReco.sh
@@ -116,16 +131,44 @@ TestRunGenPlot: ExecutePlot
 	./ExecutePlot --Input DYLLS0xDYLLS0_Centrality3050.root,DYLLxDYLL_Centrality3050.root,DYLLxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050_Different1.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsCentrality30501.pdf --SelfMixing 1,1,0,1,0
 	./ExecutePlot --Input DYLLS0xDYLLS0_Centrality3050.root,DYLLxDYLL_Centrality3050.root,DYLLxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output FullPlotsCentrality30502.pdf --SelfMixing 1,1,0,1,0
 
+TestRunGenPlotForYenjie: ExecutePlot
+	./ExecutePlot --Input DYLLS0xDYLLS0.root,DYLLxDYLL.root,DYLLxDYLLS1.root,DYLLS1xDYLLS1.root,DYLLS1xDYLLS1_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output GenClosure.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input DYLLS0xDYLLS0_Centrality010.root,DYLLxDYLL_Centrality010.root,DYLLxHydjet_Centrality010.root,HydjetxHydjet_Centrality010.root,HydjetxHydjet_Centrality010_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output GenClosureCentrality010.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","Embedded","Embedded x Background","Background","Background x Background (diff.)" --IncludeCombined true 
+	./ExecutePlot --Input DYLLS0xDYLLS0_Centrality3050.root,DYLLxDYLL_Centrality3050.root,DYLLxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050.root,HydjetxHydjet_Centrality3050_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC --Output GenClosureCentrality3050.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+
+
 TestRunGenPlotTemp: ExecutePlot
 	./ExecutePlot --Input ppMCxppMC_Gen.root,DYLLxDYLL_Gen.root,DYLLxHydjet_Nominal_Gen.root --Histograms HPhi
 
 TestRunGenWeightPlot: ExecutePlot
 	./ExecutePlot --Input DYLLS0xDYLLS0.root,ppMCxppMC.root,ppMCxppMC_Reweight.root --Coefficients 1,0,-1 --Histograms HZY,HZPT,HZMass,HZHEta,HZHPhi,HZHPT --Output ZHPlotsWeighting.pdf
 
-ExecutePlot: QuickPlot.cpp
-	g++ QuickPlot.cpp -o ExecutePlot \
-		`root-config --cflags --libs` \
-		$(ProjectBase)/CommonCode/library/*.o -I$(ProjectBase)/CommonCode/include
+
+TestRunData: ExecutePlot
+	./ExecutePlot --Input PPDataxPPData_Reco.root,PbPbDataxPbPbData_Centrality030_Reco.root,PbPbDataxMinBiasData_Centrality030_Reco.root,MinBiasDataxMinBiasData_Centrality030_Reco.root,MinBiasDataxMinBiasData_Centrality030_Reco_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal030.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco.root,PbPbDataxPbPbData_Centrality3050_Reco.root,PbPbDataxMinBiasData_Centrality3050_Reco.root,MinBiasDataxMinBiasData_Centrality3050_Reco.root,MinBiasDataxMinBiasData_Centrality3050_Reco_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal3050.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco.root,PbPbDataxPbPbData_Centrality5090_Reco.root,PbPbDataxMinBiasData_Centrality5090_Reco.root,MinBiasDataxMinBiasData_Centrality5090_Reco.root,MinBiasDataxMinBiasData_Centrality5090_Reco_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal5090.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+
+TestRunData3Inf: ExecutePlot
+	./ExecutePlot --Input PPDataxPPData_Reco3inf.root,PbPbDataxPbPbData_Centrality030_Reco3inf.root,PbPbDataxMinBiasData_Centrality030_Reco3inf.root,MinBiasDataxMinBiasData_Centrality030_Reco3inf.root,MinBiasDataxMinBiasData_Centrality030_Reco3inf_Different2.root,HybridxHybrid_pp_3inf.root,HybridxHybrid_Centrality030_3inf.root --Coefficients 0,1,-2,-1,2,0,0 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataNominal030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)","hybrid pp","hybrid"
+	./ExecutePlot --Input PPDataxPPData_Reco3inf.root,PbPbDataxPbPbData_Centrality3050_Reco3inf.root,PbPbDataxMinBiasData_Centrality3050_Reco3inf.root,MinBiasDataxMinBiasData_Centrality3050_Reco3inf.root,MinBiasDataxMinBiasData_Centrality3050_Reco3inf_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal3050.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco3inf.root,PbPbDataxPbPbData_Centrality5090_Reco3inf.root,PbPbDataxMinBiasData_Centrality5090_Reco3inf.root,MinBiasDataxMinBiasData_Centrality5090_Reco3inf.root,MinBiasDataxMinBiasData_Centrality5090_Reco3inf_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal5090.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco3inf.root,PbPbDataxPbPbData_Centrality5070_Reco3inf.root,PbPbDataxMinBiasData_Centrality5070_Reco3inf.root,MinBiasDataxMinBiasData_Centrality5070_Reco3inf.root,MinBiasDataxMinBiasData_Centrality5070_Reco3inf_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal5070.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco3inf.root,PbPbDataxPbPbData_Centrality7090_Reco3inf.root,PbPbDataxMinBiasData_Centrality7090_Reco3inf.root,MinBiasDataxMinBiasData_Centrality7090_Reco3inf.root,MinBiasDataxMinBiasData_Centrality7090_Reco3inf_Different2.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal7090.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+
+TestRunData2Inf: ExecutePlot
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030_Reco2inf_Different.root,HybridxHybrid_pp_2inf.root,HybridxHybrid_Centrality030_2inf.root --Coefficients 0,1,-2,-1,2,0,0 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataNominal030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)","hybrid pp","hybrid" --IncludeScaleUncertainty false --Normalization -1,-1,-1,278400.08,273700.99,-1,-1
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030Corrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030Corrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030Corrected_Reco2inf_Different.root,HybridxHybrid_pp_2inf.root,HybridxHybrid_Centrality030_2inf.root --Coefficients 0,1,-2,-1,2,0,0 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataCorrected030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)","hybrid pp","hybrid"
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality030_Reco2inf.root,PbPbDataxMinBiasData_Centrality030OverCorrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030OverCorrected_Reco2inf.root,MinBiasDataxMinBiasData_Centrality030OverCorrected_Reco2inf_Different.root,HybridxHybrid_pp_2inf.root,HybridxHybrid_Centrality030_2inf.root --Coefficients 0,1,-2,-1,2,0,0 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaRLog,HDeltaREEC,HDeltaREECLog --Output DataOverCorrected030.pdf --SelfMixing 1,1,0,1,0,1 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)","hybrid pp","hybrid"
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality3050_Reco2inf.root,PbPbDataxMinBiasData_Centrality3050_Reco2inf.root,MinBiasDataxMinBiasData_Centrality3050_Reco2inf.root,MinBiasDataxMinBiasData_Centrality3050_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal3050.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality5090_Reco2inf.root,PbPbDataxMinBiasData_Centrality5090_Reco2inf.root,MinBiasDataxMinBiasData_Centrality5090_Reco2inf.root,MinBiasDataxMinBiasData_Centrality5090_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal5090.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality5070_Reco2inf.root,PbPbDataxMinBiasData_Centrality5070_Reco2inf.root,MinBiasDataxMinBiasData_Centrality5070_Reco2inf.root,MinBiasDataxMinBiasData_Centrality5070_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal5070.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+	./ExecutePlot --Input PPDataxPPData_Reco2inf.root,PbPbDataxPbPbData_Centrality7090_Reco2inf.root,PbPbDataxMinBiasData_Centrality7090_Reco2inf.root,MinBiasDataxMinBiasData_Centrality7090_Reco2inf.root,MinBiasDataxMinBiasData_Centrality7090_Reco2inf_Different.root --Coefficients 0,1,-2,-1,2 --Histograms HPhi,HEta,HPT1,HPT2,HZY,HZPT,HZMass,HDeltaR,HDeltaREEC,HDeltaREECLog --Output DataNominal7090.pdf --SelfMixing 1,1,0,1,0 --Labels "pp","embedded","embedded x background","background x background","background x background (diff.)"
+
+
+HundredEvent: ExecutePlot
+	./ExecutePlot --Input HybridxHybrid_pp_1inf_Oneevent.root --Coefficients 0 --Histograms HDeltaRRC,HDeltaREECLog --Output HybridCheck.pdf --SelfMixing 1 --Labels "Hybrid (one event)"
+
 
 Deploy:
 	cp *pdf ~/Dropbox/Temp/
