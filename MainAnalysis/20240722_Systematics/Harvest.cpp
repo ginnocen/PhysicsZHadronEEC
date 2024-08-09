@@ -6,6 +6,7 @@ using namespace std;
 #include "TFile.h"
 
 #include "CommandLine.h"
+#include "CustomAssert.h"
 
 int main(int argc, char *argv[]);
 void AddInQuadrature(TH1D *HB, TH1D *HV, TH1D *GB, TH1D *GV);
@@ -22,27 +23,18 @@ int main(int argc, char *argv[])
    vector<int> Group         = CL.GetIntVector("Group");
    vector<string> GroupLabel = CL.GetStringVector("GroupLabel", vector<string>{"A", "B", "C", "D", "E"});
    GroupLabel.insert(GroupLabel.begin(), "NotGrouped");
+   vector<int> Include       = CL.GetIntVector("Include");
 
    vector<string> Histogram  = CL.GetStringVector("Histogram");
 
    string OutputFileName     = CL.Get("Output");
 
    int N = Base.size();
-   if(N != (int)Variant.size())
-   {
-      cerr << "Error: Base count " << N << ", Variant count " << Variant.size() << endl;
-      return -1;
-   }
-   if(N != (int)Label.size())
-   {
-      cerr << "Error: Base count " << N << ", Label count " << Label.size() << endl;
-      return -1;
-   }
-   if(N != (int)Group.size())
-   {
-      cerr << "Error: Base count " << N << ", Group count " << Group.size() << endl;
-      return -1;
-   }
+   
+   Assert(Base.size() == Variant.size(), "Error!  Base count != Variant count");
+   Assert(Base.size() == Label.size(), "Error!  Base count != Label count");
+   Assert(Base.size() == Group.size(), "Error!  Base count != Group count");
+   Assert(Base.size() == Include.size(), "Error!  Base count != Include count");
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
 
@@ -58,6 +50,9 @@ int main(int argc, char *argv[])
       TH1D *HNSource = (TH1D *)FN.Get(H.c_str());
       TH1D *HN = (TH1D *)HNSource->Clone(Form("Nominal_%s", H.c_str()));
       HN->Write();
+      
+      TH1D *HNTotal = (TH1D *)HNSource->Clone(Form("Total_Base_%s", H.c_str()));
+      TH1D *HVTotal = (TH1D *)HN->Clone(Form("Total_Variant_%s", H.c_str()));
    
       // Setup grouped histograms
       for(int iF = 0; iF < N; iF++)
@@ -92,6 +87,10 @@ int main(int argc, char *argv[])
          if(Group[iF] > 0)
             AddInQuadrature(HB, HV, HN, Groups[Group[iF]]);
 
+         // Add to total if applicable
+         if(Include[iF] > 0)
+            AddInQuadrature(HB, HV, HNTotal, HVTotal);
+
          FV.Close();
          FB.Close();
       }
@@ -106,6 +105,9 @@ int main(int argc, char *argv[])
             iter.second->Write();
          }
       }
+
+      HNTotal->Write();
+      HVTotal->Write();
    }
 
    OutputFile.Close();

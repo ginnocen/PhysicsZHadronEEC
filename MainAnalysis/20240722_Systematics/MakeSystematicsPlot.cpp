@@ -2,6 +2,7 @@
 #include <iostream>
 using namespace std;
 
+#include "TLatex.h"
 #include "TH1D.h"
 #include "TCanvas.h"
 #include "TH2D.h"
@@ -23,11 +24,12 @@ int main(int argc, char *argv[])
    vector<string> Item      = CL.GetStringVector("Item");
    vector<string> Histogram = CL.GetStringVector("Histogram");
    vector<string> Label     = CL.GetStringVector("Label");
-   string OutputFileName    = CL.Get("Output", "Plot.pdf");
+   string OutputBase        = CL.Get("OutputBase", "Plot");
+   vector<string> ExtraText = CL.GetStringVector("ExtraText", vector<string>{});
 
    TFile File(InputFileName.c_str());
 
-   PdfFileHelper PdfFile(OutputFileName);
+   PdfFileHelper PdfFile(OutputBase + ".pdf");
    PdfFile.AddTextPage("Systematics plots");
 
    int N = Item.size();
@@ -111,6 +113,17 @@ int main(int argc, char *argv[])
          Canvas.SetLogx();
 
       Legend.Draw();
+
+      TLatex Latex;
+      Latex.SetTextFont(42);
+      Latex.SetTextAlign(11);
+      Latex.SetTextAngle(0);
+      Latex.SetTextSize(0.035);
+      Latex.SetNDC();
+      for(int i = 0; i < (int)ExtraText.size(); i++)
+         Latex.DrawLatex(0.20, 0.80 - i * 0.05, ExtraText[i].c_str());
+
+      Canvas.SaveAs((OutputBase + "__" + H + ".pdf").c_str());
 
       PdfFile.AddCanvas(Canvas);
    }
