@@ -9,13 +9,14 @@ using namespace std;
 #include "TLegend.h"
 #include "TGraphAsymmErrors.h"
 #include "TLatex.h"
+#include "TGraph.h"
 
 #include "SetStyle.h"
 #include "CommandLine.h"
 
 int main(int argc, char *argv[]);
 void Transcribe(string FileName, string SysFileName, string Histogram,
-   TGraphAsymmErrors &G, TGraphAsymmErrors &GSys, bool LogX);
+   TGraphAsymmErrors &G, TGraphAsymmErrors &GSys);
 
 int main(int argc, char *argv[])
 {
@@ -49,11 +50,11 @@ int main(int argc, char *argv[])
    vector<TGraphAsymmErrors> GSys(NFile);
 
    for(int iF = 0; iF < NFile; iF++)
-      Transcribe(InputFileNames[iF], SystematicsFileNames[iF], Histogram, G[iF], GSys[iF], DoLogX);
+      Transcribe(InputFileNames[iF], SystematicsFileNames[iF], Histogram, G[iF], GSys[iF]);
 
    TCanvas Canvas;
 
-   double YMax = (WorldYMax == 0) ? 5500 : WorldYMax;
+   double YMax = (WorldYMax == 0) ? 4000 : WorldYMax;
    double YMin = -500;
    if(DoLogY == true)
    {
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
    if(DoLogX == true && DoLogY == false)
    {
       YMin = -500;
-      YMax = (WorldYMax == 0) ? 10000 : WorldYMax;
+      YMax = (WorldYMax == 0) ? 8000 : WorldYMax;
    }
 
    double XMin = 0;
@@ -109,6 +110,11 @@ int main(int argc, char *argv[])
 
    Legend.Draw();
 
+   TGraph Graph;
+   Graph.SetPoint(0, XMin, 0);
+   Graph.SetPoint(1, XMax, 0);
+   Graph.Draw("l");
+
    TLatex Latex;
    Latex.SetTextFont(42);
    Latex.SetTextSize(0.035);
@@ -124,7 +130,7 @@ int main(int argc, char *argv[])
 }
 
 void Transcribe(string FileName, string SysFileName, string Histogram,
-   TGraphAsymmErrors &G, TGraphAsymmErrors &GSys, bool LogX)
+   TGraphAsymmErrors &G, TGraphAsymmErrors &GSys)
 {
    int NBin = 0;
 
@@ -135,10 +141,14 @@ void Transcribe(string FileName, string SysFileName, string Histogram,
 
    for(int iB = 1; iB <= NBin; iB++)
    {
-      G.SetPoint(iB - 1, H->GetBinCenter(iB), H->GetBinContent(iB));
+      double L = H->GetXaxis()->GetBinLowEdge(iB);
+      double C = H->GetBinCenter(iB);
+      double R = H->GetXaxis()->GetBinUpEdge(iB);
+
+      G.SetPoint(iB - 1, C, H->GetBinContent(iB));
       G.SetPointError(iB - 1, 0, 0, H->GetBinError(iB), H->GetBinError(iB));
-      GSys.SetPoint(iB - 1, H->GetBinCenter(iB), H->GetBinContent(iB));
-      GSys.SetPointError(iB - 1, 0, 0, 0, 0);
+      GSys.SetPoint(iB - 1, C, H->GetBinContent(iB));
+      GSys.SetPointError(iB - 1, C - L, R - C, 0, 0);
    }
 
    File.Close();
@@ -162,10 +172,8 @@ void Transcribe(string FileName, string SysFileName, string Histogram,
 
             double X = GSys.GetPointX(iB - 1);
 
-            if(LogX == false)
-               GSys.SetPointError(iB - 1, 0.01, 0.01, fabs(V - B), fabs(V - B));
-            else
-               GSys.SetPointError(iB - 1, X * 0.05, X * 0.05, fabs(V - B), fabs(V - B));
+            GSys.SetPointError(iB - 1, GSys.GetErrorXlow(iB - 1), GSys.GetErrorXhigh(iB - 1),
+               fabs(V - B), fabs(V - B));
          }
       }
 

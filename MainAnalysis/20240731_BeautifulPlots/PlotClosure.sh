@@ -9,8 +9,8 @@ do
          --Label PP,"PbPb ${C}%","(S+B)x(S+B)","(S+B)xB","BxB same","BxB diff" \
          --Output GenClosure_Centrality${C}_PT${P}.pdf \
          --Color -1,-2,-3,-4,-5,-6 \
-         --ExtraText "p_{T} > $P GeV" \
-         --DoLog true \
+         --ExtraText "p_{T} = $P-200 GeV" \
+         --DoLogY true \
          --Histogram HDeltaREEC
    
       ./ExecuteBasic --Input Curves/Gen_PP_PT${P}.root,Curves/MC_Centrality${C}_PT${P}.root,Curves/MC_SBxSB_Centrality${C}_PT${P}.root,Curves/MC_SBxB_Centrality${C}_PT${P}.root,Curves/MC_BxBSame_Centrality${C}_PT${P}.root,Curves/MC_BxBDiff_Centrality${C}_PT${P}.root \
@@ -18,8 +18,8 @@ do
          --Label PP,"PbPb ${C}%","(S+B)x(S+B)","(S+B)xB","BxB same","BxB diff" \
          --Output Closure_Centrality${C}_PT${P}.pdf \
          --Color -1,-2,-3,-4,-5,-6 \
-         --ExtraText "p_{T} > $P GeV" \
-         --DoLog true \
+         --ExtraText "p_{T} = $P-200 GeV" \
+         --DoLogY true \
          --Histogram HDeltaREEC
    done
 done
