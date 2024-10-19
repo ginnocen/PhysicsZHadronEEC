@@ -205,9 +205,10 @@ int main(int argc, char *argv[])
                continue;
 
             //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
-            int HLT_HIL2Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL2Mu12");
-            int HLT_HIL3Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
-            if(HLT_HIL3Mu12 == 0 && HLT_HIL2Mu12 == 0)
+            int HLT_HIL2Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL2Mu12");
+            int HLT_HIL3Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
+            int HLT_HIL3Mu12_2023 = MTrigger.CheckTriggerStartWith("HLT_HIL3SingleMu12");
+            if(HLT_HIL3Mu12_2018 == 0 && HLT_HIL2Mu12_2018 == 0 && HLT_HIL3Mu12_2023 == 0)
                continue;
 
             MZHadron.NCollWeight = 1;
@@ -229,8 +230,10 @@ int main(int argc, char *argv[])
                continue;
 
             //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
-            int HLT_HIL3Mu12 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
-            if(IsBackground == false && HLT_HIL3Mu12 == 0)
+            int HLT_HIL2Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL2Mu12");
+            int HLT_HIL3Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
+            int HLT_HIL3Mu12_2023 = MTrigger.CheckTriggerStartWith("HLT_HIL3SingleMu12");
+            if(IsBackground == false && HLT_HIL3Mu12_2018 == 0 && HLT_HIL2Mu12_2018 == 0 && HLT_HIL3Mu12_2023 == 0)
                continue;
 
             MZHadron.NCollWeight = 1;
