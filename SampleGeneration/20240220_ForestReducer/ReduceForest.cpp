@@ -13,6 +13,7 @@ using namespace std;
 #include "tnp_weight.h"
 #include "trackingEfficiency2017pp.h"
 #include "trackingEfficiency2018PbPb.h"
+#include "trackingEfficiency2023PbPb.h"
 #include "TrackResidualCorrector.h"
 
 int main(int argc, char *argv[]);
@@ -31,6 +32,7 @@ int main(int argc, char *argv[])
    bool DoGenLevel                    = CL.GetBool("DoGenLevel", true);
    bool IsData                        = CL.GetBool("IsData", false);
    bool IsPP                          = CL.GetBool("IsPP", false);
+   int Year                           = CL.GetInt("Year", 2018);
    bool IsBackground                  = CL.GetBool("IsBackground", false);
    double Fraction                    = CL.GetDouble("Fraction", 1.00);
    double MinZPT                      = CL.GetDouble("MinZPT", 20);
@@ -48,22 +50,41 @@ int main(int argc, char *argv[])
    string PFTreeName                  = IsPP ? "pfcandAnalyzer/pfTree" : "particleFlowAnalyser/pftree";
    PFTreeName                         = CL.Get("PFTree", PFTreeName);
 
-   TrkEff2017pp *TrackEfficiencyPP = nullptr;
-   TrkEff2018PbPb *TrackEfficiencyPbPb = nullptr;
+   TrkEff2017pp *TrackEfficiencyPP2017 = nullptr;
+   TrkEff2018PbPb *TrackEfficiencyPbPb2018 = nullptr;
+   TrkEff2023PbPb *TrackEfficiencyPbPb2023 = nullptr;
    if(DoGenLevel == false)
    {
-      if(IsPP == true)
-         TrackEfficiencyPP = new TrkEff2017pp(false, TrackEfficiencyPath);
-      else
+      if(IsPP == true && (Year == 2017 || Year == 2018))   // 2018 does not have pp ref but for convenience
+         TrackEfficiencyPP2017 = new TrkEff2017pp(false, TrackEfficiencyPath);
+      else if(IsPP == false && Year == 2018)
       {
          if(DoAlternateTrackSelection == false)
-            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "", false, TrackEfficiencyPath);
+            TrackEfficiencyPbPb2018 = new TrkEff2018PbPb("general", "", false, TrackEfficiencyPath);
          if(DoAlternateTrackSelection == true && AlternateTrackSelection == 0)
-            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "", false, TrackEfficiencyPath);
+            TrackEfficiencyPbPb2018 = new TrkEff2018PbPb("general", "", false, TrackEfficiencyPath);
          if(DoAlternateTrackSelection == true && AlternateTrackSelection == 1)
-            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "Loose", false, TrackEfficiencyPath);
+            TrackEfficiencyPbPb2018 = new TrkEff2018PbPb("general", "Loose", false, TrackEfficiencyPath);
          if(DoAlternateTrackSelection == true && AlternateTrackSelection == 2)
-            TrackEfficiencyPbPb = new TrkEff2018PbPb("general", "Tight", false, TrackEfficiencyPath);
+            TrackEfficiencyPbPb2018 = new TrkEff2018PbPb("general", "Tight", false, TrackEfficiencyPath);
+      }
+      else if(IsPP == false && Year == 2023)
+      {
+         if(DoAlternateTrackSelection == false)
+            TrackEfficiencyPbPb2023 = new TrkEff2023PbPb("general", "", false, TrackEfficiencyPath);
+         if(DoAlternateTrackSelection == true && AlternateTrackSelection == 0)
+            TrackEfficiencyPbPb2023 = new TrkEff2023PbPb("general", "", false, TrackEfficiencyPath);
+         if(DoAlternateTrackSelection == true && AlternateTrackSelection == 1)
+            TrackEfficiencyPbPb2023 = new TrkEff2023PbPb("general", "Loose", false, TrackEfficiencyPath);
+         if(DoAlternateTrackSelection == true && AlternateTrackSelection == 2)
+            TrackEfficiencyPbPb2023 = new TrkEff2023PbPb("general", "Tight", false, TrackEfficiencyPath);
+      }
+      else
+      {
+         cerr << endl;
+         cerr << "Error in track efficiency!" << endl;
+         cerr << "Data/Year combination (IsPP = " << IsPP << ", Year = " << Year << ") does not exist!" << endl;
+         cerr << endl;
       }
    }
    TrackResidualCentralityCorrector TrackResidual(TrackResidualPath);
@@ -605,10 +626,12 @@ int main(int argc, char *argv[])
          {
             // cout << TrackPT << " " << TrackEta << " " << MZHadron.hiBin << endl;
 
-            if(IsPP == true)
-               TrackCorrection = TrackEfficiencyPP->getCorrection(TrackPT, TrackEta);
-            else
-               TrackCorrection = TrackEfficiencyPbPb->getCorrection(TrackPT, TrackEta, MZHadron.hiBin);
+            if(IsPP == true && (Year == 2017 || Year == 2018))
+               TrackCorrection = TrackEfficiencyPP2017->getCorrection(TrackPT, TrackEta);
+            else if(IsPP == false && Year == 2018)
+               TrackCorrection = TrackEfficiencyPbPb2018->getCorrection(TrackPT, TrackEta, MZHadron.hiBin);
+            else if(IsPP == false && Year == 2023)
+               TrackCorrection = TrackEfficiencyPbPb2023->getCorrection(TrackPT, TrackEta, MZHadron.hiBin);
          }
          double TrackResidualCorrection = 1;
          if(DoTrackResidual == true && DoGenLevel == false)
