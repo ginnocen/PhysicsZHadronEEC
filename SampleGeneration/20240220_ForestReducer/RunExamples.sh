@@ -9,6 +9,7 @@ mkdir -p Output/
 
 ./Execute --Input Samples/DYLL_HiForestMiniAOD_86.root \
    --Output Output/DYLL_1.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData false \
@@ -17,6 +18,7 @@ mkdir -p Output/
    --CheckZ true
 ./Execute --Input Samples/DYLL_HiForestMiniAOD_284.root \
    --Output Output/DYLL_2.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData false \
@@ -25,6 +27,7 @@ mkdir -p Output/
    --CheckZ true
 ./Execute --Input Samples/DYLL_HiForestMiniAOD_182.root \
    --Output Output/DYLL_3.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData false \
@@ -37,6 +40,7 @@ exit
 
 ./Execute --Input Samples/Hydjet_HiForestMiniAOD_33.root \
    --Output Output/Hydjet1.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData false \
@@ -45,6 +49,7 @@ exit
    --CheckZ false
 ./Execute --Input Samples/Hydjet_HiForestMiniAOD_35.root \
    --Output Output/Hydjet2.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData false \
@@ -55,6 +60,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/ppDYLL_HiForestAOD_76.root \
    --Output Output/ppMC.root \
+   --Year 2017 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData false \
@@ -69,6 +75,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/DYLL_HiForestMiniAOD_86.root \
    --Output Output/DYLLGen.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel true \
    --IsData false \
@@ -78,6 +85,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/Hydjet_HiForestMiniAOD_33.root \
    --Output Output/HydjetGen.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel true \
    --IsData false \
@@ -87,6 +95,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/ppDYLL_HiForestAOD_76.root \
    --Output Output/ppMCGen.root \
+   --Year 2017 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel true \
    --IsData false \
@@ -101,6 +110,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/SingleMuon_HiForestMiniAOD_94.root \
    --Output Output/SingleMuon.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData true \
@@ -110,6 +120,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/MB_HiForestMiniAOD_95.root \
    --Output Output/MB.root \
+   --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData true \
@@ -119,6 +130,7 @@ hadd -f Output/Hydjet.root Output/Hydjet[12].root
 
 ./Execute --Input Samples/ppSingleMuon_HiForestAOD_119.root \
    --Output Output/ppData.root \
+   --Year 2017 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
    --IsData true \
