@@ -36,28 +36,6 @@ bool checkError(const Parameters& par) {
     return false;
 }
 
-//======= eventSelection =====================================//
-// Check if the event mass eventSelection criteria
-// MinZPT < zPt < MaxZPT
-// MinHiBin , hiBin < MaxHiBin
-//============================================================//
-bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
-   int effectiveHiBin = par.isHiBinUp ? b->hiBinUp : (par.isHiBinDown ? b->hiBinDown : b->hiBin);
-
-   bool foundZ = false;            
-   if (par.isPUReject && par.isPP && b->NVertex!=1) return 0;    // Only apply PU rejection (single vertex requirement) in pp analysis
-   if (effectiveHiBin< par.MinHiBin) return 0;
-   if (effectiveHiBin>=par.MaxHiBin) return 0;
-   if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
-   if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])<60) return 0;
-   if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])>120) return 0;
-   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))<=par.MinZY) return 0;
-   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))>=par.MaxZY) return 0;
-   if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])<par.MinZPT) return 0;
-   if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])>par.MaxZPT) return 0;
-   foundZ=1;   
-   return foundZ;
-}
 
 //======= trackSelection =====================================//
 // Check if the track pass selection criteria
@@ -68,6 +46,40 @@ bool trackSelection(ZHadronMessenger *b, Parameters par, int j) {
     if ((*b->trackPt)[j]<par.MinTrackPT) return false;
     if ((!par.includeHole)&&(*b->trackWeight)[j]<0) return false;
     return true;
+}
+
+
+//======= trackSelection =====================================//
+// Check if the track pass selection criteria
+//============================================================//
+bool trackSelectionNoPt(ZHadronMessenger *b, Parameters par, int j) {
+    if (par.isMuTagged && (*b->trackMuTagged)[j]) return false; 
+    if ((!par.includeHole)&&(*b->trackWeight)[j]<0) return false;
+    return true;
+}
+
+
+//======= eventSelection =====================================//
+// Check if the event mass eventSelection criteria
+// MinZPT < zPt < MaxZPT
+// MinHiBin , hiBin < MaxHiBin
+//============================================================//
+bool eventSelection(ZHadronMessenger *b, const Parameters& par) {
+   int effectiveHiBin = par.isHiBinUp ? b->hiBinUp : (par.isHiBinDown ? b->hiBinDown : b->hiBin);
+
+   if (par.isPUReject && par.isPP && b->NVertex!=1) return 0;    // Only apply PU rejection (single vertex requirement) in pp analysis
+   if (effectiveHiBin< par.MinHiBin) return 0;
+   if (effectiveHiBin>=par.MaxHiBin) return 0;
+   if ((par.isGenZ ? b->genZMass->size() : b->zMass->size())==0) return 0;
+   if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])<60) return 0;
+   if ((par.isGenZ ? (*b->genZMass)[0] : (*b->zMass)[0])>120) return 0;
+   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))<=par.MinZY) return 0;
+   if (fabs((par.isGenZ ? (*b->genZY)[0] : (*b->zY)[0]))>=par.MaxZY) return 0;
+   if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])<par.MinZPT) return 0;
+   if ((par.isGenZ ? (*b->genZPt)[0] : (*b->zPt)[0])>par.MaxZPT) return 0;
+   
+   
+   return 1;
 }
 
 // ======= Define mixed event matching criteria
@@ -101,6 +113,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
     unsigned long mix_i = iStart;
     unsigned long mixstart_i = mix_i;
     int deltaI = (iEnd-iStart)/100+1;              
+    float dPhi_threshold=2*M_PI/3;
 
     for (unsigned long i = iStart; i < iEnd; i++) {
        MZSignal->GetEntry(i);
@@ -113,7 +126,29 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
           // Find a mixed akeevent
 	  float zY = (par.isGenZ ? (*MZSignal->genZY)[0] : (*MZSignal->zY)[0]);
 	  float zPhi = (par.isGenZ ? (*MZSignal->genZPhi)[0] : (*MZSignal->zPhi)[0]);
+	  float zPt = (par.isGenZ ? (*MZSignal->genZPt)[0] : (*MZSignal->zPt)[0]);
 	  
+	  if (par.useLeadingTrk) {
+	     float maxTrkPt=-1;
+	     long maxTrkIdx=-1;
+	     for (unsigned long j = 0; j < MZSignal->trackPhi->size(); j++) {
+	  	if (!trackSelectionNoPt(MZSignal, par, j)) continue;
+	        if (DeltaPhi((*MZSignal->trackPhi)[j], zPhi)<dPhi_threshold) continue;
+		if ((*MZSignal->trackPt)[j]>maxTrkPt) {
+	           maxTrkPt=(*MZSignal->trackPt)[j];
+		   maxTrkIdx=j;
+	        }
+	     }
+	      
+	     if (maxTrkIdx>-1&&maxTrkPt>6) {
+	  	// replace the Z position by leaing track direction
+	  	zY=(*MZSignal->trackEta)[maxTrkIdx];
+	  	zPhi=(*MZSignal->trackPhi)[maxTrkIdx]+M_PI;
+	     } else {
+//	        continue;
+	     }
+	     
+	  }	 
           for (unsigned int nMix = 0; nMix < targetMix; nMix++) {
              bool foundMix = false;
 	     mixstart_i = mix_i;
@@ -145,6 +180,7 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
                 float trackDeta  = par.mix ? fabs((*MMix->trackEta)[j] - zY) : fabs((*MZSignal->trackEta)[j] - zY);
                 float weight = (par.mix&&par.isSelfMixing) ? (MMix->ZWeight*MMix->EventWeight)*(MZSignal->ZWeight*MZSignal->EventWeight) : (MZSignal->ZWeight*MZSignal->EventWeight);
 		weight*= (par.ExtraZWeight==-1) ? 1 : ((par.mix&&par.isSelfMixing) ? MMix->ExtraZWeight[par.ExtraZWeight]*MZSignal->ExtraZWeight[par.ExtraZWeight] : MZSignal->ExtraZWeight[par.ExtraZWeight]);
+//                weight*= (par.mix ? ((*MMix->trackWeight)[j]/(*MMix->trackResidualWeight)[j]*(1-0.33*par.isJewel*((*MMix->trackWeight)[j]<0))) : ((*MZSignal->trackWeight)[j]/(*MZSignal->trackResidualWeight)[j]*(1-0.33*par.isJewel*((*MZSignal->trackWeight)[j]<0))) );
                 weight*= (par.mix ? ((*MMix->trackWeight)[j]*(1-0.33*par.isJewel*((*MMix->trackWeight)[j]<0))) : ((*MZSignal->trackWeight)[j]*(1-0.33*par.isJewel*((*MZSignal->trackWeight)[j]<0))) );
                 h->Fill( trackDeta, trackDphi , weight);
                 h->Fill(-trackDeta, trackDphi , weight);
@@ -170,6 +206,13 @@ float getDphi(ZHadronMessenger *MZSignal, ZHadronMessenger *MMix, ZHadronMesseng
 
 class DataAnalyzer {
 public:
+  TFile *inf, *mixFile, *mixFileClone, *outf;
+  TNtuple *ntDiagnose;
+  TH1D *hNZ, *hNZMix;
+  TH2D *h=0, *hSub0=0, *hMix=0;
+  ZHadronMessenger *MZHadron, *MMix, *MMixEvt;
+  string title;
+
   DataAnalyzer(const char* filename, const char* mixFilename, const char* outFilename, const char *mytitle = "Data") :
      inf(new TFile(filename)), MZHadron(new ZHadronMessenger(*inf,string("Tree"))), mixFile(new TFile(mixFilename)), mixFileClone(new TFile(mixFilename)), MMix(new ZHadronMessenger(*mixFile,string("Tree"))), MMixEvt(new ZHadronMessenger(*mixFileClone,string("Tree"),true)), title(mytitle), outf(new TFile(outFilename, "recreate"))  {
      outf->cd();
@@ -179,10 +222,17 @@ public:
   ~DataAnalyzer() {
     deleteHistograms();
     inf->Close();
+    mixFile->Close();
+    mixFileClone->Close();
+    outf->Close(); 
+    delete MZHadron;
+    delete MMix;
+    delete MMixEvt;
   }
 
   void analyze(Parameters& par) {
     // First histogram with mix=false
+    outf->cd();
     par.mix = false;
     h = new TH2D(Form("h%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
     hSub0 = new TH2D(Form("hSub0%s", title.c_str()), "", 20, -4, 4, 20, -M_PI/2, 3*M_PI/2);
@@ -206,12 +256,6 @@ public:
     smartWrite(ntDiagnose);
   }
 
-  TFile *inf, *mixFile, *mixFileClone, *outf;
-  TNtuple *ntDiagnose;
-  TH1D *hNZ, *hNZMix;
-  TH2D *h=0, *hSub0=0, *hMix=0;
-  ZHadronMessenger *MZHadron, *MMix, *MMixEvt;
-  string title;
   
   private:
   void deleteHistograms() {
@@ -252,6 +296,7 @@ int main(int argc, char *argv[])
    par.isMuTagged    = CL.GetBool  ("IsMuTagged", true);   // Default is true
    par.isHiBinUp     = CL.GetBool  ("IsHiBinUp", false);   // Default is false
    par.isHiBinDown   = CL.GetBool  ("IsHiBinDown", false); // Default is false
+   par.useLeadingTrk = CL.GetBool  ("UseLeadingTrk", false); // Default is false
    par.scaleFactor   = CL.GetDouble("Fraction", 1.00);     // Fraction of event processed in the sample
    par.nThread       = CL.GetInt   ("nThread", 1);         // The number of threads to be used for parallel processing.
    par.nChunk        = CL.GetInt   ("nChunk", 1);          // Specifies which chunk (segment) of the data to process, used in parallel processing.
@@ -271,6 +316,9 @@ int main(int argc, char *argv[])
    DataAnalyzer analyzer(par.input.c_str(), par.mixFile.c_str(), par.output.c_str(), "Data");
    analyzer.analyze(par);
    analyzer.writeHistograms(analyzer.outf);
+   cout <<endl<<endl<<"Good good"<<endl;
    saveParametersToHistograms(par, analyzer.outf);
+   
+   
    cout << "done!" << analyzer.outf->GetName() << endl;
 }
