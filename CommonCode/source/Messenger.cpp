@@ -2384,3 +2384,571 @@ bool ZHadronMessenger::FillEntry()
 
    return true;
 }
+MuMuJetMessenger::MuMuJetMessenger(TFile &File, std::string TreeName, bool SkipTrack)
+{
+   Initialized = false;
+   WriteMode = false;
+   
+   Tree = (TTree *)File.Get(TreeName.c_str());
+   Initialize(SkipTrack);
+}
+
+MuMuJetMessenger::MuMuJetMessenger(TFile *File, std::string TreeName, bool SkipTrack)
+{
+   Initialized = false;
+   WriteMode = false;
+   
+   if(File != nullptr)
+      Tree = (TTree *)File->Get(TreeName.c_str());
+   else
+      Tree = nullptr;
+   Initialize(SkipTrack);
+}
+
+MuMuJetMessenger::MuMuJetMessenger(TTree *ZHadronTree, bool SkipTrack)
+{
+   Initialized = false;
+   WriteMode = false;
+
+   Initialize(ZHadronTree, SkipTrack);
+}
+   
+MuMuJetMessenger::~MuMuJetMessenger()
+{
+   if(Initialized == true && WriteMode == true)
+   {
+      delete zMass;
+      delete zEta;
+      delete zY;
+      delete zPhi;
+      delete zPt;
+      delete genZMass;
+      delete genZEta;
+      delete genZY;
+      delete genZPhi;
+      delete genZPt;
+      delete trackPt;
+      delete trackMuTagged;
+      delete trackMuDR;
+      delete trackPDFId;
+      delete trackEta;
+      delete trackY;
+      delete trackPhi;
+      delete trackCharge;
+
+      delete muEta1;
+      delete muEta2;
+      delete muPhi1;
+      delete muPhi2;
+      delete muPt1;
+      delete muPt2;
+
+      delete muDeta;
+      delete muDphi;
+      delete muDR;
+      delete muDphiS;
+
+      delete genMuPt1;
+      delete genMuPt2;
+      delete genMuEta1;
+      delete genMuEta2;
+      delete genMuPhi1;
+      delete genMuPhi2;
+
+      delete genMuDeta;
+      delete genMuDphi;
+      delete genMuDR;
+      delete genMuDphiS;
+   }
+}
+   
+bool MuMuJetMessenger::Initialize(TTree *ZHadronTree, bool SkipTrack)
+{
+   Tree = ZHadronTree;
+   return Initialize(SkipTrack);
+}
+
+bool MuMuJetMessenger::Initialize(bool SkipTrack)
+{
+   if(Tree == nullptr)
+      return false;
+
+   Initialized = true;
+
+   zMass = nullptr;
+   zEta = nullptr;
+   zY = nullptr;
+   zPhi = nullptr;
+   zPt = nullptr;
+   genZMass = nullptr;
+   genZEta = nullptr;
+   genZY = nullptr;
+   genZPhi = nullptr;
+   genZPt = nullptr;
+   trackPt = nullptr;
+   trackPDFId = nullptr;
+   trackEta = nullptr;
+   trackY = nullptr;
+   trackPhi = nullptr;
+   trackMuTagged = nullptr;
+   trackMuDR = nullptr;
+   trackWeight = nullptr;
+   trackResidualWeight = nullptr;
+   trackCharge = nullptr;
+   subevent = nullptr;
+
+   muEta1 = nullptr;
+   muEta2 = nullptr;
+   muPhi1 = nullptr;
+   muPhi2 = nullptr;
+   muPt1 = nullptr;
+   muPt2 = nullptr;
+
+   muDeta = nullptr;
+   muDphi = nullptr;
+   muDR = nullptr;
+   muDphiS = nullptr;
+
+   genMuPt1 = nullptr;
+   genMuPt2 = nullptr;
+   genMuEta1 = nullptr;
+   genMuEta2 = nullptr;
+   genMuPhi1 = nullptr;
+   genMuPhi2 = nullptr;
+
+   genMuDeta = nullptr;
+   genMuDphi = nullptr;
+   genMuDR = nullptr;
+   genMuDphiS = nullptr;
+
+   Tree->SetBranchAddress("Run", &Run);
+   Tree->SetBranchAddress("Event", &Event);
+   Tree->SetBranchAddress("Lumi", &Lumi);
+
+   Tree->SetBranchAddress("hiBin", &hiBin);
+   Tree->SetBranchAddress("hiBinUp", &hiBinUp);
+   Tree->SetBranchAddress("hiBinDown", &hiBinDown);
+   Tree->SetBranchAddress("hiHF", &hiHF);
+   
+   Tree->SetBranchAddress("SignalHF", &SignalHF);
+   Tree->SetBranchAddress("BackgroundHF", &BackgroundHF);
+   Tree->SetBranchAddress("SubEvent0HF", &SubEvent0HF);
+   Tree->SetBranchAddress("SubEventAllHF", &SubEventAllHF);
+   Tree->SetBranchAddress("SignalVZ", &SignalVZ);
+
+   Tree->SetBranchAddress("EventWeight", &EventWeight);
+   Tree->SetBranchAddress("NCollWeight", &NCollWeight);
+   Tree->SetBranchAddress("InterSampleZWeight", &InterSampleZWeight);
+   Tree->SetBranchAddress("ZWeight", &ZWeight);
+   Tree->SetBranchAddress("VZWeight", &VZWeight);
+   Tree->SetBranchAddress("ExtraZWeight", &ExtraZWeight);
+
+   Tree->SetBranchAddress("NVertex", &NVertex);
+   Tree->SetBranchAddress("VX", &VX);
+   Tree->SetBranchAddress("VY", &VY);
+   Tree->SetBranchAddress("VZ", &VZ);
+   Tree->SetBranchAddress("VXError", &VXError);
+   Tree->SetBranchAddress("VYError", &VYError);
+   Tree->SetBranchAddress("VZError", &VZError);
+   Tree->SetBranchAddress("NPU", &NPU);
+   
+   Tree->SetBranchAddress("zMass", &zMass);
+   Tree->SetBranchAddress("zEta", &zEta);
+   Tree->SetBranchAddress("zY", &zY);
+   Tree->SetBranchAddress("zPhi", &zPhi);
+   Tree->SetBranchAddress("zPt", &zPt);
+   Tree->SetBranchAddress("genZMass", &genZMass);
+   Tree->SetBranchAddress("genZEta", &genZEta);
+   Tree->SetBranchAddress("genZY", &genZY);
+   Tree->SetBranchAddress("genZPhi", &genZPhi);
+   Tree->SetBranchAddress("genZPt", &genZPt);
+   if(SkipTrack == false)
+   {
+      Tree->SetBranchAddress("trackPt", &trackPt);
+      Tree->SetBranchAddress("trackPDFId", &trackPDFId);
+      Tree->SetBranchAddress("trackEta", &trackEta);
+      Tree->SetBranchAddress("trackY", &trackY);
+      Tree->SetBranchAddress("trackPhi", &trackPhi);
+      Tree->SetBranchAddress("trackMuTagged", &trackMuTagged);
+      Tree->SetBranchAddress("trackMuDR", &trackMuDR);
+      Tree->SetBranchAddress("trackWeight", &trackWeight);
+      Tree->SetBranchAddress("trackResidualWeight", &trackResidualWeight);
+      Tree->SetBranchAddress("trackCharge", &trackCharge);
+      Tree->SetBranchAddress("subevent", &subevent);
+   }
+   else
+   {
+      Tree->SetBranchStatus("trackPt", false);
+      Tree->SetBranchStatus("trackPDFId", false);
+      Tree->SetBranchStatus("trackEta", false);
+      Tree->SetBranchStatus("trackY", false);
+      Tree->SetBranchStatus("trackPhi", false);
+      Tree->SetBranchStatus("trackMuTagged", false);
+      Tree->SetBranchStatus("trackMuDR", false);
+      Tree->SetBranchStatus("trackWeight", false);
+      Tree->SetBranchStatus("trackResidualWeight", false);
+      Tree->SetBranchStatus("trackCharge", false);
+      Tree->SetBranchStatus("subevent", false);
+   }
+
+   Tree->SetBranchAddress("muEta1", &muEta1);
+   Tree->SetBranchAddress("muEta2", &muEta2);
+   Tree->SetBranchAddress("muPhi1", &muPhi1);
+   Tree->SetBranchAddress("muPhi2", &muPhi2);
+   Tree->SetBranchAddress("muPt1", &muPt1);
+   Tree->SetBranchAddress("muPt2", &muPt2);
+ 
+   Tree->SetBranchAddress("muDeta", &muDeta);
+   Tree->SetBranchAddress("muDphi", &muDphi);
+   Tree->SetBranchAddress("muDR", &muDR);
+   Tree->SetBranchAddress("muDphiS", &muDphiS);
+  
+   Tree->SetBranchAddress("genMuPt1", &genMuPt1);
+   Tree->SetBranchAddress("genMuPt2", &genMuPt2);
+   Tree->SetBranchAddress("genMuEta1", &genMuEta1);
+   Tree->SetBranchAddress("genMuEta2", &genMuEta2);
+   Tree->SetBranchAddress("genMuPhi1", &genMuPhi1);
+   Tree->SetBranchAddress("genMuPhi2", &genMuPhi2);
+   
+   Tree->SetBranchAddress("genMuDeta", &genMuDeta);
+   Tree->SetBranchAddress("genMuDphi", &genMuDphi);
+   Tree->SetBranchAddress("genMuDR", &genMuDR);
+   Tree->SetBranchAddress("genMuDphiS", &genMuDphiS);
+   
+   return true;
+}
+
+int MuMuJetMessenger::GetEntries()
+{
+   if(Tree == nullptr)
+      return 0;
+   return Tree->GetEntries();
+}
+
+bool MuMuJetMessenger::GetEntry(int iEntry)
+{
+   if(Tree == nullptr)
+      return false;
+
+   Tree->GetEntry(iEntry);
+
+   // fill derived quantities
+   GoodGenZ = true;
+   if(genZY == nullptr)
+      GoodGenZ = false;
+   else if(genZY->size() == 0)
+      GoodGenZ = false;
+   else
+   {
+      if(genZMass->at(0) > 120 || genZMass->at(0) < 60)   GoodGenZ = false;
+      if(genZY->at(0) < -2.4 || genZY->at(0) > 2.4)       GoodGenZ = false;
+   }
+   
+   GoodRecoZ = true;
+   if(zY == nullptr)
+      GoodRecoZ = false;
+   else if(zY->size() == 0)
+      GoodRecoZ = false;
+   else
+   {
+      if(zMass->at(0) > 120 || zMass->at(0) < 60)   GoodRecoZ = false;
+      if(zY->at(0) < -2.4 || zY->at(0) > 2.4)       GoodRecoZ = false;
+   }
+
+   return true;
+}
+
+bool MuMuJetMessenger::SetBranch(TTree *T)
+{
+   if(T == nullptr)
+      return false;
+
+   Initialized = true;
+   WriteMode = true;
+
+   zMass = new std::vector<float>();
+   zEta = new std::vector<float>();
+   zY = new std::vector<float>();
+   zPhi = new std::vector<float>();
+   zPt = new std::vector<float>();
+   genZMass = new std::vector<float>();
+   genZEta = new std::vector<float>();
+   genZY = new std::vector<float>();
+   genZPhi = new std::vector<float>();
+   genZPt = new std::vector<float>();
+   trackPt = new std::vector<float>();
+   trackPDFId = new std::vector<float>();
+   trackEta = new std::vector<float>();
+   trackY = new std::vector<float>();
+   trackPhi = new std::vector<float>();
+   trackMuTagged = new std::vector<bool>();
+   trackMuDR = new std::vector<float>();
+   trackWeight = new std::vector<float>();
+   trackResidualWeight = new std::vector<float>();
+   trackCharge = new std::vector<int>();
+   subevent = new std::vector<int>();
+
+   muEta1 = new std::vector<float>();
+   muEta2 = new std::vector<float>();
+   muPhi1 = new std::vector<float>();
+   muPhi2 = new std::vector<float>();
+   muPt1 = new std::vector<float>();
+   muPt2 = new std::vector<float>();
+
+   muDeta = new std::vector<float>();
+   muDphi = new std::vector<float>();
+   muDR = new std::vector<float>();
+   muDphiS = new std::vector<float>();
+
+   genMuPt1 = new std::vector<float>();
+   genMuPt2 = new std::vector<float>();
+   genMuEta1 = new std::vector<float>();
+   genMuEta2 = new std::vector<float>();
+   genMuPhi1 = new std::vector<float>();
+   genMuPhi2 = new std::vector<float>();
+
+   genMuDeta = new std::vector<float>();
+   genMuDphi = new std::vector<float>();
+   genMuDR = new std::vector<float>();
+   genMuDphiS = new std::vector<float>();
+
+   Tree = T;
+
+   Tree->Branch("run",                    &Run,          "run/I");
+   Tree->Branch("event",                  &Event,        "event/L");
+   Tree->Branch("lumi",                   &Lumi,         "lumi/I");
+   Tree->Branch("hiBin",                  &hiBin,        "hiBin/I");
+   Tree->Branch("hiBinUp",                &hiBinUp,      "hiBinUp/I");
+   Tree->Branch("hiBinDown",              &hiBinDown,    "hiBinDown/I");
+   Tree->Branch("hiHF",                   &hiHF,         "hiHF/F");
+
+   Tree->Branch("SignalHF",               &SignalHF,     "SignalHF/F");
+   Tree->Branch("BackgroundHF",           &BackgroundHF, "BackgroundHF/F");
+   Tree->Branch("SubEvent0HF",            &SubEvent0HF,  "SubEvent0HF/F");
+   Tree->Branch("SubEventAllHF",            &SubEventAllHF,  "SubEventAllHF/F");
+   Tree->Branch("SignalVZ",               &SignalVZ,     "SignalVZ/F");
+
+   Tree->Branch("EventWeight",            &EventWeight,  "EventWeight/F");
+   Tree->Branch("NCollWeight",            &NCollWeight,  "NCollWeight/F");
+   Tree->Branch("InterSampleZWeight",     &InterSampleZWeight,"InterSampleZWeight/F");
+   Tree->Branch("ZWeight",                &ZWeight,      "ZWeight/F");
+   Tree->Branch("VZWeight",               &VZWeight,     "VZWeight/F");
+   Tree->Branch("ExtraZWeight",           &ExtraZWeight, "ExtraZWeight[12]/F");
+   
+   Tree->Branch("NVertex",                &NVertex,      "NVertex/I");
+   Tree->Branch("VX",                     &VX,           "VX/F");
+   Tree->Branch("VY",                     &VY,           "VY/F");
+   Tree->Branch("VZ",                     &VZ,           "VZ/F");
+   Tree->Branch("VXError",                &VXError,      "VXError/F");
+   Tree->Branch("VYError",                &VYError,      "VYError/F");
+   Tree->Branch("VZError",                &VZError,      "VZError/F");
+   Tree->Branch("NPU",                    &NPU,          "NPU/I");
+
+   Tree->Branch("zMass",                  &zMass);
+   Tree->Branch("zEta",                   &zEta);
+   Tree->Branch("zY",                     &zY);
+   Tree->Branch("zPhi",                   &zPhi);
+   Tree->Branch("zPt",                    &zPt);
+   Tree->Branch("genZMass",               &genZMass);
+   Tree->Branch("genZEta",                &genZEta);
+   Tree->Branch("genZY",                  &genZY);
+   Tree->Branch("genZPhi",                &genZPhi);
+   Tree->Branch("genZPt",                 &genZPt);
+   Tree->Branch("trackPt",                &trackPt);
+   Tree->Branch("trackPDFId",             &trackPDFId);
+   Tree->Branch("trackPhi",               &trackPhi);
+   Tree->Branch("trackEta",               &trackEta);
+   Tree->Branch("trackY",                 &trackY);
+   Tree->Branch("trackMuTagged",          &trackMuTagged);
+   // Tree->Branch("trackMuDR",              &trackMuDR);
+   Tree->Branch("trackWeight",            &trackWeight);
+   Tree->Branch("trackResidualWeight",    &trackResidualWeight);
+   Tree->Branch("trackCharge",            &trackCharge);
+   Tree->Branch("subevent",               &subevent);
+   
+   Tree->Branch("muEta1",                 &muEta1);
+   Tree->Branch("muEta2",                 &muEta2);
+   Tree->Branch("muPhi1",                 &muPhi1);
+   Tree->Branch("muPhi2",                 &muPhi2);
+   Tree->Branch("muPt1",                  &muPt1);
+   Tree->Branch("muPt2",                  &muPt2);
+
+   Tree->Branch("genMuPt1",               &genMuPt1);
+   Tree->Branch("genMuPt2",               &genMuPt2);
+   Tree->Branch("genMuEta1",              &genMuEta1);
+   Tree->Branch("genMuEta2",              &genMuEta2);
+   Tree->Branch("genMuPhi1",              &genMuPhi1);
+   Tree->Branch("genMuPhi2",              &genMuPhi2);
+
+   Tree->Branch("muDeta",                 &muDeta);
+   Tree->Branch("muDphi",                 &muDphi);
+   Tree->Branch("muDR",                   &muDR);
+   Tree->Branch("muDphiS",                &muDphiS);
+
+   Tree->Branch("genMuDeta",              &genMuDeta);
+   Tree->Branch("genMuDphi",              &genMuDphi);
+   Tree->Branch("genMuDR",                &genMuDR);
+   Tree->Branch("genMuDphiS",             &genMuDphiS);
+
+   return true;
+}
+   
+void MuMuJetMessenger::Clear()
+{
+   if(Initialized == false)
+      return;
+
+   SignalHF = -1;
+   BackgroundHF = -1;
+   SubEvent0HF = -1;
+   SubEventAllHF = -1;
+   SignalVZ = -999;
+
+   EventWeight = 1;
+   NCollWeight = 1;
+   InterSampleZWeight = 1;
+   ZWeight = 1;
+   VZWeight = 1;
+   for(int i = 0; i < 12; i++)
+      ExtraZWeight[i] = 1;
+
+   NVertex = 0;
+   VX = 0;
+   VY = 0;
+   VZ = 0;
+   VXError = 0;
+   VYError = 0;
+   VZError = 0;
+   NPU = 0;
+
+   zMass->clear();
+   zEta->clear();
+   zY->clear();
+   zPhi->clear();
+   zPt->clear();
+   genZMass->clear();
+   genZEta->clear();
+   genZY->clear();
+   genZPhi->clear();
+   genZPt->clear();
+   trackPt->clear();
+   trackPDFId->clear();
+   trackPhi->clear();
+   trackEta->clear();
+   trackY->clear();
+   trackMuTagged->clear();
+   trackMuDR->clear();
+   trackWeight->clear();
+   trackResidualWeight->clear();
+   trackCharge->clear();
+   subevent->clear();
+
+   muEta1->clear();
+   muEta2->clear();
+   muPhi1->clear();
+   muPhi2->clear();
+   muPt1->clear();
+   muPt2->clear();
+
+   genMuPt1->clear();
+   genMuPt2->clear();
+   genMuEta1->clear();
+   genMuEta2->clear();
+   genMuPhi1->clear();
+   genMuPhi2->clear();
+
+   muDeta->clear();
+   muDphi->clear();
+   muDR->clear();
+   muDphiS->clear();
+   genMuDeta->clear();
+   genMuDphi->clear();
+   genMuDR->clear();
+   genMuDphiS->clear();
+}
+
+void MuMuJetMessenger::CopyNonTrack(MuMuJetMessenger &M)
+{
+   Run          = M.Run;
+   Event        = M.Event;
+   Lumi         = M.Lumi;
+   
+   hiBin        = M.hiBin;
+   hiBinUp      = M.hiBinUp;
+   hiBinDown    = M.hiBinDown;
+   hiHF         = M.hiHF;
+
+   SignalHF     = M.SignalHF;
+   BackgroundHF = M.BackgroundHF;
+   SubEvent0HF  = M.SubEvent0HF;
+   SubEventAllHF  = M.SubEventAllHF;
+   SignalVZ     = M.SignalVZ;
+
+   EventWeight  = M.EventWeight;
+   NCollWeight  = M.NCollWeight;
+   InterSampleZWeight = M.InterSampleZWeight;
+   ZWeight      = M.ZWeight;
+   VZWeight     = M.VZWeight;
+   for(int i = 0; i < 12; i++)
+      ExtraZWeight[i] = M.ExtraZWeight[i];
+
+   NVertex      = M.NVertex;
+   VX           = M.VX;
+   VY           = M.VY;
+   VZ           = M.VZ;
+   VXError      = M.VXError;
+   VYError      = M.VYError;
+   VZError      = M.VZError;
+   NPU          = M.NPU;
+  
+   if(zMass != nullptr && M.zMass != nullptr)   *zMass = *(M.zMass);
+   if(zEta != nullptr && M.zEta != nullptr)   *zEta = *(M.zEta);
+   if(zY != nullptr && M.zY != nullptr)   *zY = *(M.zY);
+   if(zPhi != nullptr && M.zPhi != nullptr)   *zPhi = *(M.zPhi);
+   if(zPt != nullptr && M.zPt != nullptr)   *zPt = *(M.zPt);
+   if(genZMass != nullptr && M.genZMass != nullptr)   *genZMass = *(M.genZMass);
+   if(genZEta != nullptr && M.genZEta != nullptr)   *genZEta = *(M.genZEta);
+   if(genZY != nullptr && M.genZY != nullptr)   *genZY = *(M.genZY);
+   if(genZPhi != nullptr && M.genZPhi != nullptr)   *genZPhi = *(M.genZPhi);
+   if(genZPt != nullptr && M.genZPt != nullptr)   *genZPt = *(M.genZPt);
+   
+   if(muEta1 != nullptr && M.muEta1 != nullptr)   *muEta1 = *(M.muEta1);
+   if(muEta2 != nullptr && M.muEta2 != nullptr)   *muEta2 = *(M.muEta2);
+   if(muPhi1 != nullptr && M.muPhi1 != nullptr)   *muPhi1 = *(M.muPhi1);
+   if(muPhi2 != nullptr && M.muPhi2 != nullptr)   *muPhi2 = *(M.muPhi2);
+   if(muPt1 != nullptr && M.muPt1 != nullptr)   *muPt1 = *(M.muPt1);
+   if(muPt2 != nullptr && M.muPt2 != nullptr)   *muPt2 = *(M.muPt2);
+
+   if(muDeta != nullptr && M.muDeta != nullptr)   *muDeta = *(M.muDeta);
+   if(muDphi != nullptr && M.muDphi != nullptr)   *muDphi = *(M.muDphi);
+   if(muDR != nullptr && M.muDR != nullptr)   *muDR = *(M.muDR);
+   if(muDphiS != nullptr && M.muDphiS != nullptr)   *muDphiS = *(M.muDphiS);
+
+   if(genMuPt1 != nullptr && M.genMuPt1 != nullptr)   *genMuPt1 = *(M.genMuPt1);
+   if(genMuPt2 != nullptr && M.genMuPt2 != nullptr)   *genMuPt2 = *(M.genMuPt2);
+   if(genMuEta1 != nullptr && M.genMuEta1 != nullptr)   *genMuEta1 = *(M.genMuEta1);
+   if(genMuEta2 != nullptr && M.genMuEta2 != nullptr)   *genMuEta2 = *(M.genMuEta2);
+   if(genMuPhi1 != nullptr && M.genMuPhi1 != nullptr)   *genMuPhi1 = *(M.genMuPhi1);
+   if(genMuPhi2 != nullptr && M.genMuPhi2 != nullptr)   *genMuPhi2 = *(M.genMuPhi2);
+
+   if(genMuDeta != nullptr && M.genMuDeta != nullptr)   *genMuDeta = *(M.genMuDeta);
+   if(genMuDphi != nullptr && M.genMuDphi != nullptr)   *genMuDphi = *(M.genMuDphi);
+   if(genMuDR != nullptr && M.genMuDR != nullptr)   *genMuDR = *(M.genMuDR);
+   if(genMuDphiS != nullptr && M.genMuDphiS != nullptr)   *genMuDphiS = *(M.genMuDphiS);
+}
+
+bool MuMuJetMessenger::FillEntry()
+{
+   if(Initialized == false)
+      return false;
+   if(WriteMode == false)
+      return false;
+
+   if(Tree == nullptr)
+      return false;
+
+   Tree->Fill();
+   Clear();
+
+   return true;
+}
