@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
    string PFTreeName                  = IsPP ? "pfcandAnalyzer/pfTree" : "particleFlowAnalyser/pftree";
    PFTreeName                         = CL.Get("PFTree", PFTreeName);
-
+   /*
    TrkEff2017pp *TrackEfficiencyPP2017 = nullptr;
    TrkEff2018PbPb *TrackEfficiencyPbPb2018 = nullptr;
    TrkEff2023PbPb *TrackEfficiencyPbPb2023 = nullptr;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
       }
    }
    TrackResidualCentralityCorrector TrackResidual(TrackResidualPath);
-
+   */
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
    TTree Tree("Tree", Form("Tree for MuMu tagged jet analysis (%s)", VersionString.c_str()));
    TTree InfoTree("InfoTree", "Information");
@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
          ///////////////////////////////
          ////////// Z weights //////////
          ///////////////////////////////
-
+         /*
          MMuMuJet.InterSampleZWeight = 1;
          if(DoInterSampleZWeight == true)   // reweight Z from pp MC to embedded MC
          {
@@ -544,11 +544,11 @@ int main(int argc, char *argv[])
                }
             }
          }
-
+         */
          ////////////////////////////
          ////////// Tracks //////////
          ////////////////////////////
-            
+         /* 
          int NTrack = DoGenLevel ? MGen.Mult : (IsPP ? MTrackPP.nTrk : MTrack.TrackPT->size());
          for(int iT = 0; iT < NTrack; iT++)
          {
@@ -654,7 +654,7 @@ int main(int argc, char *argv[])
             MMuMuJet.trackResidualWeight->push_back(TrackResidualCorrection);
             /// MMuMuJet.trackResidualWeight->push_back(1);
          }
-
+         */
          MMuMuJet.FillEntry();
       }
    
