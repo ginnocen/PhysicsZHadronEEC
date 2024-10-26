@@ -3,7 +3,7 @@
 default: TestRun
 
 TestRun: Execute
-	./Execute --Input Samples/HiForestMiniAOD_2.root --Output SkimReco.root --MinZPT 40 --Fraction 0.05 \
+	./Execute --Input Samples/HiForestMiniAOD_2_Data.root --Output SkimReco.root --MinZPT 40 --Fraction 0.05 \
 		--TrackEfficiencyPath $(ProjectBase)/CommonCode/root/ --DoGenLevel false \
 		--DoTrackResidual false
 	# ./Execute --Input DYLLMC/HiForestMiniAOD_100.root --Output SkimGen.root --MinZPT 40 --Fraction 0.05 \

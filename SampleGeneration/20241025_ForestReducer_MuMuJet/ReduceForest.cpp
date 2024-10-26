@@ -213,10 +213,11 @@ int main(int argc, char *argv[])
                   continue;
 
                //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
-               int HLT_HIL2Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL2Mu12");
-               int HLT_HIL3Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
-               int HLT_HIL3Mu12_2023 = MTrigger.CheckTriggerStartWith("HLT_HIL3SingleMu12");
-               if(HLT_HIL3Mu12_2018 == 0 && HLT_HIL2Mu12_2018 == 0 && HLT_HIL3Mu12_2023 == 0)
+               // FIXME: need to be replaced with the actual pp triggers
+               int HLT_HIL1DoubleMuOpen_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL1DoubleMu");
+               int HLT_HIL2DoubleMuOpen_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL2DoubleMu");
+               int HLT_HIL3DoubleMuOpen_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL3DoubleMu");
+               if(HLT_HIL1DoubleMuOpen_2018 == 0 && HLT_HIL2DoubleMuOpen_2018 == 0 && HLT_HIL3DoubleMuOpen_2018 == 0)
                   continue;
 
                MMuMuJet.NCollWeight = 1;
@@ -238,10 +239,11 @@ int main(int argc, char *argv[])
                   continue;
 
                //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
-               int HLT_HIL2Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL2Mu12");
-               int HLT_HIL3Mu12_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL3Mu12");
-               int HLT_HIL3Mu12_2023 = MTrigger.CheckTriggerStartWith("HLT_HIL3SingleMu12");
-               if(IsBackground == false && HLT_HIL3Mu12_2018 == 0 && HLT_HIL2Mu12_2018 == 0 && HLT_HIL3Mu12_2023 == 0)
+               // FIXME: need to be replaced with the actual PbPb triggers
+               int HLT_HIL1DoubleMuOpen_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL1DoubleMu");
+               int HLT_HIL2DoubleMuOpen_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL2DoubleMu");
+               int HLT_HIL3DoubleMuOpen_2018 = MTrigger.CheckTriggerStartWith("HLT_HIL3DoubleMu");
+               if(HLT_HIL1DoubleMuOpen_2018 == 0 && HLT_HIL2DoubleMuOpen_2018 == 0 && HLT_HIL3DoubleMuOpen_2018 == 0)
                   continue;
 
                MMuMuJet.NCollWeight = 1;
@@ -328,10 +330,11 @@ int main(int argc, char *argv[])
             if(MMu.DiCharge1[ipair] == MMu.DiCharge2[ipair])        continue;
             if(fabs(MMu.DiEta1[ipair]) > 2.4)                       continue;
             if(fabs(MMu.DiEta2[ipair]) > 2.4)                       continue;
-            if(fabs(MMu.DiPT1[ipair]) < 20)                         continue;
-            if(fabs(MMu.DiPT2[ipair]) < 20)                         continue;
-            if(MMu.DimuonPassTightCut(ipair) == false)              continue;
-            if(MMu.DiMass[ipair] < 60 || MMu.DiMass[ipair] > 120)   continue;
+            //if(fabs(MMu.DiPT1[ipair]) < 20)                         continue;
+            //if(fabs(MMu.DiPT2[ipair]) < 20)                         continue;
+            //if(MMu.DimuonPassTightCut(ipair) == false)              continue;
+            //FIXME: this is meant at removing dimuons from Z0 decays
+            if(MMu.DiMass[ipair] > 50)                              continue;
 
             TLorentzVector Mu1, Mu2;
             Mu1.SetPtEtaPhiM(MMu.DiPT1[ipair], MMu.DiEta1[ipair], MMu.DiPhi1[ipair], M_MU);
