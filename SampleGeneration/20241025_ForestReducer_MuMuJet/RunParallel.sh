@@ -2,7 +2,7 @@
 
 OUTPUT="output"
 counter=0
-MAXCORES=12
+MAXCORES=100
 filelist="list.txt"
 MERGEDOUTPUT="MergedOutput.root"
 rm $MERGEDOUTPUT
@@ -23,7 +23,10 @@ rm -f "$filelist"
 mkdir -p "$OUTPUT"
 
 # List all matching files and write to the filelist
-ls Samples/HiForestAOD_*_Data_pp.root > "$filelist"
+
+#ls  /eos/cms/store/group/phys_heavyions/ginnocen/PbPb2018_gtoccbar/20241023_DiJetpThat15PbPb2018gtoccbar_v1/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/HINPbPbSpring21MiniAOD-FixL1CaloGT_112X_upgrade2018_realistic_HI_v9-v1/MINIAODSIM/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/20241023_DiJetpThat15PbPb2018gtoccbar_v1/241023_225656/000*/*.root > "$filelist"
+ls /data/gtoccbar/20241023_DataPbPb2018gtoccbar_v2/241024_002902/000*/*.root >> "$filelist"
+#ls Samples/HiForestAOD_*_Data_pp.root > "$filelist"
 
 # Check if the filelist is empty
 if [[ ! -s "$filelist" ]]; then
@@ -42,8 +45,8 @@ while IFS= read -r file; do
             --Year 2018 \
             --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
             --DoGenLevel false \
-            --IsData true \
-            --IsPP true \
+            --IsData false \
+            --IsPP false \
             --IsBackground false \
             --CheckZ true \
             --MinZPT 30 \
