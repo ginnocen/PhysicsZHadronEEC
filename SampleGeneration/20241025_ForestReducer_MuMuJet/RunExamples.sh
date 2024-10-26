@@ -7,7 +7,7 @@ mkdir -p Output/
 ############
 
 ./Execute --Input Samples/HiForestMiniAOD_2_Data.root \
-   --Output Output/output.root \
+   --Output Output/output_2_Data.root \
    --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel false \
@@ -22,7 +22,7 @@ mkdir -p Output/
 ############
 
 ./Execute --Input Samples/HiForestMiniAOD_30_MC.root \
-   --Output Output/output.root \
+   --Output Output/output_30_MC.root \
    --Year 2018 \
    --TrackEfficiencyPath ${ProjectBase}/CommonCode/root/ \
    --DoGenLevel true \
