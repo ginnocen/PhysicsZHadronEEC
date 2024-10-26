@@ -10,11 +10,11 @@ rm $MERGEDOUTPUT
 # Check the number of physical CPUs
 NUM_PHYSICAL_CPUS=$(sysctl -n hw.physicalcpu)
 
-# Verify that MAXCORES is not larger than the number of physical CPUs
-if (( MAXCORES > NUM_PHYSICAL_CPUS )); then
-    echo "Error: MAXCORES ($MAXCORES) exceeds the number of physical CPUs ($NUM_PHYSICAL_CPUS)."
-    exit 1
-fi
+## Verify that MAXCORES is not larger than the number of physical CPUs
+#if (( MAXCORES > NUM_PHYSICAL_CPUS )); then
+#    echo "Error: MAXCORES ($MAXCORES) exceeds the number of physical CPUs ($NUM_PHYSICAL_CPUS)."
+#    exit 1
+#fi
 
 # Remove the file if it exists, suppress error if it doesn't
 rm -f "$filelist"
