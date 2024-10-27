@@ -631,11 +631,11 @@ public:
    float VX, VY, VZ, VXError, VYError, VZError;
    int NPU;
    
-   std::vector<float> *zMass;
-   std::vector<float> *zEta;
-   std::vector<float> *zY;
-   std::vector<float> *zPhi;
-   std::vector<float> *zPt;
+   std::vector<float> *MuMuMass;
+   std::vector<float> *MuMuEta;
+   std::vector<float> *MuMuY;
+   std::vector<float> *MuMuPhi;
+   std::vector<float> *MuMuPt;
    std::vector<float> *genZMass;
    std::vector<float> *genZEta;
    std::vector<float> *genZY;

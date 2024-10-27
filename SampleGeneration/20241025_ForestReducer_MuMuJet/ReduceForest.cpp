@@ -256,6 +256,7 @@ int main(int argc, char *argv[])
          ////////// Muons //////////
          ///////////////////////////
 
+         /*
          TLorentzVector VGenZ, VGenMu1, VGenMu2;
 
          if(MMu.NGen > 1)
@@ -323,7 +324,7 @@ int main(int argc, char *argv[])
                }
             }
          }
-
+         */
          for(int ipair = 0; ipair < MMu.NDi; ipair++)
          {
             // We want opposite-charge muons with some basic kinematic cuts
@@ -339,15 +340,15 @@ int main(int argc, char *argv[])
             TLorentzVector Mu1, Mu2;
             Mu1.SetPtEtaPhiM(MMu.DiPT1[ipair], MMu.DiEta1[ipair], MMu.DiPhi1[ipair], M_MU);
             Mu2.SetPtEtaPhiM(MMu.DiPT2[ipair], MMu.DiEta2[ipair], MMu.DiPhi2[ipair], M_MU);
-            TLorentzVector Z = Mu1 + Mu2;
-            if(fabs(Z.Rapidity()) > 2.4)
+            TLorentzVector MuMu = Mu1 + Mu2;
+            if(fabs(MuMu.Rapidity()) > 2.4)
                continue;
 
-            MMuMuJet.zMass->push_back(MMu.DiMass[ipair]);
-            MMuMuJet.zEta->push_back(MMu.DiEta[ipair]);
-            MMuMuJet.zY->push_back(Z.Rapidity());
-            MMuMuJet.zPhi->push_back(MMu.DiPhi[ipair]);
-            MMuMuJet.zPt->push_back(MMu.DiPT[ipair]);
+            MMuMuJet.MuMuMass->push_back(MMu.DiMass[ipair]);
+            MMuMuJet.MuMuEta->push_back(MMu.DiEta[ipair]);
+            MMuMuJet.MuMuY->push_back(MuMu.Rapidity());
+            MMuMuJet.MuMuPhi->push_back(MMu.DiPhi[ipair]);
+            MMuMuJet.MuMuPt->push_back(MMu.DiPT[ipair]);
 
             MMuMuJet.muEta1->push_back(MMu.DiEta1[ipair]);
             MMuMuJet.muEta2->push_back(MMu.DiEta2[ipair]);
@@ -373,9 +374,9 @@ int main(int argc, char *argv[])
          MMuMuJet.SignalVZ = MEvent.vz;
          MMuMuJet.SubEvent0HF = GetGenHFSum(&MGen, 0);
          MMuMuJet.SubEventAllHF = GetGenHFSum(&MGen, -1);
-         
+         /* 
          bool GoodGenZ = MMuMuJet.genZPt->size() > 0 && (MMuMuJet.genZPt->at(0) > MinZPT);
-         bool GoodRecoZ = MMuMuJet.zPt->size() > 0 && (MMuMuJet.zPt->at(0) > MinZPT);
+         bool GoodRecoZ = MMuMuJet.MuMuPt->size() > 0 && (MMuMuJet.MuMuPt->at(0) > MinZPT);
          if(CheckZ == true)
          {
             // Yen-Jie: Propose to save the charged hadron information when either GoodGenZ or GoodRecoZ is identified 
@@ -390,7 +391,7 @@ int main(int argc, char *argv[])
                continue;
             }
          }
-
+         */
          ///////////////////////////////
          ////////// Z weights //////////
          ///////////////////////////////

@@ -2417,11 +2417,11 @@ MuMuJetMessenger::~MuMuJetMessenger()
 {
    if(Initialized == true && WriteMode == true)
    {
-      delete zMass;
-      delete zEta;
-      delete zY;
-      delete zPhi;
-      delete zPt;
+      delete MuMuMass;
+      delete MuMuEta;
+      delete MuMuY;
+      delete MuMuPhi;
+      delete MuMuPt;
       delete genZMass;
       delete genZEta;
       delete genZY;
@@ -2475,11 +2475,11 @@ bool MuMuJetMessenger::Initialize(bool SkipTrack)
 
    Initialized = true;
 
-   zMass = nullptr;
-   zEta = nullptr;
-   zY = nullptr;
-   zPhi = nullptr;
-   zPt = nullptr;
+   MuMuMass = nullptr;
+   MuMuEta = nullptr;
+   MuMuY = nullptr;
+   MuMuPhi = nullptr;
+   MuMuPt = nullptr;
    genZMass = nullptr;
    genZEta = nullptr;
    genZY = nullptr;
@@ -2552,11 +2552,11 @@ bool MuMuJetMessenger::Initialize(bool SkipTrack)
    Tree->SetBranchAddress("VZError", &VZError);
    Tree->SetBranchAddress("NPU", &NPU);
    
-   Tree->SetBranchAddress("zMass", &zMass);
-   Tree->SetBranchAddress("zEta", &zEta);
-   Tree->SetBranchAddress("zY", &zY);
-   Tree->SetBranchAddress("zPhi", &zPhi);
-   Tree->SetBranchAddress("zPt", &zPt);
+   Tree->SetBranchAddress("MuMuMass", &MuMuMass);
+   Tree->SetBranchAddress("MuMuEta", &MuMuEta);
+   Tree->SetBranchAddress("MuMuY", &MuMuY);
+   Tree->SetBranchAddress("MuMuPhi", &MuMuPhi);
+   Tree->SetBranchAddress("MuMuPt", &MuMuPt);
    Tree->SetBranchAddress("genZMass", &genZMass);
    Tree->SetBranchAddress("genZEta", &genZEta);
    Tree->SetBranchAddress("genZY", &genZY);
@@ -2645,14 +2645,14 @@ bool MuMuJetMessenger::GetEntry(int iEntry)
    }
    
    GoodRecoZ = true;
-   if(zY == nullptr)
+   if(MuMuY == nullptr)
       GoodRecoZ = false;
-   else if(zY->size() == 0)
+   else if(MuMuY->size() == 0)
       GoodRecoZ = false;
    else
    {
-      if(zMass->at(0) > 120 || zMass->at(0) < 60)   GoodRecoZ = false;
-      if(zY->at(0) < -2.4 || zY->at(0) > 2.4)       GoodRecoZ = false;
+      if(MuMuMass->at(0) > 120 || MuMuMass->at(0) < 60)   GoodRecoZ = false;
+      if(MuMuY->at(0) < -2.4 || MuMuY->at(0) > 2.4)       GoodRecoZ = false;
    }
 
    return true;
@@ -2666,11 +2666,11 @@ bool MuMuJetMessenger::SetBranch(TTree *T)
    Initialized = true;
    WriteMode = true;
 
-   zMass = new std::vector<float>();
-   zEta = new std::vector<float>();
-   zY = new std::vector<float>();
-   zPhi = new std::vector<float>();
-   zPt = new std::vector<float>();
+   MuMuMass = new std::vector<float>();
+   MuMuEta = new std::vector<float>();
+   MuMuY = new std::vector<float>();
+   MuMuPhi = new std::vector<float>();
+   MuMuPt = new std::vector<float>();
    genZMass = new std::vector<float>();
    genZEta = new std::vector<float>();
    genZY = new std::vector<float>();
@@ -2744,11 +2744,11 @@ bool MuMuJetMessenger::SetBranch(TTree *T)
    Tree->Branch("VZError",                &VZError,      "VZError/F");
    Tree->Branch("NPU",                    &NPU,          "NPU/I");
 
-   Tree->Branch("zMass",                  &zMass);
-   Tree->Branch("zEta",                   &zEta);
-   Tree->Branch("zY",                     &zY);
-   Tree->Branch("zPhi",                   &zPhi);
-   Tree->Branch("zPt",                    &zPt);
+   Tree->Branch("MuMuMass",               &MuMuMass);
+   Tree->Branch("MuMuEta",                &MuMuEta);
+   Tree->Branch("MuMuY",                  &MuMuY);
+   Tree->Branch("MuMuPhi",                &MuMuPhi);
+   Tree->Branch("MuMuPt",                 &MuMuPt);
    Tree->Branch("genZMass",               &genZMass);
    Tree->Branch("genZEta",                &genZEta);
    Tree->Branch("genZY",                  &genZY);
@@ -2821,11 +2821,11 @@ void MuMuJetMessenger::Clear()
    VZError = 0;
    NPU = 0;
 
-   zMass->clear();
-   zEta->clear();
-   zY->clear();
-   zPhi->clear();
-   zPt->clear();
+   MuMuMass->clear();
+   MuMuEta->clear();
+   MuMuY->clear();
+   MuMuPhi->clear();
+   MuMuPt->clear();
    genZMass->clear();
    genZEta->clear();
    genZY->clear();
@@ -2901,11 +2901,11 @@ void MuMuJetMessenger::CopyNonTrack(MuMuJetMessenger &M)
    VZError      = M.VZError;
    NPU          = M.NPU;
   
-   if(zMass != nullptr && M.zMass != nullptr)   *zMass = *(M.zMass);
-   if(zEta != nullptr && M.zEta != nullptr)   *zEta = *(M.zEta);
-   if(zY != nullptr && M.zY != nullptr)   *zY = *(M.zY);
-   if(zPhi != nullptr && M.zPhi != nullptr)   *zPhi = *(M.zPhi);
-   if(zPt != nullptr && M.zPt != nullptr)   *zPt = *(M.zPt);
+   if(MuMuMass != nullptr && M.MuMuMass != nullptr)   *MuMuMass = *(M.MuMuMass);
+   if(MuMuEta != nullptr && M.MuMuEta != nullptr)   *MuMuEta = *(M.MuMuEta);
+   if(MuMuY != nullptr && M.MuMuY != nullptr)   *MuMuY = *(M.MuMuY);
+   if(MuMuPhi != nullptr && M.MuMuPhi != nullptr)   *MuMuPhi = *(M.MuMuPhi);
+   if(MuMuPt != nullptr && M.MuMuPt != nullptr)   *MuMuPt = *(M.MuMuPt);
    if(genZMass != nullptr && M.genZMass != nullptr)   *genZMass = *(M.genZMass);
    if(genZEta != nullptr && M.genZEta != nullptr)   *genZEta = *(M.genZEta);
    if(genZY != nullptr && M.genZY != nullptr)   *genZY = *(M.genZY);
