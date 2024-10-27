@@ -27,7 +27,7 @@ class TrackTreeMessenger;
 class MuTreeMessenger;
 class PbPbTrackTreeMessenger;
 class ZHadronMessenger;
-
+class MuMuJetMessenger;
 class HiEventTreeMessenger
 {
 public:
@@ -598,6 +598,105 @@ public:
    bool SetBranch(TTree *T);
    void Clear();
    void CopyNonTrack(ZHadronMessenger &M);
+   bool FillEntry();
+};
+
+class MuMuJetMessenger
+{
+public:
+   TTree *Tree;
+   int Run;
+   long long Event;
+   int Lumi;
+   
+   int hiBin;
+   int hiBinUp;
+   int hiBinDown;
+   float hiHF;
+
+   float SignalHF;
+   float BackgroundHF;
+   float SubEvent0HF;
+   float SubEventAllHF;
+   float SignalVZ;
+
+   float EventWeight;
+   float NCollWeight;
+   float InterSampleZWeight;
+   float ZWeight;
+   float VZWeight;
+   float ExtraZWeight[12];
+
+   int NVertex;
+   float VX, VY, VZ, VXError, VYError, VZError;
+   int NPU;
+   
+   std::vector<float> *MuMuMass;
+   std::vector<float> *MuMuEta;
+   std::vector<float> *MuMuY;
+   std::vector<float> *MuMuPhi;
+   std::vector<float> *MuMuPt;
+   std::vector<float> *genZMass;
+   std::vector<float> *genZEta;
+   std::vector<float> *genZY;
+   std::vector<float> *genZPhi;
+   std::vector<float> *genZPt;
+   std::vector<float> *trackPt;
+   std::vector<float> *trackPDFId;
+   std::vector<float> *trackEta;
+   std::vector<float> *trackY;
+   std::vector<float> *trackPhi;
+   std::vector<bool> *trackMuTagged;
+   std::vector<float> *trackMuDR;
+   std::vector<float> *trackWeight;
+   std::vector<float> *trackResidualWeight;
+   std::vector<int> *trackCharge;
+   std::vector<int> *subevent;
+   
+   std::vector<float> *muEta1;
+   std::vector<float> *muEta2;
+   std::vector<float> *muPhi1;
+   std::vector<float> *muPhi2;
+   std::vector<float> *muPt1;
+   std::vector<float> *muPt2;
+
+   std::vector<float> *muDeta;
+   std::vector<float> *muDphi;
+   std::vector<float> *muDR;
+   std::vector<float> *muDphiS;
+
+   std::vector<float> *genMuPt1;
+   std::vector<float> *genMuPt2;
+   std::vector<float> *genMuEta1;
+   std::vector<float> *genMuEta2;
+   std::vector<float> *genMuPhi1;
+   std::vector<float> *genMuPhi2;
+
+   std::vector<float> *genMuDeta;
+   std::vector<float> *genMuDphi;
+   std::vector<float> *genMuDR;
+   std::vector<float> *genMuDphiS;
+
+public:   // Derived quantities
+   bool GoodGenZ;
+   bool GoodRecoZ;
+
+private:
+   bool WriteMode;
+   bool Initialized;
+
+public:   
+   MuMuJetMessenger(TFile &File, std::string TreeName = "tree", bool SkipTrack = false);
+   MuMuJetMessenger(TFile *File, std::string TreeName = "tree", bool SkipTrack = false);
+   MuMuJetMessenger(TTree *ZHadronTree = nullptr, bool SkipTrack = false);
+   ~MuMuJetMessenger();
+   bool Initialize(TTree *ZHadronTree, bool SkipTrack = false);
+   bool Initialize(bool SkipTrack = false);
+   int GetEntries();
+   bool GetEntry(int iEntry);
+   bool SetBranch(TTree *T);
+   void Clear();
+   void CopyNonTrack(MuMuJetMessenger &M);
    bool FillEntry();
 };
 
