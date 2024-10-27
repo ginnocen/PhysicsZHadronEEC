@@ -10,6 +10,7 @@
 #define JETCOUNTMAX 500
 #define GENCOUNTMAX 250
 #define VERTEXCOUNTMAX 200
+#define DZEROCOUNTMAX 10000
 #define TRACKCOUNTMAX 10000
 #define PLANEMAX 200
 #define MUMAX 50
@@ -26,8 +27,8 @@ class TriggerObjectTreeMessenger;
 class TrackTreeMessenger;
 class MuTreeMessenger;
 class PbPbTrackTreeMessenger;
-class ZHadronMessenger;
-
+class PbPbUPCTrackTreeMessenger;
+class DzeroTreeMessenger;
 class HiEventTreeMessenger
 {
 public:
@@ -353,6 +354,40 @@ public:
    bool PassZHadron2022CutTight(int index);
 };
 
+class DzeroTreeMessenger
+{
+public:
+   TTree *Tree;
+   int Dsize;
+   float Dpt[DZEROCOUNTMAX];
+   float Dphi[DZEROCOUNTMAX];
+   float Dy[DZEROCOUNTMAX];
+   float Dmass[DZEROCOUNTMAX];
+   float Dtrk1Pt[DZEROCOUNTMAX];
+   float Dtrk1Eta[DZEROCOUNTMAX];
+   float Dtrk1PtErr[DZEROCOUNTMAX];
+   float Dtrk1highPurity[DZEROCOUNTMAX];
+   float Dtrk2Pt[DZEROCOUNTMAX];
+   float Dtrk2Eta[DZEROCOUNTMAX];
+   float Dtrk2PtErr[DZEROCOUNTMAX];
+   float Dtrk2highPurity[DZEROCOUNTMAX];
+   float Dchi2cl[DZEROCOUNTMAX];
+   float DsvpvDistance[DZEROCOUNTMAX];
+   float DsvpvDisErr[DZEROCOUNTMAX];
+   float DsvpvDistance_2D[DZEROCOUNTMAX];
+   float DsvpvDisErr_2D[DZEROCOUNTMAX];
+   float Dalpha[DZEROCOUNTMAX];
+   float Ddtheta[DZEROCOUNTMAX];
+public:
+   DzeroTreeMessenger(TFile &File, std::string TreeName = "Dfinder/ntDkpi");
+   DzeroTreeMessenger(TFile *File, std::string TreeName = "Dfinder/ntDkpi");
+   DzeroTreeMessenger(TTree *DzeroTree);
+   bool Initialize(TTree *DzeroTree);
+   bool Initialize();
+   bool GetEntry(int iEntry);
+   bool PassUPCDzero2023Cut(int index);
+};
+
 class MuTreeMessenger
 {
 public:
@@ -502,6 +537,29 @@ public:
    bool PassZHadron2022CutTight(int index);
 };
 
+class PbPbUPCTrackTreeMessenger
+{
+public:
+   TTree *Tree;
+   int nVtx;
+   int nTrk;
+   std::vector<float> *ptSumVtx;
+   std::vector<float> *xVtx;
+   std::vector<float> *yVtx;
+   std::vector<float> *zVtx;
+   std::vector<float> *xErrVtx;
+   std::vector<float> *yErrVtx;
+   std::vector<float> *zErrVtx;
+
+public:
+   PbPbUPCTrackTreeMessenger(TFile &File, std::string TreeName = "ppTracks/trackTree");
+   PbPbUPCTrackTreeMessenger(TFile *File, std::string TreeName = "ppTracks/trackTree");
+   PbPbUPCTrackTreeMessenger(TTree *PbPbUPCTrackTree);
+   bool Initialize(TTree *PbPbUPCTrackTree);
+   bool Initialize();
+   bool GetEntry(int iEntry);
+};
+
 class ZHadronMessenger
 {
 public:
@@ -598,6 +656,50 @@ public:
    bool SetBranch(TTree *T);
    void Clear();
    void CopyNonTrack(ZHadronMessenger &M);
+   bool FillEntry();
+};
+
+class DzeroUPCTreeMessenger
+{
+public:
+   TTree *Tree;
+   int Run;
+   long long Event;
+   int Lumi;
+   float VX, VY, VZ, VXError, VYError, VZError;
+   std::vector<float> *Dpt;
+   std::vector<float> *Dphi;
+   std::vector<float> *Dy;
+   std::vector<float> *Dmass;
+   std::vector<float> *Dtrk1Pt;
+   std::vector<float> *Dtrk2Pt;
+   std::vector<float> *Dchi2cl;
+   std::vector<float> *DsvpvDistance;
+   std::vector<float> *DsvpvDisErr;
+   std::vector<float> *DsvpvDistance_2D;
+   std::vector<float> *DsvpvDisErr_2D;
+   std::vector<float> *Dalpha;
+   std::vector<float> *Ddtheta;
+
+public:   // Derived quantities
+   bool GoodPhotonuclear;
+
+private:
+   bool WriteMode;
+   bool Initialized;
+
+public:
+   DzeroUPCTreeMessenger(TFile &File, std::string TreeName = "tree");
+   DzeroUPCTreeMessenger(TFile *File, std::string TreeName = "tree");
+   DzeroUPCTreeMessenger(TTree *DzeroUPCTree = nullptr);
+   ~DzeroUPCTreeMessenger();
+   bool Initialize(TTree *DzeroUPCTree);
+   bool Initialize();
+   int GetEntries();
+   bool GetEntry(int iEntry);
+   bool SetBranch(TTree *T);
+   void Clear();
+   void CopyNonTrack(DzeroUPCTreeMessenger &M);
    bool FillEntry();
 };
 
