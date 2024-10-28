@@ -13,7 +13,7 @@ mkdir -p Output/
    --MinDzeroPT 2.0 \
    --MinTrackPT 0.5 \
    --IsData true \
-
+   --PFTree particleFlowAnalyser/pftree \
 #################
 #### Data pp ####
 #################
