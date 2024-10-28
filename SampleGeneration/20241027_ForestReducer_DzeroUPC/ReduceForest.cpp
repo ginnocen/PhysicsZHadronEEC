@@ -128,6 +128,10 @@ int main(int argc, char *argv[]) {
         if (pprimaryVertexFilter == 0 || pclusterCompatibilityFilter == 0 || cscTightHalo2015Filter == false){
           continue;
         }
+        if (fabs(MTrackPbPbUPC.zVtx->at(0)) > 15){
+	  continue;
+	}
+
         bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
         bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
         // std::cout<<"==== new event ===="<<std::endl;
