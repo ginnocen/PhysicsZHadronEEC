@@ -133,8 +133,8 @@ int main(int argc, char *argv[])
          bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
          bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
          //std::cout<<"==== new event ===="<<std::endl;
-         std::cout<<"Max energy positive HF: "<<GetMaxEnergyHF(&MPF, 3., 5.2)<<std::endl;
-         std::cout<<"Max energy negative HF: "<<GetMaxEnergyHF(&MPF, -5.2, -3.)<<std::endl;
+         //std::cout<<"Max energy positive HF: "<<GetMaxEnergyHF(&MPF, 3., 5.2)<<std::endl;
+         //std::cout<<"Max energy negative HF: "<<GetMaxEnergyHF(&MPF, -5.2, -3.)<<std::endl;
          bool gapgammaN = GetMaxEnergyHF(&MPF, 3., 5.2) < 9.2;
          bool gapNgamma = GetMaxEnergyHF(&MPF, -5.2, -3.) < 8.6;
          bool gammaN_ = ZDCgammaN && gapgammaN;

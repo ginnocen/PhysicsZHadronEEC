@@ -7,8 +7,8 @@ mkdir -p Output/
 ### Data PbPb ###
 #################
 
-./Execute --Input Samples/HiForestMiniAOD_UPCPbPb23_HiVertex_279.root \
-   --Output Output/output_HiForestMiniAOD_UPCPbPb23_HiVertex_279.root \
+./Execute --Input /eos/cms/store/group/phys_heavyions/jdlang/PbPbUPC2023/2023config_2023RerecoHIForward0/HIForward0/crab_2023config_2023RerecoHIForward0/241024_101446/0001/HiForestMiniAOD_1703.root \
+   --Output Output/example.root \
    --Year 2023 \
    --MinDzeroPT 2.0 \
    --MinTrackPT 0.5 \
