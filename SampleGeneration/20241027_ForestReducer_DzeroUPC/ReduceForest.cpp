@@ -25,6 +25,7 @@ using namespace std;
 int main(int argc, char *argv[]);
 double GetHFSum(PFTreeMessenger *M);
 double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
+double GetMaxEnergyHF(PFTreeMessenger *M, double etaMin, double etaMax);
 
 int main(int argc, char *argv[])
 {
@@ -41,7 +42,7 @@ int main(int argc, char *argv[])
    double MinTrackPT                  = CL.GetDouble("MinTrackPT", 1);
    double Fraction                    = CL.GetDouble("Fraction", 1.00);
    bool IsData                        = CL.GetBool("IsData", false);
-   string PFTreeName                  = "pfcandAnalyzer/pfTree";
+   string PFTreeName                  = "particleFlowAnalyser/pftree";
    PFTreeName                         = CL.Get("PFTree", PFTreeName);
    
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
@@ -62,6 +63,7 @@ int main(int argc, char *argv[])
       SkimTreeMessenger        MSkim(InputFile);
       TriggerTreeMessenger     MTrigger(InputFile);
       DzeroTreeMessenger       MDzero(InputFile);
+      ZDCMessenger             MZDC(InputFile);
 
       int EntryCount = MEvent.GetEntries() * Fraction;
       ProgressBar Bar(cout, EntryCount);
@@ -86,7 +88,7 @@ int main(int argc, char *argv[])
          MSkim.GetEntry(iE);
          MTrigger.GetEntry(iE);
          MDzero.GetEntry(iE);
-
+         MZDC.GetEntry(iE);
          MDzeroUPC.Clear();
 
          ////////////////////////////////////////
@@ -128,7 +130,24 @@ int main(int argc, char *argv[])
 
          if(pprimaryVertexFilter == 0 ||  pclusterCompatibilityFilter == 0)
             continue;
-
+         bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
+         bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
+         //std::cout<<"==== new event ===="<<std::endl;
+         std::cout<<"Max energy positive HF: "<<GetMaxEnergyHF(&MPF, 3., 5.2)<<std::endl;
+         std::cout<<"Max energy negative HF: "<<GetMaxEnergyHF(&MPF, -5.2, -3.)<<std::endl;
+         bool gapgammaN = GetMaxEnergyHF(&MPF, 3., 5.2) < 9.2;
+         bool gapNgamma = GetMaxEnergyHF(&MPF, -5.2, -3.) < 8.6;
+         bool gammaN_ = ZDCgammaN && gapgammaN;
+         bool Ngamma_ = ZDCNgamma && gapNgamma;
+         //std::cout<<"sumMinus: "<<MZDC.sumMinus<<", sumPlus: "<<MZDC.sumPlus<<std::endl;
+         //std::cout<<"ZDCgammaN: "<<ZDCgammaN<<", ZDCNgamma: "<<ZDCNgamma<<std::endl;
+         //std::cout<<"gapgammaN: "<<gapgammaN<<", gapNgamma: "<<gapNgamma<<std::endl;
+         if (gammaN_ == false && Ngamma_ == false)
+         {
+	    continue;
+         }
+         MDzeroUPC.gammaN = gammaN_;
+         MDzeroUPC.Ngamma = Ngamma_;
          //HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12, p.5
          // FIXME: need to be replaced with the actual PbPb triggers
          //int HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 =
@@ -178,6 +197,27 @@ int main(int argc, char *argv[])
    OutputFile.Close();
 
    return 0;
+}
+
+
+double GetMaxEnergyHF(PFTreeMessenger *M, double etaMin = 3., double etaMax = 5.)
+{
+   if(M == nullptr)
+      return -1;
+   if(M->Tree == nullptr)
+      return -1;
+
+   double EMax = 0;
+   for(int iPF = 0; iPF < M->ID->size(); iPF++)
+   {
+      if ((M->ID->at(iPF) == 6 || M->ID->at(iPF) == 7) &&
+          M->Eta->at(iPF) > etaMin && M->Eta->at(iPF) < etaMax)
+      {
+        if (M->E->at(iPF) > EMax)
+	  EMax = M->E->at(iPF);
+      }
+   }
+   return EMax;
 }
 
 double GetHFSum(PFTreeMessenger *M)

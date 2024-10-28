@@ -28,6 +28,7 @@ class TrackTreeMessenger;
 class MuTreeMessenger;
 class PbPbTrackTreeMessenger;
 class PbPbUPCTrackTreeMessenger;
+class ZDCMessenger;
 class DzeroTreeMessenger;
 class HiEventTreeMessenger
 {
@@ -560,6 +561,21 @@ public:
    bool GetEntry(int iEntry);
 };
 
+class ZDCMessenger
+{
+public:
+   TTree *Tree;
+   float sumPlus, sumMinus;
+
+public:
+   ZDCMessenger(TFile &File, std::string TreeName = "zdcanalyzer/zdcdigi");
+   ZDCMessenger(TFile *File, std::string TreeName = "zdcanalyzer/zdcdigi");
+   ZDCMessenger(TTree *ZDCTree);
+   bool Initialize(TTree *ZDCTree);
+   bool Initialize();
+   bool GetEntry(int iEntry);
+};
+
 class ZHadronMessenger
 {
 public:
@@ -667,6 +683,7 @@ public:
    long long Event;
    int Lumi;
    float VX, VY, VZ, VXError, VYError, VZError;
+   int gammaN, Ngamma;
    std::vector<float> *Dpt;
    std::vector<float> *Dphi;
    std::vector<float> *Dy;

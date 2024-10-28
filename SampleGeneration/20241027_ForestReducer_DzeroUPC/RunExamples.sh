@@ -10,7 +10,7 @@ mkdir -p Output/
 ./Execute --Input Samples/HiForestMiniAOD_UPCPbPb23_HiVertex_279.root \
    --Output Output/output_HiForestMiniAOD_UPCPbPb23_HiVertex_279.root \
    --Year 2023 \
-   --MinDzeroPT 3.0 \
+   --MinDzeroPT 2.0 \
    --MinTrackPT 0.5 \
    --IsData true \
 
