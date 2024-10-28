@@ -104,6 +104,52 @@ int HiEventTreeMessenger::GetEntries()
    return Tree->GetEntries();
 }
 
+METFilterTreeMessenger::METFilterTreeMessenger(TFile &File)
+{
+   Tree = (TTree *)File.Get("l1MetFilterRecoTree/MetFilterRecoTree");
+   Initialize();
+}
+
+METFilterTreeMessenger::METFilterTreeMessenger(TFile *File)
+{
+   if(File != nullptr)
+      Tree = (TTree *)File->Get("l1MetFilterRecoTree/MetFilterRecoTree");
+   else
+      Tree = nullptr;
+   Initialize();
+}
+
+METFilterTreeMessenger::METFilterTreeMessenger(TTree *METFilterTree)
+{
+   Initialize(METFilterTree);
+}
+
+bool METFilterTreeMessenger::Initialize(TTree *METFilterTree)
+{
+   Tree = METFilterTree;
+   return Initialize();
+}
+
+bool METFilterTreeMessenger::Initialize()
+{
+   if(Tree == nullptr)
+      return false;
+
+  if (Tree->GetBranch("cscTightHalo2015Filter"))
+    Tree->SetBranchAddress("cscTightHalo2015Filter", &cscTightHalo2015Filter);
+  else
+    cscTightHalo2015Filter = false;
+  return true;
+}
+bool METFilterTreeMessenger::GetEntry(int iEntry)
+{
+   if(Tree == nullptr)
+      return false;
+
+   Tree->GetEntry(iEntry);
+   return true;
+}
+
 GGTreeMessenger::GGTreeMessenger(TFile &File, std::string TreeName)
 {
    Tree = (TTree *)File.Get(TreeName.c_str());
@@ -1970,13 +2016,13 @@ bool PbPbUPCTrackTreeMessenger::GetEntry(int iEntry)
    return true;
 }
 
-ZDCMessenger::ZDCMessenger(TFile &File, std::string TreeName)
+ZDCTreeMessenger::ZDCTreeMessenger(TFile &File, std::string TreeName)
 {
    Tree = (TTree *)File.Get(TreeName.c_str());
    Initialize();
 }
 
-ZDCMessenger::ZDCMessenger(TFile *File, std::string TreeName)
+ZDCTreeMessenger::ZDCTreeMessenger(TFile *File, std::string TreeName)
 {
    if(File != nullptr)
       Tree = (TTree *)File->Get(TreeName.c_str());
@@ -1985,18 +2031,18 @@ ZDCMessenger::ZDCMessenger(TFile *File, std::string TreeName)
    Initialize();
 }
 
-ZDCMessenger::ZDCMessenger(TTree *ZDCTree)
+ZDCTreeMessenger::ZDCTreeMessenger(TTree *ZDCTree)
 {
    Initialize(ZDCTree);
 }
 
-bool ZDCMessenger::Initialize(TTree *ZDCTree)
+bool ZDCTreeMessenger::Initialize(TTree *ZDCTree)
 {
    Tree = ZDCTree;
    return Initialize();
 }
 
-bool ZDCMessenger::Initialize()
+bool ZDCTreeMessenger::Initialize()
 {
    if(Tree == nullptr)
       return false;
@@ -2009,7 +2055,7 @@ bool ZDCMessenger::Initialize()
    return true;
 }
 
-bool ZDCMessenger::GetEntry(int iEntry)
+bool ZDCTreeMessenger::GetEntry(int iEntry)
 {
    if(Tree == nullptr)
       return false;

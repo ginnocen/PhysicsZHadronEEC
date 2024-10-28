@@ -16,6 +16,7 @@
 #define MUMAX 50
 
 class HiEventTreeMessenger;
+class METFilterTreeMessenger;
 class GGTreeMessenger;
 class RhoTreeMessenger;
 class SkimTreeMessenger;
@@ -28,7 +29,7 @@ class TrackTreeMessenger;
 class MuTreeMessenger;
 class PbPbTrackTreeMessenger;
 class PbPbUPCTrackTreeMessenger;
-class ZDCMessenger;
+class ZDCTreeMessenger;
 class DzeroTreeMessenger;
 class HiEventTreeMessenger
 {
@@ -59,6 +60,20 @@ public:
    bool Initialize();
    bool GetEntry(int iEntry);
    int GetEntries();
+};
+
+class METFilterTreeMessenger
+{
+public:
+  TTree *Tree;
+  bool cscTightHalo2015Filter;
+public:
+  METFilterTreeMessenger(TFile &File);
+  METFilterTreeMessenger(TFile *File);
+  METFilterTreeMessenger(TTree *METFilterTree);
+  bool Initialize(TTree *METFilterTree);
+  bool Initialize();
+  bool GetEntry(int iEntry);
 };
 
 class GGTreeMessenger
@@ -561,16 +576,16 @@ public:
    bool GetEntry(int iEntry);
 };
 
-class ZDCMessenger
+class ZDCTreeMessenger
 {
 public:
    TTree *Tree;
    float sumPlus, sumMinus;
 
 public:
-   ZDCMessenger(TFile &File, std::string TreeName = "zdcanalyzer/zdcdigi");
-   ZDCMessenger(TFile *File, std::string TreeName = "zdcanalyzer/zdcdigi");
-   ZDCMessenger(TTree *ZDCTree);
+   ZDCTreeMessenger(TFile &File, std::string TreeName = "zdcanalyzer/zdcdigi");
+   ZDCTreeMessenger(TFile *File, std::string TreeName = "zdcanalyzer/zdcdigi");
+   ZDCTreeMessenger(TTree *ZDCTree);
    bool Initialize(TTree *ZDCTree);
    bool Initialize();
    bool GetEntry(int iEntry);

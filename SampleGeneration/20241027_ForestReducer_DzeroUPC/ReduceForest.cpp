@@ -62,7 +62,8 @@ int main(int argc, char *argv[]) {
     SkimTreeMessenger MSkim(InputFile);
     TriggerTreeMessenger MTrigger(InputFile);
     DzeroTreeMessenger MDzero(InputFile);
-    ZDCMessenger MZDC(InputFile);
+    ZDCTreeMessenger MZDC(InputFile);
+    METFilterTreeMessenger MFilter(InputFile);
 
     int EntryCount = MEvent.GetEntries() * Fraction;
     ProgressBar Bar(cout, EntryCount);
@@ -87,6 +88,7 @@ int main(int argc, char *argv[]) {
       MDzero.GetEntry(iE);
       MZDC.GetEntry(iE);
       MDzeroUPC.Clear();
+      MFilter.GetEntry(iE);
 
       ////////////////////////////////////////
       ////////// Global event stuff //////////
@@ -122,9 +124,10 @@ int main(int argc, char *argv[]) {
       if (IsData == true) {
         int pprimaryVertexFilter = MSkim.PVFilter;
         int pclusterCompatibilityFilter = MSkim.ClusterCompatibilityFilter;
-
-        if (pprimaryVertexFilter == 0 || pclusterCompatibilityFilter == 0)
+        int cscTightHalo2015Filter = MFilter.cscTightHalo2015Filter;
+        if (pprimaryVertexFilter == 0 || pclusterCompatibilityFilter == 0 || cscTightHalo2015Filter == false){
           continue;
+        }
         bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
         bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
         // std::cout<<"==== new event ===="<<std::endl;
