@@ -125,12 +125,13 @@ int main(int argc, char *argv[]) {
         int pprimaryVertexFilter = MSkim.PVFilter;
         int pclusterCompatibilityFilter = MSkim.ClusterCompatibilityFilter;
         int cscTightHalo2015Filter = MFilter.cscTightHalo2015Filter;
-        if (pprimaryVertexFilter == 0 || pclusterCompatibilityFilter == 0 || cscTightHalo2015Filter == false){
+        if (pprimaryVertexFilter == 0 || pclusterCompatibilityFilter == 0 ||
+            cscTightHalo2015Filter == false) {
           continue;
         }
-        if (fabs(MTrackPbPbUPC.zVtx->at(0)) > 15){
-	  continue;
-	}
+        if (fabs(MTrackPbPbUPC.zVtx->at(0)) > 15) {
+          continue;
+        }
 
         bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
         bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
@@ -169,10 +170,22 @@ int main(int argc, char *argv[]) {
             HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000_2023 == 0)
           continue;
       }
+
+      int nTrackInAcceptanceHP = 0;
+      for (int iTrack = 0; iTrack < MTrackPbPbUPC.nTrk; iTrack++) {
+        if (MTrackPbPbUPC.trkPt->at(iTrack) > 0.5 &&
+            fabs(MTrackPbPbUPC.trkEta->at(iTrack)) < 2.4 &&
+            MTrackPbPbUPC.highPurity->at(iTrack) == true) {
+          nTrackInAcceptanceHP++;
+        }
+      }
+      MDzeroUPC.nTrackInAcceptanceHP = nTrackInAcceptanceHP;
+
       for (int iD = 0; iD < MDzero.Dsize; iD++) {
         if (MDzero.Dpt[iD] < MinDzeroPT ||
             MDzero.PassUPCDzero2023Cut(iD) == false)
           continue;
+        MDzeroUPC.DnTrackInAcceptanceHP->push_back(nTrackInAcceptanceHP);
         MDzeroUPC.Dphi->push_back(MDzero.Dphi[iD]);
         MDzeroUPC.Dpt->push_back(MDzero.Dpt[iD]);
         MDzeroUPC.Dy->push_back(MDzero.Dy[iD]);

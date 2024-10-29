@@ -566,6 +566,9 @@ public:
    std::vector<float> *xErrVtx;
    std::vector<float> *yErrVtx;
    std::vector<float> *zErrVtx;
+   std::vector<float> *trkPt;
+   std::vector<float> *trkEta;
+   std::vector<float> *highPurity;
 
 public:
    PbPbUPCTrackTreeMessenger(TFile &File, std::string TreeName = "ppTracks/trackTree");
@@ -712,6 +715,8 @@ public:
    std::vector<float> *DsvpvDisErr_2D;
    std::vector<float> *Dalpha;
    std::vector<float> *Ddtheta;
+   std::vector<int> *DnTrackInAcceptanceHP;
+   int nTrackInAcceptanceHP;
 
 public:   // Derived quantities
    bool GoodPhotonuclear;

@@ -1994,6 +1994,9 @@ bool PbPbUPCTrackTreeMessenger::Initialize()
    xErrVtx = nullptr;
    yErrVtx = nullptr;
    zErrVtx = nullptr;
+   trkPt = nullptr;
+   trkEta = nullptr;
+   highPurity = nullptr;
 
    Tree->SetBranchAddress("nVtx", &nVtx);
    Tree->SetBranchAddress("nTrk", &nTrk);
@@ -2004,6 +2007,9 @@ bool PbPbUPCTrackTreeMessenger::Initialize()
    Tree->SetBranchAddress("xErrVtx", &xErrVtx);
    Tree->SetBranchAddress("yErrVtx", &yErrVtx);
    Tree->SetBranchAddress("zErrVtx", &zErrVtx);
+   Tree->SetBranchAddress("trkPt", &trkPt);
+   Tree->SetBranchAddress("trkEta", &trkEta);
+   Tree->SetBranchAddress("highPurity", &highPurity);
    return true;
 }
 
@@ -2679,6 +2685,7 @@ DzeroUPCTreeMessenger::~DzeroUPCTreeMessenger()
       delete DsvpvDisErr_2D;
       delete Dalpha;
       delete Ddtheta;
+      delete DnTrackInAcceptanceHP;
    }
 }
 
@@ -2707,6 +2714,7 @@ bool DzeroUPCTreeMessenger::Initialize()
    DsvpvDisErr_2D = nullptr;
    Dalpha = nullptr;
    Ddtheta = nullptr;
+   DnTrackInAcceptanceHP = nullptr;
 
    Tree->SetBranchAddress("Run", &Run);
    Tree->SetBranchAddress("Event", &Event);
@@ -2732,7 +2740,8 @@ bool DzeroUPCTreeMessenger::Initialize()
    Tree->SetBranchAddress("DsvpvDisErr_2D", &DsvpvDisErr_2D);
    Tree->SetBranchAddress("Dalpha", &Dalpha);
    Tree->SetBranchAddress("Ddtheta", &Ddtheta);
-
+   Tree->SetBranchAddress("DnTrackInAcceptanceHP", &DnTrackInAcceptanceHP);
+   Tree->SetBranchAddress("nTrackInAcceptanceHP", &nTrackInAcceptanceHP);
    return true;
 }
 
@@ -2797,6 +2806,7 @@ bool DzeroUPCTreeMessenger::SetBranch(TTree *T)
    DsvpvDisErr_2D = new std::vector<float>();
    Dalpha = new std::vector<float>();
    Ddtheta = new std::vector<float>();
+   DnTrackInAcceptanceHP = new std::vector<int>();
 
    Tree = T;
 
@@ -2824,6 +2834,8 @@ bool DzeroUPCTreeMessenger::SetBranch(TTree *T)
    Tree->Branch("DsvpvDisErr_2D",        &DsvpvDisErr_2D);
    Tree->Branch("Dalpha",                &Dalpha);
    Tree->Branch("Ddtheta",               &Ddtheta);
+   Tree->Branch("DnTrackInAcceptanceHP", &DnTrackInAcceptanceHP);
+   Tree->Branch("nTrackInAcceptanceHP",  &nTrackInAcceptanceHP, "nTrackInAcceptanceHP/I");
 
    return true;
 }
@@ -2854,6 +2866,8 @@ void DzeroUPCTreeMessenger::Clear()
    DsvpvDisErr_2D->clear();
    Dalpha->clear();
    Ddtheta->clear();
+   DnTrackInAcceptanceHP->clear();
+   nTrackInAcceptanceHP = 0;
 }
 
 void DzeroUPCTreeMessenger::CopyNonTrack(DzeroUPCTreeMessenger &M)
@@ -2882,6 +2896,8 @@ void DzeroUPCTreeMessenger::CopyNonTrack(DzeroUPCTreeMessenger &M)
    if(DsvpvDisErr_2D != nullptr && M.DsvpvDisErr_2D != nullptr)   *DsvpvDisErr_2D = *(M.DsvpvDisErr_2D);
    if(Dalpha != nullptr && M.Dalpha != nullptr)   *Dalpha = *(M.Dalpha);
    if(Ddtheta != nullptr && M.Ddtheta != nullptr)   *Ddtheta = *(M.Ddtheta);
+   if(DnTrackInAcceptanceHP != nullptr && M.DnTrackInAcceptanceHP != nullptr)   *DnTrackInAcceptanceHP = *(M.DnTrackInAcceptanceHP);
+   nTrackInAcceptanceHP = M.nTrackInAcceptanceHP;
 }
 
 bool DzeroUPCTreeMessenger::FillEntry()
