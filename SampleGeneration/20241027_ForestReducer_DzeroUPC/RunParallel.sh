@@ -25,7 +25,8 @@ mkdir -p "$OUTPUT"
 # List all matching files and write to the filelist
 
 #ls  /eos/cms/store/group/phys_heavyions/ginnocen/PbPb2018_gtoccbar/20241023_DiJetpThat15PbPb2018gtoccbar_v1/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/HINPbPbSpring21MiniAOD-FixL1CaloGT_112X_upgrade2018_realistic_HI_v9-v1/MINIAODSIM/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/20241023_DiJetpThat15PbPb2018gtoccbar_v1/241023_225656/000*/*.root > "$filelist"
-ls /eos/cms/store/group/phys_heavyions/jdlang/PbPbUPC2023/2023config_2023RerecoHIForward0/HIForward0/crab_2023config_2023RerecoHIForward0/241024_101446/000*/*.root > "$filelist"
+#ls /eos/cms/store/group/phys_heavyions/jdlang/PbPbUPC2023/2023config_2023RerecoHIForward0/HIForward0/crab_2023config_2023RerecoHIForward0/241024_101446/000*/*.root > "$filelist"
+ls /home/data/public/jdlang/Run23UPC_Rereco24_Private/Run23UPC_Rereco24_HIForward*.root > "$filelist"
 #ls Samples/HiForestAOD_*_Data_pp.root > "$filelist"
 
 # Check if the filelist is empty
