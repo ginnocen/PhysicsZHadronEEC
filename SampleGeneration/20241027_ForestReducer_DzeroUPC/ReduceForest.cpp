@@ -132,6 +132,21 @@ int main(int argc, char *argv[]) {
         if (fabs(MTrackPbPbUPC.zVtx->at(0)) > 15) {
           continue;
         }
+        //  FIXME: need to be replaced with the actual PbPb triggers
+        // int HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 =
+        //   MTrigger.CheckTriggerStartWith("HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000");
+        int HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 =
+            MTrigger.CheckTriggerStartWith(
+                "HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400");
+        int HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000_2023 =
+            MTrigger.CheckTriggerStartWith(
+                "HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000");
+        if (
+            // HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 == 0 &&
+            HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 ==
+                0 &&
+            HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000_2023 == 0)
+          continue;
 
         bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
         bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
@@ -152,23 +167,6 @@ int main(int argc, char *argv[]) {
         }
         MDzeroUPC.gammaN = gammaN_;
         MDzeroUPC.Ngamma = Ngamma_;
-        // HLT trigger to select dimuon events, see Kaya's note: AN2019_143_v12,
-        // p.5
-        //  FIXME: need to be replaced with the actual PbPb triggers
-        // int HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 =
-        //   MTrigger.CheckTriggerStartWith("HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000");
-        int HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 =
-            MTrigger.CheckTriggerStartWith(
-                "HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400");
-        int HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000_2023 =
-            MTrigger.CheckTriggerStartWith(
-                "HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000");
-        if (
-            // HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 == 0 &&
-            HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 ==
-                0 &&
-            HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000_2023 == 0)
-          continue;
       }
 
       int nTrackInAcceptanceHP = 0;
