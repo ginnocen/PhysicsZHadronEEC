@@ -11,6 +11,7 @@
 #define GENCOUNTMAX 250
 #define VERTEXCOUNTMAX 200
 #define DZEROCOUNTMAX 10000
+#define DZEROGENCOUNTMAX 300
 #define TRACKCOUNTMAX 10000
 #define PLANEMAX 200
 #define MUMAX 50
@@ -402,6 +403,27 @@ public:
    bool Initialize();
    bool GetEntry(int iEntry);
    bool PassUPCDzero2023Cut(int index);
+};
+
+
+class DzeroGenTreeMessenger
+{
+public:
+   TTree *Tree;
+   int Gsize;
+   float Gpt[DZEROGENCOUNTMAX];
+   float Gy[DZEROGENCOUNTMAX];
+   float GpdgId[DZEROGENCOUNTMAX];
+   float GisSignal[DZEROGENCOUNTMAX];
+   float GcollisionId[DZEROGENCOUNTMAX];
+   float GSignalType[DZEROGENCOUNTMAX];
+public:
+   DzeroGenTreeMessenger(TFile &File, std::string TreeName = "Dfinder/ntGenDkpi");
+   DzeroGenTreeMessenger(TFile *File, std::string TreeName = "Dfinder/ntGenDkpi");
+   DzeroGenTreeMessenger(TTree *DzeroGenTree);
+   bool Initialize(TTree *DzeroGenTree);
+   bool Initialize();
+   bool GetEntry(int iEntry);
 };
 
 class MuTreeMessenger

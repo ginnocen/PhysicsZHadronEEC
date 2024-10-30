@@ -1514,6 +1514,56 @@ bool DzeroTreeMessenger::PassUPCDzero2023Cut(int index)
    return true;
 }
 
+DzeroGenTreeMessenger::DzeroGenTreeMessenger(TFile &File, std::string TreeName)
+{
+   Tree = (TTree *)File.Get(TreeName.c_str());
+   Initialize();
+}
+
+DzeroGenTreeMessenger::DzeroGenTreeMessenger(TFile *File, std::string TreeName)
+{
+   if(File != nullptr)
+      Tree = (TTree *)File->Get(TreeName.c_str());
+   else
+      Tree = nullptr;
+   Initialize();
+}
+
+DzeroGenTreeMessenger::DzeroGenTreeMessenger(TTree *DzeroGenTree)
+{
+   Initialize(DzeroGenTree);
+}
+
+bool DzeroGenTreeMessenger::Initialize(TTree *DzeroGenTree)
+{
+   Tree = DzeroGenTree;
+   return Initialize();
+}
+
+bool DzeroGenTreeMessenger::Initialize()
+{
+   if(Tree == nullptr)
+      return false;
+
+   Tree->SetBranchAddress("Gsize", &Gsize);
+   Tree->SetBranchAddress("Gpt", &Gpt);
+   Tree->SetBranchAddress("Gy", &Gy);
+   Tree->SetBranchAddress("GpdgId", &GpdgId);
+   Tree->SetBranchAddress("GisSignal", &GisSignal);
+   Tree->SetBranchAddress("GcollisionId", &GcollisionId);
+   Tree->SetBranchAddress("GSignalType", &GSignalType);
+}
+
+bool DzeroGenTreeMessenger::GetEntry(int iEntry)
+{
+   if(Tree == nullptr)
+      return false;
+
+   Tree->GetEntry(iEntry);
+
+   return true;
+}
+
 MuTreeMessenger::MuTreeMessenger(TFile &File, std::string TreeName)
 {
    Tree = (TTree *)File.Get(TreeName.c_str());
