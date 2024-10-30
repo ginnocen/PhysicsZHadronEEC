@@ -740,6 +740,15 @@ public:
    std::vector<int> *DnTrackInAcceptanceHP;
    int nTrackInAcceptanceHP;
 
+   //MC only quantities
+   int Gsize;
+   std::vector<float> *Gpt;
+   std::vector<float> *Gy;
+   std::vector<int> *GpdgId;
+   std::vector<int> *GisSignal;
+   std::vector<int> *GcollisionId;
+   std::vector<int> *GSignalType;
+
 public:   // Derived quantities
    bool GoodPhotonuclear;
 

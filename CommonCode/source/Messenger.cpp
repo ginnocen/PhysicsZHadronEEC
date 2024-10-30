@@ -1460,7 +1460,6 @@ bool DzeroTreeMessenger::Initialize()
       return false;
    Tree->SetBranchAddress("Dsize", &Dsize);
    Tree->SetBranchAddress("Dpt", &Dpt);
-   Tree->SetBranchAddress("Dphi", &Dphi);
    Tree->SetBranchAddress("Dy", &Dy);
    Tree->SetBranchAddress("Dmass", &Dmass);
    Tree->SetBranchAddress("Dtrk1Pt", &Dtrk1Pt);
@@ -1552,6 +1551,8 @@ bool DzeroGenTreeMessenger::Initialize()
    Tree->SetBranchAddress("GisSignal", &GisSignal);
    Tree->SetBranchAddress("GcollisionId", &GcollisionId);
    Tree->SetBranchAddress("GSignalType", &GSignalType);
+
+   return true;
 }
 
 bool DzeroGenTreeMessenger::GetEntry(int iEntry)
@@ -2723,7 +2724,6 @@ DzeroUPCTreeMessenger::~DzeroUPCTreeMessenger()
    if(Initialized == true && WriteMode == true)
    {
       delete Dpt;
-      delete Dphi;
       delete Dy;
       delete Dmass;
       delete Dtrk1Pt;
@@ -2736,6 +2736,12 @@ DzeroUPCTreeMessenger::~DzeroUPCTreeMessenger()
       delete Dalpha;
       delete Ddtheta;
       delete DnTrackInAcceptanceHP;
+      delete Gpt;
+      delete Gy;
+      delete GpdgId;
+      delete GisSignal;
+      delete GcollisionId;
+      delete GSignalType;
    }
 }
 
@@ -2752,7 +2758,6 @@ bool DzeroUPCTreeMessenger::Initialize()
 
    Initialized = true;
    Dpt = nullptr;
-   Dphi = nullptr;
    Dy = nullptr;
    Dmass = nullptr;
    Dtrk1Pt = nullptr;
@@ -2765,6 +2770,12 @@ bool DzeroUPCTreeMessenger::Initialize()
    Dalpha = nullptr;
    Ddtheta = nullptr;
    DnTrackInAcceptanceHP = nullptr;
+   Gpt = nullptr;
+   Gy = nullptr;
+   GpdgId = nullptr;
+   GisSignal = nullptr;
+   GcollisionId = nullptr;
+   GSignalType = nullptr;
 
    Tree->SetBranchAddress("Run", &Run);
    Tree->SetBranchAddress("Event", &Event);
@@ -2778,7 +2789,6 @@ bool DzeroUPCTreeMessenger::Initialize()
    Tree->SetBranchAddress("gammaN", &gammaN);
    Tree->SetBranchAddress("Ngamma", &Ngamma);
    Tree->SetBranchAddress("Dpt", &Dpt);
-   Tree->SetBranchAddress("Dphi", &Dphi);
    Tree->SetBranchAddress("Dy", &Dy);
    Tree->SetBranchAddress("Dmass", &Dmass);
    Tree->SetBranchAddress("Dtrk1Pt", &Dtrk1Pt);
@@ -2792,6 +2802,12 @@ bool DzeroUPCTreeMessenger::Initialize()
    Tree->SetBranchAddress("Ddtheta", &Ddtheta);
    Tree->SetBranchAddress("DnTrackInAcceptanceHP", &DnTrackInAcceptanceHP);
    Tree->SetBranchAddress("nTrackInAcceptanceHP", &nTrackInAcceptanceHP);
+   Tree->SetBranchAddress("Gpt", &Gpt);
+   Tree->SetBranchAddress("Gy", &Gy);
+   Tree->SetBranchAddress("GpdgId", &GpdgId);
+   Tree->SetBranchAddress("GisSignal", &GisSignal);
+   Tree->SetBranchAddress("GcollisionId", &GcollisionId);
+   Tree->SetBranchAddress("GSignalType", &GSignalType);
    return true;
 }
 
@@ -2844,7 +2860,6 @@ bool DzeroUPCTreeMessenger::SetBranch(TTree *T)
    WriteMode = true;
 
    Dpt = new std::vector<float>();
-   Dphi = new std::vector<float>();
    Dy = new std::vector<float>();
    Dmass = new std::vector<float>();
    Dtrk1Pt = new std::vector<float>();
@@ -2857,6 +2872,12 @@ bool DzeroUPCTreeMessenger::SetBranch(TTree *T)
    Dalpha = new std::vector<float>();
    Ddtheta = new std::vector<float>();
    DnTrackInAcceptanceHP = new std::vector<int>();
+   Gpt = new std::vector<float>();
+   Gy = new std::vector<float>();
+   GpdgId = new std::vector<int>();
+   GisSignal = new std::vector<int>();
+   GcollisionId = new std::vector<int>();
+   GSignalType = new std::vector<int>();
 
    Tree = T;
 
@@ -2872,7 +2893,6 @@ bool DzeroUPCTreeMessenger::SetBranch(TTree *T)
    Tree->Branch("gammaN",                &gammaN, "gammaN/I");
    Tree->Branch("Ngamma",                &Ngamma, "Ngamma/I");
    Tree->Branch("Dpt",                   &Dpt);
-   Tree->Branch("Dphi",                  &Dphi);
    Tree->Branch("Dy",                    &Dy);
    Tree->Branch("Dmass",                 &Dmass);
    Tree->Branch("Dtrk1Pt",               &Dtrk1Pt);
@@ -2886,7 +2906,12 @@ bool DzeroUPCTreeMessenger::SetBranch(TTree *T)
    Tree->Branch("Ddtheta",               &Ddtheta);
    Tree->Branch("DnTrackInAcceptanceHP", &DnTrackInAcceptanceHP);
    Tree->Branch("nTrackInAcceptanceHP",  &nTrackInAcceptanceHP, "nTrackInAcceptanceHP/I");
-
+   Tree->Branch("Gpt",                   &Gpt);
+   Tree->Branch("Gy",                    &Gy);
+   Tree->Branch("GpdgId",                &GpdgId);
+   Tree->Branch("GisSignal",             &GisSignal);
+   Tree->Branch("GcollisionId",          &GcollisionId);
+   Tree->Branch("GSignalType",           &GSignalType);
    return true;
 }
 
@@ -2904,7 +2929,6 @@ void DzeroUPCTreeMessenger::Clear()
    gammaN = -1;
    Ngamma = -1;
    Dpt->clear();
-   Dphi->clear();
    Dy->clear();
    Dmass->clear();
    Dtrk1Pt->clear();
@@ -2918,6 +2942,12 @@ void DzeroUPCTreeMessenger::Clear()
    Ddtheta->clear();
    DnTrackInAcceptanceHP->clear();
    nTrackInAcceptanceHP = 0;
+   Gpt->clear();
+   Gy->clear();
+   GpdgId->clear();
+   GisSignal->clear();
+   GcollisionId->clear();
+   GSignalType->clear();
 }
 
 void DzeroUPCTreeMessenger::CopyNonTrack(DzeroUPCTreeMessenger &M)
@@ -2934,7 +2964,6 @@ void DzeroUPCTreeMessenger::CopyNonTrack(DzeroUPCTreeMessenger &M)
    gammaN       = M.gammaN;
    Ngamma       = M.Ngamma;
    if(Dpt != nullptr && M.Dpt != nullptr)   *Dpt = *(M.Dpt);
-   if(Dphi != nullptr && M.Dphi != nullptr)   *Dphi = *(M.Dphi);
    if(Dy != nullptr && M.Dy != nullptr)   *Dy = *(M.Dy);
    if(Dmass != nullptr && M.Dmass != nullptr)   *Dmass = *(M.Dmass);
    if(Dtrk1Pt != nullptr && M.Dtrk1Pt != nullptr)   *Dtrk1Pt = *(M.Dtrk1Pt);
@@ -2948,6 +2977,12 @@ void DzeroUPCTreeMessenger::CopyNonTrack(DzeroUPCTreeMessenger &M)
    if(Ddtheta != nullptr && M.Ddtheta != nullptr)   *Ddtheta = *(M.Ddtheta);
    if(DnTrackInAcceptanceHP != nullptr && M.DnTrackInAcceptanceHP != nullptr)   *DnTrackInAcceptanceHP = *(M.DnTrackInAcceptanceHP);
    nTrackInAcceptanceHP = M.nTrackInAcceptanceHP;
+   if(Gpt != nullptr && M.Gpt != nullptr)   *Gpt = *(M.Gpt);
+   if(Gy != nullptr && M.Gy != nullptr)   *Gy = *(M.Gy);
+   if(GpdgId != nullptr && M.GpdgId != nullptr)   *GpdgId = *(M.GpdgId);
+   if(GisSignal != nullptr && M.GisSignal != nullptr)   *GisSignal = *(M.GisSignal);
+   if(GcollisionId != nullptr && M.GcollisionId != nullptr)   *GcollisionId = *(M.GcollisionId);
+   if(GSignalType != nullptr && M.GSignalType != nullptr)   *GSignalType = *(M.GSignalType);
 }
 
 bool DzeroUPCTreeMessenger::FillEntry()

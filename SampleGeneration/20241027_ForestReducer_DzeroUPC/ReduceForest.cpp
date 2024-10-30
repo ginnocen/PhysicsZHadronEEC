@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
     SkimTreeMessenger MSkim(InputFile);
     TriggerTreeMessenger MTrigger(InputFile);
     DzeroTreeMessenger MDzero(InputFile);
+    DzeroGenTreeMessenger MDzeroGen(InputFile);
     ZDCTreeMessenger MZDC(InputFile);
     METFilterTreeMessenger MFilter(InputFile);
 
@@ -86,6 +87,8 @@ int main(int argc, char *argv[]) {
       MSkim.GetEntry(iE);
       MTrigger.GetEntry(iE);
       MDzero.GetEntry(iE);
+      if (IsData == false)
+	MDzeroGen.GetEntry(iE);
       MZDC.GetEntry(iE);
       MDzeroUPC.Clear();
       MFilter.GetEntry(iE);
@@ -167,7 +170,7 @@ int main(int argc, char *argv[]) {
         }
         MDzeroUPC.gammaN = gammaN_;
         MDzeroUPC.Ngamma = Ngamma_;
-      }
+      } // end of if (IsData == true)
 
       int nTrackInAcceptanceHP = 0;
       for (int iTrack = 0; iTrack < MTrackPbPbUPC.nTrk; iTrack++) {
@@ -179,12 +182,21 @@ int main(int argc, char *argv[]) {
       }
       MDzeroUPC.nTrackInAcceptanceHP = nTrackInAcceptanceHP;
 
+      if (IsData == false){
+        for (int iDGen = 0; iDGen < MDzeroGen.Gsize; iDGen++){
+          MDzeroUPC.Gpt->push_back(MDzeroGen.Gpt[iDGen]);
+          MDzeroUPC.Gy->push_back(MDzeroGen.Gy[iDGen]);
+          MDzeroUPC.GpdgId->push_back(MDzeroGen.GpdgId[iDGen]);
+          MDzeroUPC.GisSignal->push_back(MDzeroGen.GisSignal[iDGen]);
+          MDzeroUPC.GcollisionId->push_back(MDzeroGen.GcollisionId[iDGen]);
+          MDzeroUPC.GSignalType->push_back(MDzeroGen.GSignalType[iDGen]);
+        }
+      }
       for (int iD = 0; iD < MDzero.Dsize; iD++) {
         if (MDzero.Dpt[iD] < MinDzeroPT ||
             MDzero.PassUPCDzero2023Cut(iD) == false)
           continue;
         MDzeroUPC.DnTrackInAcceptanceHP->push_back(nTrackInAcceptanceHP);
-        MDzeroUPC.Dphi->push_back(MDzero.Dphi[iD]);
         MDzeroUPC.Dpt->push_back(MDzero.Dpt[iD]);
         MDzeroUPC.Dy->push_back(MDzero.Dy[iD]);
         MDzeroUPC.Dmass->push_back(MDzero.Dmass[iD]);
