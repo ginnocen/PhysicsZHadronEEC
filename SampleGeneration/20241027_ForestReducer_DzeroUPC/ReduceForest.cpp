@@ -23,8 +23,6 @@ using namespace std;
 #include "trackingEfficiency2023PbPb.h"
 
 int main(int argc, char *argv[]);
-double GetHFSum(PFTreeMessenger *M);
-double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
 double GetMaxEnergyHF(PFTreeMessenger *M, double etaMin, double etaMax);
 
 int main(int argc, char *argv[]) {
@@ -136,8 +134,10 @@ int main(int argc, char *argv[]) {
           continue;
         }
         //  FIXME: need to be replaced with the actual PbPb triggers
-        // int HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 =
-        //   MTrigger.CheckTriggerStartWith("HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000");
+        int HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 =
+            MTrigger.CheckTriggerStartWith("HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000");
+        int HLT_HIUPC_SingleJet8_ZDC1nAsymXOR_MaxPixelCluster50000_2023 =
+            MTrigger.CheckTriggerStartWith("HLT_HIUPC_SingleJet8_ZDC1nAsymXOR_MaxPixelCluster50000");
         int HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 =
             MTrigger.CheckTriggerStartWith(
                 "HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400");
@@ -145,26 +145,19 @@ int main(int argc, char *argv[]) {
             MTrigger.CheckTriggerStartWith(
                 "HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000");
         if (
-            // HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 == 0 &&
-            HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 ==
-                0 &&
+            HLT_HIUPC_SingleJet8_ZDC1nXOR_MaxPixelCluster50000_2023 == 0 &&
+            HLT_HIUPC_SingleJet8_ZDC1nAsymXOR_MaxPixelCluster50000_2023 == 0 &&
+            HLT_HIUPC_ZDC1nOR_SinglePixelTrackLowPt_MaxPixelCluster400_2023 == 0 &&
             HLT_HIUPC_ZDC1nOR_MinPixelCluster400_MaxPixelCluster10000_2023 == 0)
           continue;
-
         bool ZDCgammaN = (MZDC.sumMinus > 1100. && MZDC.sumPlus < 1100.);
         bool ZDCNgamma = (MZDC.sumMinus < 1100. && MZDC.sumPlus > 1100.);
-        // std::cout<<"==== new event ===="<<std::endl;
-        // std::cout<<"Max energy positive HF:
-        // "<<GetMaxEnergyHF(&MPF, 3., 5.2)<<std::endl; std::cout<<"Max energy
-        // negative HF: "<<GetMaxEnergyHF(&MPF, -5.2, -3.)<<std::endl;
+
         bool gapgammaN = GetMaxEnergyHF(&MPF, 3., 5.2) < 9.2;
         bool gapNgamma = GetMaxEnergyHF(&MPF, -5.2, -3.) < 8.6;
         bool gammaN_ = ZDCgammaN && gapgammaN;
         bool Ngamma_ = ZDCNgamma && gapNgamma;
-        // std::cout<<"sumMinus: "<<MZDC.sumMinus<<", sumPlus:
-        // "<<MZDC.sumPlus<<std::endl; std::cout<<"ZDCgammaN: "<<ZDCgammaN<<",
-        // ZDCNgamma: "<<ZDCNgamma<<std::endl; std::cout<<"gapgammaN:
-        // "<<gapgammaN<<", gapNgamma: "<<gapNgamma<<std::endl;
+
         if (gammaN_ == false && Ngamma_ == false) {
           continue;
         }
@@ -246,53 +239,4 @@ double GetMaxEnergyHF(PFTreeMessenger *M, double etaMin = 3.,
     }
   }
   return EMax;
-}
-
-double GetHFSum(PFTreeMessenger *M) {
-  if (M == nullptr)
-    return -1;
-  if (M->Tree == nullptr)
-    return -1;
-
-  double Sum = 0;
-  for (int iPF = 0; iPF < M->ID->size(); iPF++) {
-    if (fabs(M->Eta->at(iPF)) < 3)
-      continue;
-    if (fabs(M->Eta->at(iPF)) > 5)
-      continue;
-    Sum = Sum + M->E->at(iPF);
-  }
-
-  // cout << Sum << endl;
-
-  return Sum;
-}
-
-double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent) {
-  if (M == nullptr)
-    return -1;
-  if (M->Tree == nullptr)
-    return -1;
-
-  double Sum = 0;
-  for (int iGen = 0; iGen < M->Mult; iGen++) {
-    if (fabs(M->Eta->at(iGen)) < 3)
-      continue;
-    if (fabs(M->Eta->at(iGen)) > 5)
-      continue;
-    if (M->DaughterCount->at(iGen) > 0)
-      continue;
-    if (M->PT->at(iGen) < 0.4) // for now...
-      continue;
-
-    if (SubEvent >= 0) // if SubEvent >= 0, check subevent
-    {
-      if (M->SubEvent->at(iGen) != SubEvent)
-        continue;
-    }
-
-    Sum = Sum + M->PT->at(iGen) * cosh(M->Eta->at(iGen));
-  }
-
-  return Sum;
 }

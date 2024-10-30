@@ -46,7 +46,6 @@ while IFS= read -r file; do
             --Year 2023 \
             --IsData true \
             --MinDzeroPT 1.0 \
-            --MinTrackPT 1.0 \
             --PFTree particleFlowAnalyser/pftree &
     ((counter++))
     if (( counter % $MAXCORES == 0 )); then
